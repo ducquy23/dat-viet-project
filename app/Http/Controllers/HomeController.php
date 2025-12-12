@@ -43,9 +43,12 @@ class HomeController extends Controller
             $query->where('district_id', $request->district);
         }
 
-        // Filter theo giá
+        // Filter theo giá (convert từ triệu đồng sang VND nếu cần)
         if ($request->has('max_price') && $request->max_price) {
-            $query->where('price', '<=', $request->max_price);
+            $maxPrice = $request->max_price;
+            // If price is less than 10000, assume it's in millions and convert to VND
+            $priceFilter = $maxPrice < 10000 ? $maxPrice * 1000000 : $maxPrice;
+            $query->where('price', '<=', $priceFilter);
         }
 
         // Filter theo diện tích

@@ -113,7 +113,10 @@ class ApiController extends Controller
         }
 
         if ($maxPrice) {
-            $query->where('price', '<=', $maxPrice);
+            // maxPrice can be in millions (from form) or VND (from API)
+            // If it's less than 10000, assume it's in millions and convert
+            $priceFilter = $maxPrice < 10000 ? $maxPrice * 1000000 : $maxPrice;
+            $query->where('price', '<=', $priceFilter);
         }
 
         if ($maxArea) {

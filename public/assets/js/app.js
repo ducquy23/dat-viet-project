@@ -724,28 +724,78 @@ const filterRoadEl = document.getElementById("filter-road");
 const priceLabel = document.getElementById("price-label");
 const areaLabel = document.getElementById("area-label");
 
-async function applyFilters() {
-    const category = filterTypeEl?.value;
-    const city = filterCityEl?.value;
-    const district = filterDistrictEl?.value;
+async function applyFilters(e) {
+    // Prevent form submission if event is passed
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    const category = filterTypeEl?.value || '';
+    const city = filterCityEl?.value || '';
+    const district = filterDistrictEl?.value || '';
     const priceMax = Number(filterPriceEl?.value || 5000);
     const areaMax = Number(filterAreaEl?.value || 1000);
-    const needRoad = filterRoadEl?.checked;
+    const needRoad = filterRoadEl?.checked || false;
 
     const filters = {};
     if (category) filters.category = category;
     if (city) filters.city = city;
     if (district) filters.district = district;
-    if (priceMax) filters.maxPrice = priceMax;
-    if (areaMax) filters.maxArea = areaMax;
+    
+    // Convert triệu đồng to VND (đồng) for API
+    // Only apply filter if value is less than max (meaning user changed it)
+    if (priceMax && priceMax < 5000) {
+        filters.maxPrice = priceMax * 1000000; // Convert triệu to đồng
+    }
+    if (areaMax && areaMax < 1000) {
+        filters.maxArea = areaMax;
+    }
     if (needRoad) filters.hasRoad = true;
 
     await loadListings(filters);
+    
+    // Update URL without reloading page
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (city) params.append('city', city);
+    if (district) params.append('district', district);
+    // Only add to URL if not default values
+    if (priceMax < 5000) params.append('max_price', priceMax);
+    if (areaMax < 1000) params.append('max_area', areaMax);
+    if (needRoad) params.append('has_road', '1');
+    
+    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.pushState({}, '', newUrl);
+    
+    // Update filter count badge
+    updateFilterCount();
+}
+
+function updateFilterCount() {
+    const filterCountEl = document.getElementById('filter-count');
+    if (!filterCountEl) return;
+    
+    let count = 0;
+    if (filterTypeEl?.value) count++;
+    if (filterCityEl?.value) count++;
+    if (filterDistrictEl?.value) count++;
+    if (filterPriceEl?.value && filterPriceEl.value < 5000) count++;
+    if (filterAreaEl?.value && filterAreaEl.value < 1000) count++;
+    if (filterRoadEl?.checked) count++;
+    
+    filterCountEl.textContent = count > 0 ? `${count} tiêu chí` : '0 tiêu chí';
 }
 
 function updateRangeLabels() {
-    priceLabel.textContent = `${filterPriceEl.value}+`;
-    areaLabel.textContent = `${filterAreaEl.value}+`;
+    if (priceLabel) {
+        const priceValue = parseInt(filterPriceEl.value);
+        priceLabel.textContent = `${new Intl.NumberFormat('vi-VN').format(priceValue)} triệu`;
+    }
+    if (areaLabel) {
+        const areaValue = parseInt(filterAreaEl.value);
+        areaLabel.textContent = `${new Intl.NumberFormat('vi-VN').format(areaValue)} m²`;
+    }
 }
 
 // Load districts when city changes
@@ -781,6 +831,9 @@ if (filterCityEl && filterDistrictEl) {
                 
                 // Re-enable district select
                 filterDistrictEl.disabled = false;
+                
+                // Update filter count
+                updateFilterCount();
             } catch (error) {
                 console.error('Error loading districts:', error);
                 filterDistrictEl.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
@@ -790,6 +843,9 @@ if (filterCityEl && filterDistrictEl) {
             // Clear districts if no city selected
             filterDistrictEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
             filterDistrictEl.disabled = false;
+            
+            // Update filter count
+            updateFilterCount();
         }
     });
     
@@ -799,20 +855,75 @@ if (filterCityEl && filterDistrictEl) {
     }
 }
 
+// Update filter count when other filters change
+if (filterTypeEl) {
+    filterTypeEl.addEventListener('change', updateFilterCount);
+}
+if (filterPriceEl) {
+    filterPriceEl.addEventListener('input', function() {
+        updateRangeLabels();
+        updateFilterCount();
+    });
+}
+if (filterAreaEl) {
+    filterAreaEl.addEventListener('input', function() {
+        updateRangeLabels();
+        updateFilterCount();
+    });
+}
+if (filterRoadEl) {
+    filterRoadEl.addEventListener('change', updateFilterCount);
+}
+
+// Initialize filter count on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateFilterCount);
+} else {
+    updateFilterCount();
+}
+
 // Only add event listeners if elements exist (not all pages have filters)
 const btnApplyFilters = document.getElementById("btn-apply-filters");
 const btnNearby = document.getElementById("btn-nearby");
+const filterForm = document.getElementById("filter-form");
+
 if (btnApplyFilters) {
     btnApplyFilters.addEventListener("click", applyFilters);
+}
+
+// Prevent form submission, use AJAX instead
+if (filterForm) {
+    filterForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        applyFilters(e);
+    });
 }
 if (btnNearby) {
     btnNearby.addEventListener("click", locateUserAndPickNearest);
 }
 if (filterPriceEl) {
-    filterPriceEl.addEventListener("input", updateRangeLabels);
+    filterPriceEl.addEventListener("input", function() {
+        updateRangeLabels();
+        updateFilterCount();
+        // Update slider progress visual
+        const progress = ((this.value - this.min) / (this.max - this.min)) * 100;
+        this.style.setProperty('--range-progress', progress + '%');
+    });
+    // Initialize progress on load
+    const priceProgress = ((filterPriceEl.value - filterPriceEl.min) / (filterPriceEl.max - filterPriceEl.min)) * 100;
+    filterPriceEl.style.setProperty('--range-progress', priceProgress + '%');
 }
 if (filterAreaEl) {
-    filterAreaEl.addEventListener("input", updateRangeLabels);
+    filterAreaEl.addEventListener("input", function() {
+        updateRangeLabels();
+        updateFilterCount();
+        // Update slider progress visual
+        const progress = ((this.value - this.min) / (this.max - this.min)) * 100;
+        this.style.setProperty('--range-progress', progress + '%');
+    });
+    // Initialize progress on load
+    const areaProgress = ((filterAreaEl.value - filterAreaEl.min) / (filterAreaEl.max - filterAreaEl.min)) * 100;
+    filterAreaEl.style.setProperty('--range-progress', areaProgress + '%');
 }
 if (priceLabel && areaLabel && filterPriceEl && filterAreaEl) {
     updateRangeLabels();
