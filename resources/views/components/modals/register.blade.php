@@ -214,10 +214,15 @@
                 }
                 
                 // Show success message
-                alert('Đăng ký thành công! Bạn có thể đăng nhập ngay.');
-                
-                // Reload page để cập nhật header
-                window.location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: 'Đăng ký thành công! Bạn có thể đăng nhập ngay.',
+                    confirmButtonText: 'Đồng ý'
+                }).then(() => {
+                    // Reload page để cập nhật header
+                    window.location.reload();
+                });
             }
         })
         .catch(error => {

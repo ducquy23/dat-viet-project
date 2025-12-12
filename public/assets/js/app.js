@@ -1096,16 +1096,59 @@ document.getElementById('btn-next-step')?.addEventListener('click', function() {
         const lng = document.getElementById('post-longitude').value;
 
         if (!lat || !lng || !postMarker) {
-            alert('Vui lòng chọn vị trí trên bản đồ hoặc dùng vị trí hiện tại');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Thiếu thông tin',
+                text: 'Vui lòng chọn vị trí trên bản đồ hoặc dùng vị trí hiện tại',
+                confirmButtonText: 'Đã hiểu'
+            });
             return;
         }
     } else if (currentStep === 2) {
-        const price = document.getElementById('post-price').value;
-        const area = document.getElementById('post-area').value;
-        const phone = document.getElementById('post-phone').value;
+        // Validate các trường bắt buộc
+        const category = document.getElementById('post-category')?.value;
+        const city = document.getElementById('post-city')?.value;
+        const title = document.getElementById('post-title')?.value;
+        const address = document.getElementById('post-address')?.value;
+        const price = document.getElementById('post-price')?.value;
+        const area = document.getElementById('post-area')?.value;
+        const contactName = document.getElementById('post-contact-name')?.value;
+        const phone = document.getElementById('post-phone')?.value;
 
-        if (!price || !area || !phone) {
-            alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+        let errorMessage = '';
+        if (!category) {
+            errorMessage = 'Vui lòng chọn loại đất';
+            document.getElementById('post-category')?.focus();
+        } else if (!city) {
+            errorMessage = 'Vui lòng chọn tỉnh/thành phố';
+            document.getElementById('post-city')?.focus();
+        } else if (!title || !title.trim()) {
+            errorMessage = 'Vui lòng nhập tiêu đề tin đăng';
+            document.getElementById('post-title')?.focus();
+        } else if (!address || !address.trim()) {
+            errorMessage = 'Vui lòng nhập địa chỉ chi tiết';
+            document.getElementById('post-address')?.focus();
+        } else if (!price || parseFloat(price) <= 0) {
+            errorMessage = 'Vui lòng nhập giá bán hợp lệ';
+            document.getElementById('post-price')?.focus();
+        } else if (!area || parseFloat(area) <= 0) {
+            errorMessage = 'Vui lòng nhập diện tích hợp lệ';
+            document.getElementById('post-area')?.focus();
+        } else if (!contactName || !contactName.trim()) {
+            errorMessage = 'Vui lòng nhập tên người liên hệ';
+            document.getElementById('post-contact-name')?.focus();
+        } else if (!phone || !phone.trim()) {
+            errorMessage = 'Vui lòng nhập số điện thoại';
+            document.getElementById('post-phone')?.focus();
+        }
+
+        if (errorMessage) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Thiếu thông tin',
+                text: errorMessage,
+                confirmButtonText: 'Đã hiểu'
+            });
             return;
         }
     }
@@ -1126,12 +1169,22 @@ document.getElementById('btn-prev-step')?.addEventListener('click', function() {
 document.getElementById('btn-use-current-location')?.addEventListener('click', function() {
     if (!postMap) {
         console.error('Post map not initialized');
-        alert('Bản đồ chưa sẵn sàng. Vui lòng đợi một chút và thử lại.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Bản đồ chưa sẵn sàng. Vui lòng đợi một chút và thử lại.',
+            confirmButtonText: 'Đã hiểu'
+        });
         return;
     }
     
     if (!navigator.geolocation) {
-        alert('Trình duyệt không hỗ trợ định vị');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Không hỗ trợ',
+            text: 'Trình duyệt không hỗ trợ định vị',
+            confirmButtonText: 'Đã hiểu'
+        });
         return;
     }
 
@@ -1146,9 +1199,21 @@ document.getElementById('btn-use-current-location')?.addEventListener('click', f
             setPostLocation(latitude, longitude);
             btn.disabled = false;
             btn.innerHTML = originalText;
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: 'Đã lấy vị trí hiện tại',
+                timer: 2000,
+                showConfirmButton: false
+            });
         },
         error => {
-            alert('Không thể lấy vị trí hiện tại. Vui lòng chọn vị trí trên bản đồ.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Không thể lấy vị trí hiện tại. Vui lòng chọn vị trí trên bản đồ.',
+                confirmButtonText: 'Đã hiểu'
+            });
             btn.disabled = false;
             btn.innerHTML = originalText;
         },
@@ -1170,7 +1235,12 @@ document.getElementById('post-address-search')?.addEventListener('keypress', fun
 
 async function searchAddressForPost() {
     if (!postMap) {
-        alert('Bản đồ chưa sẵn sàng. Vui lòng đợi một chút và thử lại.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Bản đồ chưa sẵn sàng. Vui lòng đợi một chút và thử lại.',
+            confirmButtonText: 'Đã hiểu'
+        });
         return;
     }
 
@@ -1178,7 +1248,12 @@ async function searchAddressForPost() {
     const searchBtn = document.getElementById('btn-search-address');
     
     if (!addressInput || !addressInput.value.trim()) {
-        alert('Vui lòng nhập địa chỉ cần tìm');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Thiếu thông tin',
+            text: 'Vui lòng nhập địa chỉ cần tìm',
+            confirmButtonText: 'Đã hiểu'
+        });
         return;
     }
 
@@ -1237,11 +1312,21 @@ async function searchAddressForPost() {
                 alertDiv.remove();
             }, 3000);
         } else {
-            alert('Không tìm thấy địa chỉ. Vui lòng thử lại với địa chỉ khác hoặc chọn trực tiếp trên bản đồ.');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Không tìm thấy',
+                text: 'Không tìm thấy địa chỉ. Vui lòng thử lại với địa chỉ khác hoặc chọn trực tiếp trên bản đồ.',
+                confirmButtonText: 'Đã hiểu'
+            });
         }
     } catch (error) {
         console.error('Error searching address:', error);
-        alert('Có lỗi xảy ra khi tìm kiếm địa chỉ. Vui lòng thử lại hoặc chọn trực tiếp trên bản đồ.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Có lỗi xảy ra khi tìm kiếm địa chỉ. Vui lòng thử lại hoặc chọn trực tiếp trên bản đồ.',
+            confirmButtonText: 'Đã hiểu'
+        });
     } finally {
         searchBtn.disabled = false;
         searchBtn.innerHTML = originalBtnText;
@@ -1266,7 +1351,12 @@ document.getElementById('btn-submit-post')?.addEventListener('click', function()
     const lng = document.getElementById('post-longitude').value;
 
     if (!price || !area || !phone || !lat || !lng) {
-        alert('Vui lòng điền đầy đủ thông tin');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Thiếu thông tin',
+            text: 'Vui lòng điền đầy đủ thông tin',
+            confirmButtonText: 'Đã hiểu'
+        });
         return;
     }
 
@@ -1281,7 +1371,12 @@ document.getElementById('btn-submit-post')?.addEventListener('click', function()
 document.getElementById('btn-send-otp')?.addEventListener('click', function() {
     const phone = document.getElementById('register-phone').value;
     if (!phone || phone.length < 10) {
-        alert('Vui lòng nhập số điện thoại hợp lệ');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Thiếu thông tin',
+            text: 'Vui lòng nhập số điện thoại hợp lệ',
+            confirmButtonText: 'Đã hiểu'
+        });
         return;
     }
 
@@ -1289,33 +1384,60 @@ document.getElementById('btn-send-otp')?.addEventListener('click', function() {
     document.getElementById('otp-section').style.display = 'block';
     document.getElementById('btn-send-otp').style.display = 'none';
     document.getElementById('btn-verify-otp').style.display = 'block';
-    alert('Mã OTP đã được gửi đến số điện thoại của bạn');
+    Swal.fire({
+        icon: 'success',
+        title: 'Đã gửi OTP',
+        text: 'Mã OTP đã được gửi đến số điện thoại của bạn',
+        timer: 3000,
+        showConfirmButton: false
+    });
 });
 
 document.getElementById('btn-verify-otp')?.addEventListener('click', function() {
     const otp = document.getElementById('register-otp').value;
     if (!otp || otp.length !== 6) {
-        alert('Vui lòng nhập mã OTP 6 số');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Thiếu thông tin',
+            text: 'Vui lòng nhập mã OTP 6 số',
+            confirmButtonText: 'Đã hiểu'
+        });
         return;
     }
 
     // Simulate verification
-    alert('Đăng ký thành công! Bạn có thể đăng tin ngay.');
-    bootstrap.Modal.getInstance(document.getElementById('registerModal'))?.hide();
-
-    // Reset form
-    document.getElementById('register-phone').value = '';
-    document.getElementById('register-otp').value = '';
-    document.getElementById('otp-section').style.display = 'none';
-    document.getElementById('btn-send-otp').style.display = 'block';
-    document.getElementById('btn-verify-otp').style.display = 'none';
+    Swal.fire({
+        icon: 'success',
+        title: 'Thành công!',
+        text: 'Đăng ký thành công! Bạn có thể đăng tin ngay.',
+        confirmButtonText: 'Đồng ý'
+    }).then(() => {
+        bootstrap.Modal.getInstance(document.getElementById('registerModal'))?.hide();
+        
+        // Reset form
+        document.getElementById('register-phone').value = '';
+        document.getElementById('register-otp').value = '';
+        document.getElementById('otp-section').style.display = 'none';
+        document.getElementById('btn-send-otp').style.display = 'block';
+        document.getElementById('btn-verify-otp').style.display = 'none';
+    });
 });
 
 // Social login (simulate)
 document.getElementById('btn-register-google')?.addEventListener('click', function() {
-    alert('Đăng ký với Google (1 bước) - Tích hợp Google OAuth');
+    Swal.fire({
+        icon: 'info',
+        title: 'Thông tin',
+        text: 'Đăng ký với Google (1 bước) - Tích hợp Google OAuth',
+        confirmButtonText: 'Đã hiểu'
+    });
 });
 
 document.getElementById('btn-register-facebook')?.addEventListener('click', function() {
-    alert('Đăng ký với Facebook (1 bước) - Tích hợp Facebook OAuth');
+    Swal.fire({
+        icon: 'info',
+        title: 'Thông tin',
+        text: 'Đăng ký với Facebook (1 bước) - Tích hợp Facebook OAuth',
+        confirmButtonText: 'Đã hiểu'
+    });
 });

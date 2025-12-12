@@ -148,7 +148,12 @@
     function toggleFavoriteFromDetail() {
         const listingId = window.currentListingId || document.getElementById('favorite-btn')?.getAttribute('data-listing-id');
         if (!listingId) {
-            alert('Vui lòng đăng nhập để sử dụng tính năng này');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Yêu cầu đăng nhập',
+                text: 'Vui lòng đăng nhập để sử dụng tính năng này',
+                confirmButtonText: 'Đã hiểu'
+            });
             return;
         }
 
@@ -165,7 +170,12 @@
         })
         .then(response => {
             if (response.status === 401) {
-                alert('Vui lòng đăng nhập để sử dụng tính năng này');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Yêu cầu đăng nhập',
+                    text: 'Vui lòng đăng nhập để sử dụng tính năng này',
+                    confirmButtonText: 'Đã hiểu'
+                });
                 return null;
             }
             return response.json();

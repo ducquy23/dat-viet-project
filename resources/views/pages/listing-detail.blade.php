@@ -304,35 +304,69 @@
     })
     .catch(error => {
       if (error.status === 401) {
-        alert('Vui lòng đăng nhập để sử dụng tính năng này');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Yêu cầu đăng nhập',
+          text: 'Vui lòng đăng nhập để sử dụng tính năng này',
+          confirmButtonText: 'Đã hiểu'
+        });
       }
     });
   }
 
   // Show contact form
   function showContactForm(listingId) {
-    const name = prompt('Nhập tên của bạn:');
-    if (!name) return;
-
-    const phone = prompt('Nhập số điện thoại:');
-    if (!phone) return;
-
-    const message = prompt('Nhập tin nhắn (tùy chọn):') || '';
-
-    fetch(`/api/listings/${listingId}/contact`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-      },
-      body: JSON.stringify({ name, phone, message })
-    })
-    .then(response => response.json())
-    .then(data => {
-      alert(data.message || 'Gửi liên hệ thành công!');
-    })
-    .catch(error => {
-      alert('Có lỗi xảy ra, vui lòng thử lại');
+    Swal.fire({
+      title: 'Liên hệ với người đăng',
+      html: `
+        <input id="swal-name" class="swal2-input" placeholder="Tên của bạn" required>
+        <input id="swal-phone" class="swal2-input" type="tel" placeholder="Số điện thoại" required>
+        <textarea id="swal-message" class="swal2-textarea" placeholder="Tin nhắn (tùy chọn)"></textarea>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Gửi',
+      cancelButtonText: 'Hủy',
+      preConfirm: () => {
+        const name = document.getElementById('swal-name').value;
+        const phone = document.getElementById('swal-phone').value;
+        const message = document.getElementById('swal-message').value || '';
+        
+        if (!name || !phone) {
+          Swal.showValidationMessage('Vui lòng điền đầy đủ thông tin');
+          return false;
+        }
+        
+        return { name, phone, message };
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value) {
+        fetch(`/api/listings/${listingId}/contact`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: JSON.stringify(result.value)
+        })
+        .then(response => response.json())
+        .then(data => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Thành công',
+            text: data.message || 'Gửi liên hệ thành công!',
+            confirmButtonText: 'Đồng ý'
+          });
+        })
+        .catch(error => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Có lỗi xảy ra, vui lòng thử lại',
+            confirmButtonText: 'Đã hiểu'
+          });
+        });
+      }
     });
   }
 </script>

@@ -161,41 +161,87 @@ function updateStats() {
 // Action functions
 function editListing(id) {
     // TODO: Implement edit functionality
-    alert('Chức năng sửa đang phát triển');
+    Swal.fire({
+        icon: 'info',
+        title: 'Thông tin',
+        text: 'Chức năng sửa đang phát triển',
+        confirmButtonText: 'Đã hiểu'
+    });
 }
 
 function hideListing(id) {
     // TODO: Implement hide functionality
-    if (confirm('Bạn có chắc muốn ẩn tin đăng này?')) {
-        alert('Chức năng ẩn đang phát triển');
-    }
+    Swal.fire({
+        icon: 'question',
+        title: 'Xác nhận',
+        text: 'Bạn có chắc muốn ẩn tin đăng này?',
+        showCancelButton: true,
+        confirmButtonText: 'Có, ẩn tin',
+        cancelButtonText: 'Hủy'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Thông tin',
+                text: 'Chức năng ẩn đang phát triển',
+                confirmButtonText: 'Đã hiểu'
+            });
+        }
+    });
 }
 
 function deleteListing(id) {
-    if (confirm('Bạn có chắc muốn xóa tin đăng này? Hành động này không thể hoàn tác.')) {
-        // TODO: Implement delete functionality
-        fetch(`/api/listings/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                listings = listings.filter(l => l.id !== id);
-                render();
-                updateStats();
-            } else {
-                alert('Có lỗi xảy ra: ' + (data.message || 'Không thể xóa'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Có lỗi xảy ra khi xóa tin đăng');
-        });
-    }
+    Swal.fire({
+        icon: 'warning',
+        title: 'Xác nhận xóa',
+        text: 'Bạn có chắc muốn xóa tin đăng này? Hành động này không thể hoàn tác.',
+        showCancelButton: true,
+        confirmButtonText: 'Có, xóa tin',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // TODO: Implement delete functionality
+            fetch(`/api/listings/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    listings = listings.filter(l => l.id !== id);
+                    render();
+                    updateStats();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công',
+                        text: 'Đã xóa tin đăng thành công',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: data.message || 'Không thể xóa',
+                        confirmButtonText: 'Đã hiểu'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Có lỗi xảy ra khi xóa tin đăng',
+                    confirmButtonText: 'Đã hiểu'
+                });
+            });
+        }
+    });
 }
 
 // Filters - Only initialize if on dashboard page
