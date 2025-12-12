@@ -2,7 +2,7 @@
 <div class="col-12 col-md-3 col-lg-3 border-start p-3 bg-white sidebar-right" id="detail-panel">
     <!-- RIGHT SIDEBAR AD BANNER -->
     @include('components.ads.right-panel')
-    
+
     @if(isset($listing) && $listing)
         <!-- Server-side rendered listing (for detail page) -->
         @include('components.detail-panel-content', ['listing' => $listing])

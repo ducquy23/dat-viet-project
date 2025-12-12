@@ -80,7 +80,7 @@ function renderMarkers(data) {
         }
     });
     markerLayers = [];
-    
+
     // Also clear markers from map-area.blade.php if they exist
     if (window.mapAreaMarkers && Array.isArray(window.mapAreaMarkers)) {
         window.mapAreaMarkers.forEach(m => {
@@ -93,20 +93,20 @@ function renderMarkers(data) {
 
     // Track IDs to avoid duplicates
     const addedIds = new Set();
-    
+
     data.forEach(lot => {
         // Skip if this ID was already added
         if (addedIds.has(lot.id)) {
             console.warn(`Duplicate listing ID ${lot.id} detected, skipping`);
             return;
         }
-        
+
         // Validate coordinates
         if (!lot.lat || !lot.lng || isNaN(lot.lat) || isNaN(lot.lng)) {
             console.warn(`Invalid coordinates for listing ${lot.id}: lat=${lot.lat}, lng=${lot.lng}`);
             return;
         }
-        
+
         // Validate coordinate ranges (Vietnam bounds approximately)
         const lat = parseFloat(lot.lat);
         const lng = parseFloat(lot.lng);
@@ -114,16 +114,16 @@ function renderMarkers(data) {
             console.warn(`Coordinates out of Vietnam bounds for listing ${lot.id}: lat=${lat}, lng=${lng}`);
             return;
         }
-        
+
         addedIds.add(lot.id);
-        
-        const marker = L.marker([lat, lng], { 
+
+        const marker = L.marker([lat, lng], {
             icon: lot.isVip ? iconVip : iconNormal,
             title: lot.name || lot.title || `Tin đăng ${lot.id}`,
             riseOnHover: true,
             zIndexOffset: lot.isVip ? 1000 : 500
         }).addTo(currentMap);
-        
+
         marker.bindPopup(popupTemplate(lot), {
             maxWidth: 250,
             className: 'custom-popup',
@@ -138,7 +138,7 @@ function renderMarkers(data) {
                 animate: true,
                 duration: 0.5
             });
-            
+
             // Load full detail and update right panel
             await loadListingDetail(lot.id);
             const fullLot = lots.find(l => l.id === lot.id) || lot;
@@ -163,7 +163,7 @@ function renderMarkers(data) {
 
         markerLayers.push(marker);
     });
-    
+
     // Store markers globally so map-area can clear them
     window.markerLayers = markerLayers;
 }
@@ -172,7 +172,7 @@ function popupTemplate(lot) {
     const imageUrl = lot.img || '/images/Image-not-found.png';
     const address = lot.address || lot.district || '';
     const cityDistrict = [lot.district, lot.city].filter(Boolean).join(', ');
-    
+
     return `
         <div style="width:220px; font-family: 'SF Pro Display', sans-serif;">
             <img src="${imageUrl}" style="width:100%; height:120px; object-fit:cover; border-radius:8px 8px 0 0; margin-bottom:8px; display:block;" onerror="this.src='/images/Image-not-found.png'">
@@ -681,6 +681,7 @@ async function loadListingDetail(listingId) {
         lot.roadWidth = listing.road_width ? `${listing.road_width}m` : '';
         lot.direction = listing.direction || '';
         lot.roadAccess = listing.has_road_access || false;
+        lot.price = formatPrice(listing.price);
         lot.pricePer = listing.price_per_m2 ? `${(listing.price_per_m2 / 1000000).toFixed(1)}tr/m²` : '';
         lot.planning = listing.planning_info || '';
         lot.depositOnline = listing.deposit_online ? 'Có' : 'Không';
@@ -742,7 +743,7 @@ async function applyFilters(e) {
     if (category) filters.category = category;
     if (city) filters.city = city;
     if (district) filters.district = district;
-    
+
     // Convert triệu đồng to VND (đồng) for API
     // Only apply filter if value is less than max (meaning user changed it)
     if (priceMax && priceMax < 5000) {
@@ -754,7 +755,7 @@ async function applyFilters(e) {
     if (needRoad) filters.hasRoad = true;
 
     await loadListings(filters);
-    
+
     // Update URL without reloading page
     const params = new URLSearchParams();
     if (category) params.append('category', category);
@@ -764,10 +765,10 @@ async function applyFilters(e) {
     if (priceMax < 5000) params.append('max_price', priceMax);
     if (areaMax < 1000) params.append('max_area', areaMax);
     if (needRoad) params.append('has_road', '1');
-    
+
     const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
     window.history.pushState({}, '', newUrl);
-    
+
     // Update filter count badge
     updateFilterCount();
 }
@@ -775,7 +776,7 @@ async function applyFilters(e) {
 function updateFilterCount() {
     const filterCountEl = document.getElementById('filter-count');
     if (!filterCountEl) return;
-    
+
     let count = 0;
     if (filterTypeEl?.value) count++;
     if (filterCityEl?.value) count++;
@@ -783,7 +784,7 @@ function updateFilterCount() {
     if (filterPriceEl?.value && filterPriceEl.value < 5000) count++;
     if (filterAreaEl?.value && filterAreaEl.value < 1000) count++;
     if (filterRoadEl?.checked) count++;
-    
+
     filterCountEl.textContent = count > 0 ? `${count} tiêu chí` : '0 tiêu chí';
 }
 
@@ -802,24 +803,24 @@ function updateRangeLabels() {
 if (filterCityEl && filterDistrictEl) {
     filterCityEl.addEventListener('change', async function() {
         const cityId = this.value;
-        
+
         if (cityId) {
             try {
                 // Disable district select while loading
                 filterDistrictEl.disabled = true;
                 filterDistrictEl.innerHTML = '<option value="">Đang tải...</option>';
-                
+
                 const response = await fetch(`/api/districts?city_id=${cityId}`);
-                
+
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                
+
                 const data = await response.json();
-                
+
                 // Clear and populate districts
                 filterDistrictEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-                
+
                 if (data.districts && Array.isArray(data.districts)) {
                     data.districts.forEach(district => {
                         const option = document.createElement('option');
@@ -828,10 +829,10 @@ if (filterCityEl && filterDistrictEl) {
                         filterDistrictEl.appendChild(option);
                     });
                 }
-                
+
                 // Re-enable district select
                 filterDistrictEl.disabled = false;
-                
+
                 // Update filter count
                 updateFilterCount();
             } catch (error) {
@@ -843,12 +844,12 @@ if (filterCityEl && filterDistrictEl) {
             // Clear districts if no city selected
             filterDistrictEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
             filterDistrictEl.disabled = false;
-            
+
             // Update filter count
             updateFilterCount();
         }
     });
-    
+
     // Load districts on page load if city is already selected
     if (filterCityEl.value) {
         filterCityEl.dispatchEvent(new Event('change'));
@@ -1147,8 +1148,8 @@ document.getElementById('postModal')?.addEventListener('shown.bs.modal', async f
             try {
                 // Clear container first
                 mapContainer.innerHTML = '';
-                
-                postMap = L.map('post-map', { 
+
+                postMap = L.map('post-map', {
                     zoomControl: true,
                     attributionControl: true
                 }).setView([defaultLat, defaultLng], 15);
@@ -1248,7 +1249,7 @@ function setPostLocation(lat, lng) {
         const lngInput = document.getElementById('post-longitude');
         if (latInput) latInput.value = position.lat;
         if (lngInput) lngInput.value = position.lng;
-        
+
         // Reverse geocode để cập nhật địa chỉ
         reverseGeocodeForPost(position.lat, position.lng);
     });
@@ -1341,11 +1342,11 @@ async function loadPostFormData() {
         // Remove existing listener to avoid duplicates
         const newCitySelect = citySelect.cloneNode(true);
         citySelect.parentNode.replaceChild(newCitySelect, citySelect);
-        
+
         newCitySelect.addEventListener('change', async function() {
             const cityId = this.value;
             const districtSelect = document.getElementById('post-district');
-            
+
             if (!cityId) {
                 if (districtSelect) districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
                 return;
@@ -1454,7 +1455,7 @@ document.getElementById('btn-use-current-location')?.addEventListener('click', f
         });
         return;
     }
-    
+
     if (!navigator.geolocation) {
         Swal.fire({
             icon: 'warning',
@@ -1523,7 +1524,7 @@ async function searchAddressForPost() {
 
     const addressInput = document.getElementById('post-address-search');
     const searchBtn = document.getElementById('btn-search-address');
-    
+
     if (!addressInput || !addressInput.value.trim()) {
         Swal.fire({
             icon: 'warning',
@@ -1557,25 +1558,25 @@ async function searchAddressForPost() {
             const result = data[0];
             const lat = parseFloat(result.lat);
             const lng = parseFloat(result.lon);
-            
+
             // Cập nhật vị trí trên bản đồ
             setPostLocation(lat, lng);
-            
+
             // Cập nhật input với địa chỉ chính xác
             addressInput.value = result.display_name;
-            
+
             // Cập nhật input address trong form
             const formAddressInput = document.getElementById('post-address');
             if (formAddressInput) {
                 formAddressInput.value = result.display_name;
             }
-            
+
             // Hiển thị thông báo thành công
             const existingAlert = addressInput.parentElement.parentElement.querySelector('.alert-success');
             if (existingAlert) {
                 existingAlert.remove();
             }
-            
+
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
             alertDiv.innerHTML = `
@@ -1583,7 +1584,7 @@ async function searchAddressForPost() {
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             addressInput.parentElement.parentElement.appendChild(alertDiv);
-            
+
             // Tự động ẩn thông báo sau 3 giây
             setTimeout(() => {
                 alertDiv.remove();
@@ -1759,7 +1760,7 @@ document.getElementById('btn-verify-otp')?.addEventListener('click', function() 
         confirmButtonText: 'Đồng ý'
     }).then(() => {
         bootstrap.Modal.getInstance(document.getElementById('registerModal'))?.hide();
-        
+
         // Reset form
         document.getElementById('register-phone').value = '';
         document.getElementById('register-otp').value = '';

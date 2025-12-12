@@ -162,8 +162,7 @@ class ApiController extends Controller
             ->findOrFail($id);
 
         $user = auth('partner')->user();
-        
-        // If not active, only allow if user owns the listing
+    
         if (!$listing->is_active && (!$user || $listing->user_id !== $user->id)) {
             abort(404);
         }

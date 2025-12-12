@@ -21,7 +21,7 @@
 <!-- Price & Address -->
 <div class="d-flex align-items-start justify-content-between mb-3">
     <div class="flex-grow-1">
-        <h4 class="lot-price fw-bold mb-1">{{ number_format($listing->price) }} triệu • {{ $listing->area }}m²</h4>
+        <h4 class="lot-price fw-bold mb-1">{{ number_format($listing->price, 0) }} triệu • {{ $listing->area }}m²</h4>
         <p class="text-muted small mb-0 d-flex align-items-center gap-1" id="lot-address">
             <i class="bi bi-geo-alt-fill"></i>
             <span>{{ $listing->address }}</span>
@@ -99,7 +99,7 @@
         </li>
         <li class="d-flex justify-content-between py-1">
             <span class="text-muted">Đơn giá</span>
-            <span class="fw-semibold text-dark">{{ $listing->price_per_m2 ? number_format($listing->price_per_m2, 1) . 'tr/m²' : 'Đang cập nhật' }}</span>
+            <span class="fw-semibold text-dark">{{ $listing->price_per_m2 ? number_format($listing->price_per_m2 / 1000000, 1) . 'tr/m²' : 'Đang cập nhật' }}</span>
         </li>
     </ul>
 </div>
@@ -142,7 +142,7 @@
         <div class="similar-item" onclick="window.location.href='{{ route('listings.show', $similar->slug) }}'">
             <img src="{{ $similar->primaryImage?->image_url ?? asset('images/Image-not-found.png') }}" alt="{{ $similar->title }}">
             <div class="flex-grow-1">
-                <div class="fw-bold">{{ number_format($similar->price) }} triệu</div>
+                <div class="fw-bold">{{ number_format($similar->price / 1000000, 0) }} triệu</div>
                 <div class="text-muted small">{{ $similar->area }}m² • {{ $similar->category->name }}</div>
                 <a href="{{ route('listings.show', $similar->slug) }}" class="btn btn-outline-primary btn-sm mt-1">Xem chi tiết</a>
             </div>
