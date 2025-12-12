@@ -84,7 +84,25 @@ class ListingResource extends Resource
                             ->addActionLabel('Thêm ảnh')
                             ->reorderableWithButtons()
                             ->collapsible()
-                            ->itemLabel(fn (array $state): ?string => $state['image'] ?? 'Ảnh mới')
+                            ->itemLabel(function (array $state): ?string {
+                                $image = $state['image'] ?? null;
+                                
+                                // Nếu là array, kiểm tra có phần tử và lấy phần tử đầu tiên
+                                if (is_array($image)) {
+                                    if (!empty($image) && isset($image[0])) {
+                                        $image = $image[0];
+                                    } else {
+                                        $image = null;
+                                    }
+                                }
+                                
+                                // Nếu là string và có giá trị, lấy tên file
+                                if (is_string($image) && !empty($image)) {
+                                    return basename($image);
+                                }
+                                
+                                return 'Ảnh mới';
+                            })
                             ->columnSpanFull(),
                     ])
                     ->collapsible()

@@ -1,9 +1,19 @@
 // ===== MAP SETUP =====
-const map = L.map('map', { scrollWheelZoom: true }).setView([10.776, 106.700], 16);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-}).addTo(map);
+// Check if map element exists and not already initialized
+let map;
+const mapElement = document.getElementById('map');
+if (mapElement && !window.mainMap) {
+    map = L.map('map', { scrollWheelZoom: true }).setView([10.776, 106.700], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+    
+    // Expose map globally
+    window.mainMap = map;
+} else if (window.mainMap) {
+    // Use existing map from map-area component
+    map = window.mainMap;
+}
 
 
 // ===== DATA STORAGE =====
@@ -38,19 +48,40 @@ let markerLayers = [];
 
 // ===== RENDER MARKERS =====
 function renderMarkers(data) {
-    markerLayers.forEach(m => map.removeLayer(m));
+    // Use global map if available
+    const currentMap = map || window.mainMap;
+    if (!currentMap) {
+        console.warn('Map not initialized');
+        return;
+    }
+    
+    markerLayers.forEach(m => currentMap.removeLayer(m));
     markerLayers = [];
 
     data.forEach(lot => {
-        const marker = L.marker([lot.lat, lot.lng], { icon: lot.isVip ? iconVip : iconNormal }).addTo(map);
+        const marker = L.marker([lot.lat, lot.lng], { icon: lot.isVip ? iconVip : iconNormal }).addTo(currentMap);
         marker.bindPopup(popupTemplate(lot));
 
-        marker.on("click", () => updateDetail(lot));
+        marker.on("click", async () => {
+            // Load full detail and update right panel
+            await loadListingDetail(lot.id);
+            const fullLot = lots.find(l => l.id === lot.id) || lot;
+            await updateDetail(fullLot);
+            
+            // Scroll to detail panel on mobile
+            if (window.innerWidth < 768) {
+                document.getElementById('detail-panel')?.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
 
         marker.on("popupopen", () => {
             const btn = document.querySelector(`[data-view-lot="${lot.id}"]`);
             if (btn) {
-                btn.onclick = () => flyToLot(lot.id);
+                btn.onclick = async () => {
+                    await loadListingDetail(lot.id);
+                    const fullLot = lots.find(l => l.id === lot.id) || lot;
+                    await updateDetail(fullLot);
+                };
             }
         });
 
@@ -72,6 +103,9 @@ function popupTemplate(lot) {
 
 // ===== MINI MAP =====
 function updateMiniMap(lot) {
+    const miniMapEl = document.getElementById('mini-map');
+    if (!miniMapEl) return;
+    
     if (!miniMap) {
         miniMap = L.map('mini-map', {
             zoomControl: false,
@@ -99,78 +133,133 @@ async function updateDetail(lot) {
         lot = currentListing || lot;
     }
 
+    // Show detail content and hide empty state
+    const emptyState = document.getElementById('detail-panel-empty');
+    const detailContent = document.getElementById('detail-panel-content');
+    
+    if (emptyState) emptyState.style.display = 'none';
+    if (detailContent) detailContent.style.display = 'block';
+
     setGallery(lot);
-    if (document.querySelector(".lot-price")) {
-        document.querySelector(".lot-price").innerHTML = `${lot.price} • ${lot.size}`;
+    
+    // Update price and size
+    const priceEl = document.getElementById("lot-price");
+    if (priceEl) {
+        priceEl.innerHTML = `${lot.price} • ${lot.size}`;
     }
-    if (document.getElementById("lot-address")) {
-        document.getElementById("lot-address").textContent = lot.address;
+    
+    // Update address
+    const addressEl = document.getElementById("lot-address");
+    if (addressEl) {
+        const span = addressEl.querySelector('span');
+        if (span) span.textContent = lot.address;
     }
-    if (document.getElementById("lot-type")) {
-        document.getElementById("lot-type").textContent = lot.type;
-    }
-    if (document.getElementById("lot-legal")) {
-        document.getElementById("lot-legal").textContent = lot.legal || "Đang cập nhật";
-    }
-    if (document.getElementById("lot-front")) {
-        document.getElementById("lot-front").textContent = lot.front || "Đang cập nhật";
-    }
-    if (document.getElementById("lot-road")) {
-        document.getElementById("lot-road").textContent = lot.road || "Đang cập nhật";
-    }
-    if (document.getElementById("lot-depth")) {
-        document.getElementById("lot-depth").textContent = lot.depth || "Đang cập nhật";
-    }
-    if (document.getElementById("lot-width")) {
-        document.getElementById("lot-width").textContent = lot.roadWidth || lot.road || "Đang cập nhật";
-    }
-    if (document.getElementById("lot-direction")) {
-        document.getElementById("lot-direction").textContent = lot.direction || "Đang cập nhật";
-    }
-    if (document.getElementById("lot-price-per")) {
-        document.getElementById("lot-price-per").textContent = lot.pricePer || "Đang cập nhật";
-    }
-    if (document.getElementById("lot-plan")) {
-        document.getElementById("lot-plan").textContent = lot.planning || "Đang cập nhật";
-    }
-    if (document.getElementById("lot-deposit")) {
-        document.getElementById("lot-deposit").textContent = lot.depositOnline || "Đang cập nhật";
-    }
-    if (document.getElementById("lot-desc")) {
-        document.getElementById("lot-desc").textContent = lot.desc || "Đang cập nhật mô tả.";
+    
+    // Update type
+    const typeEl = document.getElementById("lot-type");
+    if (typeEl) typeEl.textContent = lot.type || "Đất";
+    
+    // Update details
+    const legalEl = document.getElementById("lot-legal");
+    if (legalEl) legalEl.textContent = lot.legal || "Đang cập nhật";
+    
+    const frontEl = document.getElementById("lot-front");
+    if (frontEl) frontEl.textContent = lot.front || "Đang cập nhật";
+    
+    const roadEl = document.getElementById("lot-road");
+    if (roadEl) roadEl.textContent = lot.road || "Đang cập nhật";
+    
+    const depthEl = document.getElementById("lot-depth");
+    if (depthEl) depthEl.textContent = lot.depth || "Đang cập nhật";
+    
+    const directionEl = document.getElementById("lot-direction");
+    if (directionEl) directionEl.textContent = lot.direction || "Đang cập nhật";
+    
+    const pricePerEl = document.getElementById("lot-price-per");
+    if (pricePerEl) pricePerEl.textContent = lot.pricePer || "Đang cập nhật";
+    
+    // Update description
+    const descEl = document.getElementById("lot-desc");
+    const descContainer = document.getElementById("lot-desc-container");
+    if (descEl && lot.desc) {
+        descEl.textContent = lot.desc;
+        if (descContainer) descContainer.style.display = 'block';
+    } else if (descContainer) {
+        descContainer.style.display = 'none';
     }
 
-    if (document.getElementById("seller-name")) {
-        document.getElementById("seller-name").textContent = lot.seller.name;
+    // Update seller info
+    const sellerNameEl = document.getElementById("seller-name");
+    if (sellerNameEl) sellerNameEl.textContent = lot.seller?.name || "Đang cập nhật";
+    
+    const sellerPhoneEl = document.getElementById("seller-phone");
+    if (sellerPhoneEl) sellerPhoneEl.textContent = lot.seller?.phone || "Đang cập nhật";
+    
+    // Update action buttons
+    const callBtn = document.getElementById("btn-call");
+    if (callBtn && lot.seller?.phone) {
+        callBtn.href = `tel:${lot.seller.phone}`;
     }
-    if (document.getElementById("seller-phone")) {
-        document.getElementById("seller-phone").textContent = lot.seller.phone;
+    
+    const zaloBtn = document.getElementById("btn-zalo");
+    if (zaloBtn && lot.seller?.zalo) {
+        zaloBtn.href = `https://zalo.me/${lot.seller.zalo}`;
+        zaloBtn.style.display = 'flex';
+    } else if (zaloBtn) {
+        zaloBtn.style.display = 'none';
+    }
+    
+    const viewDetailBtn = document.getElementById("btn-view-detail");
+    if (viewDetailBtn && lot.slug) {
+        viewDetailBtn.href = `/tin-dang/${lot.slug}`;
+    } else if (viewDetailBtn && lot.id) {
+        viewDetailBtn.href = `/tin-dang/${lot.id}`;
+    }
+    
+    // Update favorite button
+    const favBtn = document.getElementById("favorite-btn");
+    if (favBtn && lot.id) {
+        favBtn.setAttribute('data-listing-id', lot.id);
     }
 
     renderTags(lot.tags);
     renderSimilar(lot.id);
-    renderVipCarousel();
     updateMiniMap(lot);
     drawPolygon(lot);
+    
+    // Store current listing for favorite
+    window.currentListingId = lot.id;
 }
 
 function setGallery(lot) {
     const main = document.getElementById("lot-main-img");
+    if (!main) return;
+    
     const thumbsWrap = document.getElementById("lot-thumbs");
-    const imgs = lot.images && lot.images.length ? lot.images : [lot.img];
+    const imgs = lot.images && lot.images.length ? lot.images : [lot.img || '/images/placeholder.jpg'];
+    
+    // Set main image
     main.src = imgs[0];
-    thumbsWrap.innerHTML = "";
-    imgs.forEach((url, idx) => {
-        const btn = document.createElement("button");
-        btn.className = `thumb ${idx === 0 ? "active" : ""}`;
-        btn.innerHTML = `<img src="${url}" alt="thumb">`;
-        btn.onclick = () => {
-            main.src = url;
-            thumbsWrap.querySelectorAll(".thumb").forEach(t => t.classList.remove("active"));
-            btn.classList.add("active");
-        };
-        thumbsWrap.appendChild(btn);
-    });
+    main.alt = lot.name || lot.title || 'Hình ảnh';
+    main.onerror = function() {
+        this.src = '/images/placeholder.jpg';
+    };
+    
+    // Clear and set thumbnails
+    if (thumbsWrap) {
+        thumbsWrap.innerHTML = "";
+        imgs.slice(0, 4).forEach((url, idx) => {
+            const btn = document.createElement("button");
+            btn.className = `thumb ${idx === 0 ? "active" : ""}`;
+            btn.innerHTML = `<img src="${url}" alt="thumb" onerror="this.src='/images/placeholder.jpg'">`;
+            btn.onclick = () => {
+                main.src = url;
+                thumbsWrap.querySelectorAll(".thumb").forEach(t => t.classList.remove("active"));
+                btn.classList.add("active");
+            };
+            thumbsWrap.appendChild(btn);
+        });
+    }
 }
 
 function renderTags(tags = []) {
@@ -229,8 +318,8 @@ async function renderVipCarousel() {
         const data = await response.json();
         const vipListings = data.listings.filter(l => l.is_vip).slice(0, 10);
         
-        wrap.innerHTML = "";
-        
+    wrap.innerHTML = "";
+
         if (vipListings.length === 0) {
             wrap.innerHTML = '<div class="text-center text-muted py-4 w-100"><i class="bi bi-inbox" style="font-size: 48px;"></i><p class="mt-2">Chưa có tin VIP nào</p></div>';
             return;
@@ -331,8 +420,8 @@ async function renderVipCarousel() {
                 </a>
             </div>
         `;
-            wrap.appendChild(card);
-        });
+        wrap.appendChild(card);
+    });
     } catch (error) {
         console.error('Error loading VIP listings:', error);
         wrap.innerHTML = '<div class="text-center text-muted py-4 w-100">Lỗi tải dữ liệu</div>';
@@ -540,7 +629,7 @@ if (favBtn) {
 // Initialize: Load listings on page load
 loadListings().then(() => {
     if (lots.length > 0) {
-        updateDetail(lots[0]);
+updateDetail(lots[0]);
     }
 });
 
@@ -553,10 +642,22 @@ if (map) {
             loadListings();
         }, 500);
     });
+} else if (window.mainMap) {
+    // Use global map if available
+    window.mainMap.on('moveend', function() {
+        clearTimeout(window.mapReloadTimer);
+        window.mapReloadTimer = setTimeout(() => {
+            loadListings();
+        }, 500);
+    });
 }
 
-// expose for debugging
+// Expose functions globally for use in other scripts
 window.flyToLot = flyToLot;
+window.loadListingDetail = loadListingDetail;
+window.updateDetail = updateDetail;
+window.lots = lots;
+window.renderMarkers = renderMarkers;
 
 // ===== POLYGON DRAW =====
 function drawPolygon(lot) {
@@ -636,6 +737,9 @@ function markUserLocation(lat, lng) {
 function locateUserAndPickNearest() {
     if (!navigator.geolocation) return;
 
+    const currentMap = map || window.mainMap;
+    if (!currentMap) return;
+
     navigator.geolocation.getCurrentPosition(
         pos => {
             const { latitude, longitude } = pos.coords;
@@ -643,9 +747,9 @@ function locateUserAndPickNearest() {
             const nearest = findNearestLots(latitude, longitude)[0];
             if (nearest) {
                 updateDetail(nearest);
-                map.setView([nearest.lat, nearest.lng], 17);
+                currentMap.setView([nearest.lat, nearest.lng], 17);
             } else {
-                map.setView([latitude, longitude], 15);
+                currentMap.setView([latitude, longitude], 15);
             }
         },
         () => {},
@@ -664,28 +768,102 @@ let selectedPackage = 'vip';
 
 // Initialize post map when modal opens
 document.getElementById('postModal')?.addEventListener('shown.bs.modal', function() {
+    // Reset step
+    currentStep = 1;
+    updatePostSteps();
+    
+    // Initialize map if not exists
     if (!postMap) {
-        postMap = L.map('post-map', { zoomControl: true }).setView([10.776, 106.700], 15);
+        // Wait a bit for modal to fully render
+        setTimeout(() => {
+            const mapContainer = document.getElementById('post-map');
+            if (!mapContainer) return;
+            
+            // Default location: Ho Chi Minh City
+            const defaultLat = 10.776;
+            const defaultLng = 106.700;
+            
+            postMap = L.map('post-map', { zoomControl: true }).setView([defaultLat, defaultLng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
         }).addTo(postMap);
 
+            // Map click handler
         postMap.on('click', function(e) {
             const { lat, lng } = e.latlng;
-            if (postMarker) postMap.removeLayer(postMarker);
+                setPostLocation(lat, lng);
+            });
+            
+            // Try to get current location automatically
+            getCurrentLocationForPost();
+        }, 100);
+    } else {
+        // Map already exists, just invalidate size in case modal was resized
+        setTimeout(() => {
+            postMap.invalidateSize();
+            // Try to get current location
+            getCurrentLocationForPost();
+        }, 100);
+    }
+});
+
+// Get current location for post modal
+function getCurrentLocationForPost() {
+    if (!navigator.geolocation) {
+        // Fallback to default location
+        setPostLocation(10.776, 106.700);
+        return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            const { latitude, longitude } = pos.coords;
+            setPostLocation(latitude, longitude);
+        },
+        error => {
+            // Fallback to default location if geolocation fails
+            console.log('Geolocation error:', error);
+            setPostLocation(10.776, 106.700);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+}
+
+// Set location on post map
+function setPostLocation(lat, lng) {
+    if (!postMap) return;
+    
+    // Update hidden inputs
+    document.getElementById('post-latitude').value = lat;
+    document.getElementById('post-longitude').value = lng;
+    
+    // Remove existing marker
+    if (postMarker) {
+        postMap.removeLayer(postMarker);
+    }
+    
+    // Add new marker
             postMarker = L.marker([lat, lng], {
                 icon: L.divIcon({
                     className: "",
                     html: '<div class="map-pin" style="background:#e03131;"></div>',
                     iconSize: [18, 18],
                     iconAnchor: [9, 18],
-                })
+        }),
+        draggable: true
             }).addTo(postMap);
-        });
-    }
-    currentStep = 1;
-    updatePostSteps();
-});
+    
+    // Center map on location
+    postMap.setView([lat, lng], 16);
+    
+    // Update location when marker is dragged
+    postMarker.on('dragend', function(e) {
+        const position = postMarker.getLatLng();
+        document.getElementById('post-latitude').value = position.lat;
+        document.getElementById('post-longitude').value = position.lng;
+    });
+}
 
 // Post modal step navigation
 function updatePostSteps() {
@@ -714,7 +892,10 @@ function updatePostSteps() {
 
 document.getElementById('btn-next-step')?.addEventListener('click', function() {
     if (currentStep === 1) {
-        if (!postMarker) {
+        const lat = document.getElementById('post-latitude').value;
+        const lng = document.getElementById('post-longitude').value;
+        
+        if (!lat || !lng || !postMarker) {
             alert('Vui lòng chọn vị trí trên bản đồ hoặc dùng vị trí hiện tại');
             return;
         }
@@ -748,23 +929,24 @@ document.getElementById('btn-use-current-location')?.addEventListener('click', f
         return;
     }
     
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang lấy vị trí...';
+    
     navigator.geolocation.getCurrentPosition(
         pos => {
             const { latitude, longitude } = pos.coords;
-            if (postMap) {
-                postMap.setView([latitude, longitude], 16);
-                if (postMarker) postMap.removeLayer(postMarker);
-                postMarker = L.marker([latitude, longitude], {
-                    icon: L.divIcon({
-                        className: "",
-                        html: '<div class="map-pin" style="background:#e03131;"></div>',
-                        iconSize: [18, 18],
-                        iconAnchor: [9, 18],
-                    })
-                }).addTo(postMap);
-            }
+            setPostLocation(latitude, longitude);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         },
-        () => alert('Không thể lấy vị trí hiện tại')
+        error => {
+            alert('Không thể lấy vị trí hiện tại. Vui lòng chọn vị trí trên bản đồ.');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
     );
 });
 
@@ -782,25 +964,18 @@ document.getElementById('btn-submit-post')?.addEventListener('click', function()
     const price = document.getElementById('post-price').value;
     const area = document.getElementById('post-area').value;
     const phone = document.getElementById('post-phone').value;
+    const lat = document.getElementById('post-latitude').value;
+    const lng = document.getElementById('post-longitude').value;
     
-    if (!price || !area || !phone || !postMarker) {
+    if (!price || !area || !phone || !lat || !lng) {
         alert('Vui lòng điền đầy đủ thông tin');
         return;
     }
     
-    // Simulate posting
-    alert(`Tin đã được gửi! Gói ${selectedPackage === 'vip' ? 'VIP' : 'Thường'}\nChúng tôi sẽ duyệt trong vòng 24h.`);
-    bootstrap.Modal.getInstance(document.getElementById('postModal'))?.hide();
-    
-    // Reset form
-    currentStep = 1;
-    updatePostSteps();
-    document.getElementById('post-price').value = '';
-    document.getElementById('post-area').value = '';
-    document.getElementById('post-phone').value = '';
-    if (postMarker) {
-        postMap.removeLayer(postMarker);
-        postMarker = null;
+    // Submit form
+    const form = document.getElementById('post-form');
+    if (form) {
+        form.submit();
     }
 });
 
