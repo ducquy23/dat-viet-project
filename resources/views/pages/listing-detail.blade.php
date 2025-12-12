@@ -278,7 +278,7 @@
             <!-- Sidebar -->
             <div class="col-lg-4">
                 <!-- Thông tin liên hệ -->
-                <div class="contact-card mb-4 sticky-top" style="top: 20px;">
+                <div class="contact-card mb-4">
                     <div class="contact-card-header">
                         <h5 class="mb-0">
                             <i class="bi bi-person-circle-fill"></i>
@@ -627,6 +627,33 @@
     border-radius: var(--dv-radius-lg);
     box-shadow: var(--dv-shadow-lg);
     overflow: hidden;
+}
+
+@media (min-width: 992px) {
+    .contact-card {
+        position: sticky;
+        top: 90px;
+        z-index: 5;
+        max-height: calc(100vh - 110px);
+        overflow-y: auto;
+    }
+    
+    .contact-card::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .contact-card::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .contact-card::-webkit-scrollbar-thumb {
+        background: rgba(51, 87, 147, 0.3);
+        border-radius: 10px;
+    }
+    
+    .contact-card::-webkit-scrollbar-thumb:hover {
+        background: rgba(51, 87, 147, 0.5);
+    }
 }
 
 .contact-card-header {
