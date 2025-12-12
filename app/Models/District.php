@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,10 +21,9 @@ class District extends Model
   protected $fillable = [
     'city_id',     // ID thành phố
     'name',        // Tên quận/huyện
-    'code',        // Mã code (phunhuan, binhthanh, etc.)
-    'slug',        // Slug cho URL
-    'sort_order',  // Thứ tự sắp xếp
-    'is_active',   // Trạng thái hoạt động
+    'type',        // Loại: Quận / Huyện / Phường (theo yêu cầu)
+    'code',        // Mã code hành chính
+    'sort_order',      // Thứ tự
   ];
 
   /**
@@ -31,7 +31,6 @@ class District extends Model
    */
   protected $casts = [
     'city_id' => 'integer',
-    'is_active' => 'boolean',
     'sort_order' => 'integer',
   ];
 
@@ -53,20 +52,23 @@ class District extends Model
     return $this->hasMany(Listing::class);
   }
 
+  // Không còn quan hệ wards theo cấu trúc mới
+
   /**
    * Scope: Chỉ lấy các quận/huyện đang hoạt động
-   * @param \Illuminate\Database\Eloquent\Builder $query
-   * @return \Illuminate\Database\Eloquent\Builder
+   * @param Builder $query
+   * @return Builder
    */
   public function scopeActive($query)
   {
-    return $query->where('is_active', true);
+    // Giữ tương thích cũ: không lọc gì (vì bỏ cột is_active)
+    return $query;
   }
 
   /**
    * Scope: Sắp xếp theo thứ tự
-   * @param \Illuminate\Database\Eloquent\Builder $query
-   * @return \Illuminate\Database\Eloquent\Builder
+   * @param Builder $query
+   * @return Builder
    */
   public function scopeOrdered($query)
   {

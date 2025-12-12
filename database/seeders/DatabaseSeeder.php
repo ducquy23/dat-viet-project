@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
-     * 
+     *
      * Thứ tự seed quan trọng:
      * 1. City (tỉnh/thành phố) - không phụ thuộc
      * 2. District (quận/huyện) - phụ thuộc City
@@ -24,11 +24,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            CitySeeder::class,
-            DistrictSeeder::class,
             CategorySeeder::class,
             PackageSeeder::class,
             UserSeeder::class,
+            CitySeeder::class,
             ListingSeeder::class,
             AdSeeder::class,
         ]);

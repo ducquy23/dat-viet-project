@@ -16,10 +16,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('code')->unique(); // hcm, hn, etc.
             $table->string('slug')->unique();
-            $table->integer('sort_order')->default(0);
+            $table->string('type')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index('code');
             $table->index('is_active');
         });

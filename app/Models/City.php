@@ -12,63 +12,61 @@ use Illuminate\Database\Eloquent\Model;
  */
 class City extends Model
 {
-  use HasFactory;
+    use HasFactory;
 
-  /**
-   * Các trường có thể gán hàng loạt (mass assignment)
-   */
-  protected $fillable = [
-    'name',        // Tên tỉnh/thành phố
-    'code',        // Mã code (hcm, hn, etc.)
-    'slug',        // Slug cho URL
-    'sort_order',  // Thứ tự sắp xếp
-    'is_active',   // Trạng thái hoạt động
-  ];
+    /**
+     * Các trường có thể gán hàng loạt (mass assignment)
+     */
+    protected $fillable = [
+        'name',
+        'type',
+        'code',
+    ];
 
-  /**
-   * Các trường được cast sang kiểu dữ liệu cụ thể
-   */
-  protected $casts = [
-    'is_active' => 'boolean',
-    'sort_order' => 'integer',
-  ];
+    /**
+     * Các trường được cast sang kiểu dữ liệu cụ thể
+     */
+    protected $casts = [];
 
-  /**
-   * Quan hệ: Một thành phố có nhiều quận/huyện
-   * @return \Illuminate\Database\Eloquent\Relations\HasMany
-   */
-  public function districts()
-  {
-    return $this->hasMany(District::class);
-  }
+    /**
+     * Quan hệ: Một thành phố có nhiều quận/huyện
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function districts()
+    {
+        return $this->hasMany(District::class);
+    }
 
-  /**
-   * Quan hệ: Một thành phố có nhiều tin đăng
-   * @return \Illuminate\Database\Eloquent\Relations\HasMany
-   */
-  public function listings()
-  {
-    return $this->hasMany(Listing::class);
-  }
+    /**
+     * Quan hệ: Một thành phố có nhiều tin đăng
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function listings()
+    {
+        return $this->hasMany(Listing::class);
+    }
 
-  /**
-   * Scope: Chỉ lấy các thành phố đang hoạt động
-   * @param \Illuminate\Database\Eloquent\Builder $query
-   * @return \Illuminate\Database\Eloquent\Builder
-   */
-  public function scopeActive($query)
-  {
-    return $query->where('is_active', true);
-  }
+    // Không còn quan hệ wards theo cấu trúc mới
 
-  /**
-   * Scope: Sắp xếp theo thứ tự
-   * @param \Illuminate\Database\Eloquent\Builder $query
-   * @return \Illuminate\Database\Eloquent\Builder
-   */
-  public function scopeOrdered($query)
-  {
-    return $query->orderBy('sort_order')->orderBy('name');
-  }
+    /**
+     * Scope: Chỉ lấy các thành phố đang hoạt động
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        // Giữ tương thích cũ: không lọc gì (vì bỏ cột is_active)
+        return $query;
+    }
+
+    /**
+     * Scope: Sắp xếp theo thứ tự
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('name');
+    }
 }
 

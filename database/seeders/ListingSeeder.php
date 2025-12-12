@@ -23,10 +23,11 @@ class ListingSeeder extends Seeder
     {
         $users = User::where('role', 'user')->get();
         $categories = Category::all();
-        $hcm = City::where('code', 'hcm')->first();
-        $hn = City::where('code', 'hn')->first();
+        // Lấy city theo tên (vì code đã đổi sang mã hành chính)
+        $hcm = City::where('name', 'Hồ Chí Minh')->first();
+        $hn  = City::where('name', 'Hà Nội')->first();
         $hcmDistricts = $hcm ? District::where('city_id', $hcm->id)->get() : collect();
-        $hnDistricts = $hn ? District::where('city_id', $hn->id)->get() : collect();
+        $hnDistricts  = $hn ? District::where('city_id', $hn->id)->get() : collect();
         $normalPackage = Package::where('code', 'normal')->first();
         $vipPackage = Package::where('code', 'vip')->first();
 
@@ -55,8 +56,8 @@ class ListingSeeder extends Seeder
                 'contact_name' => 'Nguyễn Văn A',
                 'contact_phone' => '0912345678',
                 'status' => 'approved',
-                'city' => 'hcm',
-                'district' => 'q5',
+                'city' => 'Hồ Chí Minh',
+                'district' => 'Quận 5',
                 'category' => 'Đất thổ cư',
             ],
             [
@@ -74,8 +75,8 @@ class ListingSeeder extends Seeder
                 'contact_name' => 'Trần Thị B',
                 'contact_phone' => '0923456789',
                 'status' => 'pending',
-                'city' => 'hcm',
-                'district' => 'hcc',
+                'city' => 'Hồ Chí Minh',
+                'district' => 'Huyện Củ Chi',
                 'category' => 'Đất nông nghiệp',
             ],
             [
@@ -97,8 +98,8 @@ class ListingSeeder extends Seeder
                 'contact_name' => 'Lê Văn C',
                 'contact_phone' => '0934567890',
                 'status' => 'approved',
-                'city' => 'hcm',
-                'district' => 'q9',
+                'city' => 'Hồ Chí Minh',
+                'district' => 'Quận 9',
                 'category' => 'Đất mặt tiền',
                 'package' => 'vip',
             ],
@@ -121,8 +122,8 @@ class ListingSeeder extends Seeder
                 'contact_name' => 'Phạm Thị D',
                 'contact_phone' => '0945678901',
                 'status' => 'approved',
-                'city' => 'hcm',
-                'district' => 'q2',
+                'city' => 'Hồ Chí Minh',
+                'district' => 'Quận 2',
                 'category' => 'Đất thổ cư',
             ],
             [
@@ -144,8 +145,8 @@ class ListingSeeder extends Seeder
                 'contact_name' => 'Hoàng Văn E',
                 'contact_phone' => '0956789012',
                 'status' => 'pending',
-                'city' => 'hn',
-                'district' => 'qdd',
+                'city' => 'Hà Nội',
+                'district' => 'Quận Đống Đa',
                 'category' => 'Đất dự án',
             ],
         ];
@@ -153,17 +154,20 @@ class ListingSeeder extends Seeder
         foreach ($listings as $index => $listingData) {
             $user = $users->random();
             $category = $categories->firstWhere('name', $listingData['category']);
-            $city = City::where('code', $listingData['city'])->first();
+            $city = City::where('name', $listingData['city'])->first();
             $district = null;
             if (isset($listingData['district'])) {
-                if ($listingData['city'] === 'hcm') {
-                    $district = $hcmDistricts->firstWhere('code', $listingData['district']);
-                } elseif ($listingData['city'] === 'hn') {
-                    $district = $hnDistricts->firstWhere('code', $listingData['district']);
+                $target = $listingData['district'];
+                if ($city && $city->id === $hcm?->id) {
+                    $district = $hcmDistricts->firstWhere('name', $target);
+                } elseif ($city && $city->id === $hn?->id) {
+                    $district = $hnDistricts->firstWhere('name', $target);
+                } else {
+                    $district = District::where('city_id', $city?->id)->where('name', $target)->first();
                 }
             }
-            $package = isset($listingData['package']) && $listingData['package'] === 'vip' 
-                ? $vipPackage 
+            $package = isset($listingData['package']) && $listingData['package'] === 'vip'
+                ? $vipPackage
                 : $normalPackage;
 
             if (!$category || !$city || !$package) {
