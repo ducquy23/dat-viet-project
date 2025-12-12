@@ -198,7 +198,7 @@ class ListingController extends Controller
   /**
    * Hiển thị danh sách tin đăng của user đã đăng nhập
    */
-  public function myListings()
+  public function myListings(Request $request)
   {
     $user = auth('partner')->user();
     
@@ -206,6 +206,33 @@ class ListingController extends Controller
       ->with(['category', 'city', 'district', 'package', 'primaryImage'])
       ->latest()
       ->paginate(20);
+    
+    // Return JSON if requested
+    if ($request->wantsJson() || $request->get('format') === 'json') {
+      return response()->json([
+        'listings' => $listings->map(function ($listing) {
+          return [
+            'id' => $listing->id,
+            'title' => $listing->title,
+            'address' => $listing->address,
+            'price' => number_format($listing->price) . ' triệu',
+            'size' => $listing->area . 'm²',
+            'vip' => $listing->isVip(),
+            'is_vip' => $listing->isVip(),
+            'status' => $listing->status,
+            'type' => $listing->category?->slug ?? 'thocu',
+            'slug' => $listing->slug,
+            'created_at' => $listing->created_at->format('d/m/Y'),
+          ];
+        }),
+        'pagination' => [
+          'current_page' => $listings->currentPage(),
+          'last_page' => $listings->lastPage(),
+          'per_page' => $listings->perPage(),
+          'total' => $listings->total(),
+        ],
+      ]);
+    }
     
     return view('pages.my-listings', [
       'listings' => $listings,

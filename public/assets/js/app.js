@@ -6,129 +6,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 
-// ===== FIXED DATA =====
-const lots = [
-    {
-        id: 1,
-        name: "Lô VIP 350m²",
-        price: "350.000đ",
-        size: "350m²",
-        priceValue: 350,
-        sizeValue: 350,
-        lat: 10.7765,
-        lng: 106.701,
-        img: "https://xdcs.cdnchinhphu.vn/446259493575335936/2023/2/24/chinh-sach-moi-anh-huong-den-thi-truong-bat-dong-san1602162451-16772104701281575851658.png",
-        type: "Đất nông nghiệp",
-        address: "123 Phan Xích Long, Quận Phú Nhuận, TP.HCM",
-        city: "hcm",
-        district: "phunhuan",
-        tags: ["Sổ đỏ", "Mặt tiền", "Gần chợ"],
-        seller: { name: "Anh Minh", phone: "0327 200 505" },
-        isVip: true,
-        legal: "Sổ đỏ",
-        front: "6m",
-        road: "Ô tô 6m",
-        depth: "12m",
-        roadWidth: "12m",
-        direction: "Đông Nam",
-        roadAccess: true,
-        pricePer: "1tr/m²",
-        planning: "Không vướng quy hoạch",
-        depositOnline: "Có",
-        desc: "Lô đất vuông vức, gần chợ và trường học, thích hợp xây nhà ở hoặc đầu tư cho thuê.",
-        images: [
-            "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
-            "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80",
-            "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=600&q=80"
-        ],
-        polygon: [
-            [10.77685, 106.70065],
-            [10.77690, 106.70105],
-            [10.77625, 106.70115],
-            [10.77620, 106.70075]
-        ]
-    },
-    {
-        id: 2,
-        name: "Lô góc 420m²",
-        price: "420.000đ",
-        size: "420m²",
-        priceValue: 420,
-        sizeValue: 420,
-        lat: 10.775,
-        lng: 106.702,
-        img: "https://media.istockphoto.com/id/1409298953/vi/anh/c%C3%A1c-%C4%91%E1%BA%A1i-l%C3%BD-b%E1%BA%A5t-%C4%91%E1%BB%99ng-s%E1%BA%A3n-b%E1%BA%AFt-tay-nhau-sau-khi-k%C3%BD-k%E1%BA%BFt-th%E1%BB%8Fa-thu%E1%BA%ADn-h%E1%BB%A3p-%C4%91%E1%BB%93ng-ho%C3%A0n-t%E1%BA%A5t.jpg?b=1&s=612x612&w=0&k=20&c=EUQjk4iNtViMfmWdxR61ctUW0x_sUmQj-LRvqHt8ijk=",
-        type: "Đất thổ cư",
-        address: "55 Nguyễn Hữu Cảnh, Quận Bình Thạnh, TP.HCM",
-        city: "hcm",
-        district: "binhthanh",
-        tags: ["Sổ hồng", "Đường ô tô", "Gần trường"],
-        seller: { name: "Chị Lan", phone: "0901 888 777" },
-        isVip: false,
-        legal: "Sổ hồng",
-        front: "5.5m",
-        road: "Đường nhựa 8m",
-        depth: "20m",
-        roadWidth: "8m",
-        direction: "Tây Bắc",
-        roadAccess: true,
-        pricePer: "1.1tr/m²",
-        planning: "Quy hoạch ổn định",
-        depositOnline: "Có",
-        desc: "Khu dân cư hiện hữu, gần trường học và trung tâm thương mại, pháp lý rõ ràng.",
-        images: [
-            "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=900&q=80",
-            "https://images.unsplash.com/photo-1505693014937-96b5dbee9705?auto=format&fit=crop&w=600&q=80",
-            "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=600&q=80"
-        ],
-        polygon: [
-            [10.77535, 106.70155],
-            [10.77560, 106.70205],
-            [10.77485, 106.70215],
-            [10.77465, 106.70160]
-        ]
-    },
-    {
-        id: 3,
-        name: "Lô VIP 500m²",
-        price: "510.000đ",
-        size: "500m²",
-        priceValue: 510,
-        sizeValue: 500,
-        lat: 10.7772,
-        lng: 106.699,
-        img: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=800&q=80",
-        type: "Đất thổ cư",
-        address: "12 Đinh Tiên Hoàng, Quận 1, TP.HCM",
-        city: "hcm",
-        district: "quan1",
-        tags: ["VIP", "Gần trung tâm", "View sông"],
-        seller: { name: "Anh Tuấn", phone: "0989 999 111" },
-        isVip: true,
-        legal: "Sổ đỏ",
-        front: "7m",
-        road: "Lộ giới 10m",
-        depth: "18m",
-        roadWidth: "10m",
-        direction: "Đông Bắc",
-        roadAccess: true,
-        pricePer: "1.02tr/m²",
-        planning: "Không tranh chấp",
-        depositOnline: "Có",
-        desc: "Lô VIP ngay trung tâm, view sông đẹp, phù hợp xây khách sạn mini hoặc căn hộ dịch vụ.",
-        images: [
-            "https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=900&q=80",
-            "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=600&q=80",
-            "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=600&q=80"
-        ],
-        polygon: [
-            [10.77755, 106.69865],
-            [10.77785, 106.69915],
-            [10.77695, 106.69935],
-            [10.77670, 106.69885]
-        ]
-    }
-];
+// ===== DATA STORAGE =====
+let lots = [];
+let currentListing = null;
+let loadingListings = false;
 
 // ===== MAP ICONS =====
 const iconNormal = L.divIcon({
@@ -178,12 +59,13 @@ function renderMarkers(data) {
 }
 
 function popupTemplate(lot) {
+    const imageUrl = lot.img || '/images/placeholder.jpg';
     return `
         <div style="width:180px">
-            <img src="${lot.img}" style="width:100%; height:90px; object-fit:cover; border-radius:8px; margin-bottom:6px;">
+            <img src="${imageUrl}" style="width:100%; height:90px; object-fit:cover; border-radius:8px; margin-bottom:6px;" onerror="this.src='/images/placeholder.jpg'">
             <div class="fw-semibold">${lot.price} • ${lot.size}</div>
-            <div class="text-muted small mb-2">${lot.type}</div>
-            <button class="btn btn-primary btn-sm w-100" data-view-lot="${lot.id}">Xem chi tiết</button>
+            <div class="text-muted small mb-2">${lot.type || ''}</div>
+            <a href="/tin-dang/${lot.slug || lot.id}" class="btn btn-primary btn-sm w-100" data-view-lot="${lot.id}">Xem chi tiết</a>
         </div>
     `;
 }
@@ -210,24 +92,60 @@ function updateMiniMap(lot) {
 }
 
 // ===== UPDATE RIGHT PANEL =====
-function updateDetail(lot) {
-    setGallery(lot);
-    document.querySelector(".lot-price").innerHTML = `${lot.price} • ${lot.size}`;
-    document.getElementById("lot-address").textContent = lot.address;
-    document.getElementById("lot-type").textContent = lot.type;
-    document.getElementById("lot-legal").textContent = lot.legal || "Đang cập nhật";
-    document.getElementById("lot-front").textContent = lot.front || "Đang cập nhật";
-    document.getElementById("lot-road").textContent = lot.road || "Đang cập nhật";
-    document.getElementById("lot-depth").textContent = lot.depth || "Đang cập nhật";
-    document.getElementById("lot-width").textContent = lot.roadWidth || lot.road || "Đang cập nhật";
-    document.getElementById("lot-direction").textContent = lot.direction || "Đang cập nhật";
-    document.getElementById("lot-price-per").textContent = lot.pricePer || "Đang cập nhật";
-    document.getElementById("lot-plan").textContent = lot.planning || "Đang cập nhật";
-    document.getElementById("lot-deposit").textContent = lot.depositOnline || "Đang cập nhật";
-    document.getElementById("lot-desc").textContent = lot.desc || "Đang cập nhật mô tả.";
+async function updateDetail(lot) {
+    // Load full detail if not loaded yet
+    if (!lot.desc && lot.id) {
+        await loadListingDetail(lot.id);
+        lot = currentListing || lot;
+    }
 
-    document.getElementById("seller-name").textContent = lot.seller.name;
-    document.getElementById("seller-phone").textContent = lot.seller.phone;
+    setGallery(lot);
+    if (document.querySelector(".lot-price")) {
+        document.querySelector(".lot-price").innerHTML = `${lot.price} • ${lot.size}`;
+    }
+    if (document.getElementById("lot-address")) {
+        document.getElementById("lot-address").textContent = lot.address;
+    }
+    if (document.getElementById("lot-type")) {
+        document.getElementById("lot-type").textContent = lot.type;
+    }
+    if (document.getElementById("lot-legal")) {
+        document.getElementById("lot-legal").textContent = lot.legal || "Đang cập nhật";
+    }
+    if (document.getElementById("lot-front")) {
+        document.getElementById("lot-front").textContent = lot.front || "Đang cập nhật";
+    }
+    if (document.getElementById("lot-road")) {
+        document.getElementById("lot-road").textContent = lot.road || "Đang cập nhật";
+    }
+    if (document.getElementById("lot-depth")) {
+        document.getElementById("lot-depth").textContent = lot.depth || "Đang cập nhật";
+    }
+    if (document.getElementById("lot-width")) {
+        document.getElementById("lot-width").textContent = lot.roadWidth || lot.road || "Đang cập nhật";
+    }
+    if (document.getElementById("lot-direction")) {
+        document.getElementById("lot-direction").textContent = lot.direction || "Đang cập nhật";
+    }
+    if (document.getElementById("lot-price-per")) {
+        document.getElementById("lot-price-per").textContent = lot.pricePer || "Đang cập nhật";
+    }
+    if (document.getElementById("lot-plan")) {
+        document.getElementById("lot-plan").textContent = lot.planning || "Đang cập nhật";
+    }
+    if (document.getElementById("lot-deposit")) {
+        document.getElementById("lot-deposit").textContent = lot.depositOnline || "Đang cập nhật";
+    }
+    if (document.getElementById("lot-desc")) {
+        document.getElementById("lot-desc").textContent = lot.desc || "Đang cập nhật mô tả.";
+    }
+
+    if (document.getElementById("seller-name")) {
+        document.getElementById("seller-name").textContent = lot.seller.name;
+    }
+    if (document.getElementById("seller-phone")) {
+        document.getElementById("seller-phone").textContent = lot.seller.phone;
+    }
 
     renderTags(lot.tags);
     renderSimilar(lot.id);
@@ -266,34 +184,71 @@ function renderTags(tags = []) {
 // ===== RENDER SIMILAR LIST =====
 function renderSimilar(activeId) {
     const list = document.getElementById("similar-list");
+    if (!list) return;
+    
     list.innerHTML = "";
 
-    lots.filter(l => l.id !== activeId).forEach(lot => {
+    const similar = lots.filter(l => l.id !== activeId).slice(0, 5);
+    
+    if (similar.length === 0) {
+        list.innerHTML = '<div class="text-muted small text-center py-3">Chưa có tin tương tự</div>';
+        return;
+    }
+
+    similar.forEach(lot => {
         const item = document.createElement("div");
         item.className = "similar-item";
+        item.style.cursor = "pointer";
         item.innerHTML = `
-            <img src="${lot.img}">
+            <img src="${lot.img || '/images/placeholder.jpg'}" onerror="this.src='/images/placeholder.jpg'">
             <div class="flex-grow-1">
                 <div class="fw-bold">${lot.price}</div>
-                <div class="text-muted small">${lot.size} • ${lot.type}</div>
-                <button class="btn btn-outline-primary btn-sm mt-1" data-jump="${lot.id}">Xem trên bản đồ</button>
+                <div class="text-muted small">${lot.size} • ${lot.type || ''}</div>
+                <a href="/tin-dang/${lot.slug || lot.id}" class="btn btn-outline-primary btn-sm mt-1">Xem chi tiết</a>
             </div>
         `;
+        item.onclick = () => {
+            if (lot.slug) {
+                window.location.href = `/tin-dang/${lot.slug}`;
+            } else {
+                flyToLot(lot.id);
+            }
+        };
         list.appendChild(item);
-    });
-
-    list.querySelectorAll("[data-jump]").forEach(btn => {
-        btn.onclick = () => flyToLot(Number(btn.getAttribute("data-jump")));
     });
 }
 
 // ===== VIP CAROUSEL =====
-function renderVipCarousel() {
+async function renderVipCarousel() {
     const wrap = document.getElementById("vip-carousel");
     if (!wrap) return;
-    wrap.innerHTML = "";
+    
+    // Load VIP listings
+    try {
+        const response = await fetch('/api/listings/map?category=vip');
+        const data = await response.json();
+        const vipListings = data.listings.filter(l => l.is_vip).slice(0, 10);
+        
+        wrap.innerHTML = "";
+        
+        if (vipListings.length === 0) {
+            wrap.innerHTML = '<div class="text-center text-muted py-4 w-100"><i class="bi bi-inbox" style="font-size: 48px;"></i><p class="mt-2">Chưa có tin VIP nào</p></div>';
+            return;
+        }
 
-    lots.filter(l => l.isVip).forEach(lot => {
+        vipListings.forEach(listing => {
+            const lot = {
+                id: listing.id,
+                name: listing.title,
+                price: formatPrice(listing.price),
+                size: `${listing.area}m²`,
+                img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/placeholder.jpg',
+                type: listing.category || '',
+                address: listing.address,
+                tags: [],
+                seller: { name: '', phone: '' },
+                slug: listing.slug
+            };
         const card = document.createElement("div");
         card.className = "vip-card";
         
@@ -371,17 +326,152 @@ function renderVipCarousel() {
                     </div>
                 </div>
                 
-                <button class="btn btn-primary btn-sm w-100 vip-card-btn" data-jump="${lot.id}">
-                    <i class="bi bi-map"></i> Xem trên bản đồ
-                </button>
+                <a href="/tin-dang/${lot.slug || lot.id}" class="btn btn-primary btn-sm w-100 vip-card-btn">
+                    <i class="bi bi-map"></i> Xem chi tiết
+                </a>
             </div>
         `;
-        wrap.appendChild(card);
-    });
+            wrap.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Error loading VIP listings:', error);
+        wrap.innerHTML = '<div class="text-center text-muted py-4 w-100">Lỗi tải dữ liệu</div>';
+    }
+}
 
-    wrap.querySelectorAll("[data-jump]").forEach(btn => {
-        btn.onclick = () => flyToLot(Number(btn.getAttribute("data-jump")));
-    });
+// ===== LOAD DATA FROM API =====
+async function loadListings(filters = {}) {
+    if (loadingListings) return;
+    loadingListings = true;
+
+    try {
+        const params = new URLSearchParams();
+        
+        // Add filter params
+        if (filters.city) params.append('city', filters.city);
+        if (filters.district) params.append('district', filters.district);
+        if (filters.category) params.append('category', filters.category);
+        if (filters.maxPrice) params.append('max_price', filters.maxPrice);
+        if (filters.maxArea) params.append('max_area', filters.maxArea);
+        if (filters.hasRoad) params.append('has_road', '1');
+        
+        // Add map bounds if available
+        if (map) {
+            const bounds = map.getBounds();
+            params.append('bounds[north]', bounds.getNorth());
+            params.append('bounds[south]', bounds.getSouth());
+            params.append('bounds[east]', bounds.getEast());
+            params.append('bounds[west]', bounds.getWest());
+        }
+
+        const url = `/api/listings/map${params.toString() ? '?' + params.toString() : ''}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Convert API data to app format
+        lots = data.listings.map(listing => ({
+            id: listing.id,
+            name: listing.title,
+            price: formatPrice(listing.price),
+            size: `${listing.area}m²`,
+            priceValue: listing.price,
+            sizeValue: listing.area,
+            lat: parseFloat(listing.latitude),
+            lng: parseFloat(listing.longitude),
+            slug: listing.slug,
+            img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/placeholder.jpg',
+            type: listing.category || 'Đất',
+            address: listing.address,
+            city: listing.city,
+            district: listing.district,
+            tags: [], // Will be loaded from detail
+            seller: { name: '', phone: '' }, // Will be loaded from detail
+            isVip: listing.is_vip || false,
+            legal: '',
+            front: '',
+            road: '',
+            depth: '',
+            roadWidth: '',
+            direction: '',
+            roadAccess: false,
+            pricePer: '',
+            planning: '',
+            depositOnline: '',
+            desc: '',
+            images: [],
+            polygon: []
+        }));
+
+        if (lots.length > 0) {
+            renderMarkers(lots);
+            // Load first listing detail
+            await loadListingDetail(lots[0].id);
+        } else {
+            // Clear markers if no results
+            markerLayers.forEach(m => map.removeLayer(m));
+            markerLayers = [];
+        }
+    } catch (error) {
+        console.error('Error loading listings:', error);
+    } finally {
+        loadingListings = false;
+    }
+}
+
+// Load listing detail from API
+async function loadListingDetail(listingId) {
+    try {
+        const response = await fetch(`/api/listings/${listingId}`);
+        const data = await response.json();
+        const listing = data.listing;
+
+        // Find and update the lot in lots array
+        const lotIndex = lots.findIndex(l => l.id === listingId);
+        if (lotIndex === -1) return;
+
+        const lot = lots[lotIndex];
+        
+        // Update lot with full details
+        lot.name = listing.title;
+        lot.desc = listing.description || '';
+        lot.legal = listing.legal_status || '';
+        lot.front = listing.front_width ? `${listing.front_width}m` : '';
+        lot.road = listing.road_type || '';
+        lot.depth = listing.depth ? `${listing.depth}m` : '';
+        lot.roadWidth = listing.road_width ? `${listing.road_width}m` : '';
+        lot.direction = listing.direction || '';
+        lot.roadAccess = listing.has_road_access || false;
+        lot.pricePer = listing.price_per_m2 ? `${(listing.price_per_m2 / 1000000).toFixed(1)}tr/m²` : '';
+        lot.planning = listing.planning_info || '';
+        lot.depositOnline = listing.deposit_online ? 'Có' : 'Không';
+        lot.tags = listing.tags && Array.isArray(listing.tags) ? listing.tags : [];
+        lot.seller = {
+            name: listing.contact_name || '',
+            phone: listing.contact_phone || ''
+        };
+        lot.images = listing.images && listing.images.length > 0 
+            ? listing.images.map(img => img.image_path.startsWith('http') ? img.image_path : `/storage/${img.image_path}`)
+            : [lot.img];
+        lot.polygon = listing.polygon_coordinates && Array.isArray(listing.polygon_coordinates) 
+            ? listing.polygon_coordinates 
+            : [];
+
+        // Update current listing
+        currentListing = lot;
+        
+        // Update UI if this is the active listing
+        if (document.querySelector('.lot-price')) {
+            updateDetail(lot);
+        }
+    } catch (error) {
+        console.error('Error loading listing detail:', error);
+    }
+}
+
+function formatPrice(price) {
+    if (!price) return '0 triệu';
+    const millions = price / 1000000;
+    return new Intl.NumberFormat('vi-VN').format(millions) + ' triệu';
 }
 
 // ===== FILTERS =====
@@ -394,28 +484,23 @@ const filterRoadEl = document.getElementById("filter-road");
 const priceLabel = document.getElementById("price-label");
 const areaLabel = document.getElementById("area-label");
 
-function applyFilters() {
-    const type = filterTypeEl.value;
-    const city = filterCityEl.value;
-    const district = filterDistrictEl.value;
-    const priceMax = Number(filterPriceEl.value || 5000);
-    const areaMax = Number(filterAreaEl.value || 1000);
-    const needRoad = filterRoadEl.checked;
+async function applyFilters() {
+    const category = filterTypeEl?.value;
+    const city = filterCityEl?.value;
+    const district = filterDistrictEl?.value;
+    const priceMax = Number(filterPriceEl?.value || 5000);
+    const areaMax = Number(filterAreaEl?.value || 1000);
+    const needRoad = filterRoadEl?.checked;
 
-    const filtered = lots.filter(l => {
-        if (type === "thocu" && l.type !== "Đất thổ cư") return false;
-        if (type === "nongnghiep" && l.type !== "Đất nông nghiệp") return false;
-        if (city && l.city !== city) return false;
-        if (district && l.district !== district) return false;
-        if (l.priceValue && l.priceValue > priceMax) return false;
-        if (l.sizeValue && l.sizeValue > areaMax) return false;
-        if (needRoad && !l.roadAccess) return false;
-        return true;
-    });
+    const filters = {};
+    if (category) filters.category = category;
+    if (city) filters.city = city;
+    if (district) filters.district = district;
+    if (priceMax) filters.maxPrice = priceMax;
+    if (areaMax) filters.maxArea = areaMax;
+    if (needRoad) filters.hasRoad = true;
 
-    const target = filtered.length ? filtered : lots;
-    renderMarkers(target);
-    updateDetail(target[0]);
+    await loadListings(filters);
 }
 
 function updateRangeLabels() {
@@ -430,11 +515,20 @@ filterAreaEl.addEventListener("input", updateRangeLabels);
 updateRangeLabels();
 
 // ===== JUMP TO LOT =====
-function flyToLot(id) {
+async function flyToLot(id) {
     const lot = lots.find(l => l.id === id);
-    if (!lot) return;
+    if (!lot) {
+        // Try to load from API
+        await loadListingDetail(id);
+        const loadedLot = lots.find(l => l.id === id);
+        if (loadedLot) {
+            map.setView([loadedLot.lat, loadedLot.lng], 17);
+            updateDetail(loadedLot);
+        }
+        return;
+    }
     map.setView([lot.lat, lot.lng], 17);
-    updateDetail(lot);
+    await updateDetail(lot);
 }
 
 // ===== FAVORITE BUTTON =====
@@ -443,9 +537,23 @@ if (favBtn) {
     favBtn.onclick = () => favBtn.classList.toggle("active");
 }
 
-// Init first lot
-renderMarkers(lots);
-updateDetail(lots[0]);
+// Initialize: Load listings on page load
+loadListings().then(() => {
+    if (lots.length > 0) {
+        updateDetail(lots[0]);
+    }
+});
+
+// Reload listings when map bounds change
+if (map) {
+    map.on('moveend', function() {
+        // Debounce to avoid too many requests
+        clearTimeout(window.mapReloadTimer);
+        window.mapReloadTimer = setTimeout(() => {
+            loadListings();
+        }, 500);
+    });
+}
 
 // expose for debugging
 window.flyToLot = flyToLot;
