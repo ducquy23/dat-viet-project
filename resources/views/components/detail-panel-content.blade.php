@@ -28,11 +28,12 @@
         </p>
     </div>
     @auth('partner')
-    <button class="btn btn-light btn-fav {{ isset($isFavorited) && $isFavorited ? 'active' : '' }}"
+    <button class="btn btn-light btn-fav d-flex align-items-center justify-content-center {{ isset($isFavorited) && $isFavorited ? 'active' : '' }}"
             id="favorite-btn"
             onclick="toggleFavorite({{ $listing->id }})"
-            title="Thêm vào yêu thích">
-        <i class="bi bi-heart"></i>
+            title="Thêm vào yêu thích"
+            style="width:44px; height:44px; border-radius:50%; padding:0;">
+        <i class="bi bi-heart" style="font-size:18px;"></i>
     </button>
     @endauth
 </div>
