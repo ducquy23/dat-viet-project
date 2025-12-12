@@ -28,7 +28,9 @@
     @include('components.header')
 
     <!-- Top Banner Ad -->
-    @include('components.ads.top-banner')
+    @if(!request()->routeIs('listings.my-listings'))
+        @include('components.ads.top-banner')
+    @endif
 
     <!-- Main Content -->
     <main class="main-layout">
@@ -36,10 +38,14 @@
     </main>
 
     <!-- Bottom Ad Banner -->
-    @include('components.ads.bottom-banner')
+    @if(!request()->routeIs('listings.my-listings'))
+        @include('components.ads.bottom-banner')
+    @endif
 
     <!-- Bottom Bar (VIP Carousel) -->
-    @include('components.bottom-bar')
+    @if(!request()->routeIs('listings.my-listings'))
+        @include('components.bottom-bar')
+    @endif
 
     <!-- Modals -->
     @include('components.modals.post-listing')

@@ -24,7 +24,6 @@ class PartnerRegisterController extends Controller
             'username' => 'required|string|max:255|unique:users,name',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Password::min(8)],
-            'agree_terms' => 'required|accepted',
         ], [
             'username.required' => 'Vui lòng nhập username',
             'username.unique' => 'Username đã tồn tại',
@@ -34,8 +33,6 @@ class PartnerRegisterController extends Controller
             'password.required' => 'Vui lòng nhập mật khẩu',
             'password.confirmed' => 'Mật khẩu xác nhận không khớp',
             'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự',
-            'agree_terms.required' => 'Bạn phải đồng ý với điều khoản sử dụng',
-            'agree_terms.accepted' => 'Bạn phải đồng ý với điều khoản sử dụng',
         ]);
 
         $user = User::create([

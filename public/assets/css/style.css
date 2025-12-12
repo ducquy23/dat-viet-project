@@ -1281,9 +1281,46 @@ small {
 }
 
 /* Social buttons */
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1.5px solid #dee2e6;
+    transition: var(--dv-transition);
+    font-weight: 600;
+}
+
 .social-btn svg,
 .social-btn i {
-    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.social-btn-google {
+    border-color: var(--dv-primary);
+    color: #495057;
+    background: white;
+}
+
+.social-btn-google:hover {
+    border-color: #4285F4;
+    background: #f8f9fa;
+    color: #4285F4;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(66, 133, 244, 0.15);
+}
+
+.social-btn-facebook {
+    border-color: var(--dv-primary);
+    color: var(--dv-primary);
+    background: white;
+}
+
+.social-btn-facebook:hover {
+    background: var(--dv-primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(51, 87, 147, 0.25);
 }
 
 /* Auth modals */
@@ -2517,31 +2554,31 @@ html {
         padding: 20px 16px;
         margin-bottom: 16px;
     }
-    
+
     .lot-price {
         font-size: 1.5rem;
     }
-    
+
     .btn {
         padding: 10px 20px;
         font-size: 14px;
     }
-    
+
     .detail-box,
     .description-box,
     .seller-card {
         padding: 16px;
     }
-    
+
     .sidebar-left,
     .sidebar-right {
         padding: 16px 12px;
     }
-    
+
     .empty-state {
         padding: 40px 20px;
     }
-    
+
     .empty-state i {
         font-size: 48px;
     }
