@@ -22,20 +22,38 @@ let currentListing = null;
 let loadingListings = false;
 
 // ===== MAP ICONS =====
+// Custom marker style (dashed tím + pin vàng)
+function ensureLotMarkerStyle() {
+    if (document.getElementById('lot-marker-style')) return;
+    const style = document.createElement('style');
+    style.id = 'lot-marker-style';
+    style.innerHTML = `
+      .lot-marker { position: relative; width: 30px; height: 40px; transform: translate(-50%, -100%); }
+      .lot-marker .lot-rect { position: absolute; top: 6px; left: 2px; width: 26px; height: 24px; border: 2px dashed #7c3aed; border-radius: 6px; background: rgba(124,58,237,0.1); box-sizing: border-box; }
+      .lot-marker .lot-pin { position: absolute; left: 50%; top: -2px; transform: translateX(-50%); width: 18px; height: 18px; background: #fbbf24; border: 2px solid #fef3c7; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+      .lot-marker .lot-pin:after { content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 10px solid #fbbf24; }
+      .lot-marker.vip .lot-rect { border-color: #f97316; background: rgba(249,115,22,0.12); }
+      .lot-marker.vip .lot-pin { background: #facc15; border-color: #fef9c3; }
+      .lot-marker.vip .lot-pin:after { border-top-color: #facc15; }
+    `;
+    document.head.appendChild(style);
+}
+ensureLotMarkerStyle();
+
 const iconNormal = L.divIcon({
     className: "",
-    html: '<div class="map-pin"></div>',
-    iconSize: [18, 18],
-    iconAnchor: [9, 18],
-    popupAnchor: [0, -18]
+    html: '<div class="lot-marker"><div class="lot-rect"></div><div class="lot-pin"></div></div>',
+    iconSize: [30, 40],
+    iconAnchor: [15, 36],
+    popupAnchor: [0, -36]
 });
 
 const iconVip = L.divIcon({
     className: "",
-    html: '<div class="map-pin vip"></div>',
-    iconSize: [18, 18],
-    iconAnchor: [9, 18],
-    popupAnchor: [0, -18]
+    html: '<div class="lot-marker vip"><div class="lot-rect"></div><div class="lot-pin"></div></div>',
+    iconSize: [30, 40],
+    iconAnchor: [15, 36],
+    popupAnchor: [0, -36]
 });
 
 let miniMap;
