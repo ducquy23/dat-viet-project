@@ -35,18 +35,38 @@
                         <div class="text-center mb-3">
                             <i class="bi bi-geo-alt-fill text-primary" style="font-size: 48px;"></i>
                             <h6 class="mt-2 mb-1">Chọn vị trí lô đất</h6>
-                            <p class="text-muted small">Click trên bản đồ hoặc dùng vị trí hiện tại</p>
+                            <p class="text-muted small">Nhập địa chỉ, click trên bản đồ hoặc dùng vị trí hiện tại</p>
                         </div>
+                        
+                        <!-- Tìm kiếm địa chỉ -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-search text-primary"></i>
+                                <span>Tìm kiếm địa chỉ</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="post-address-search" 
+                                       placeholder="Nhập địa chỉ, ví dụ: 123 Đường Láng, Hà Nội">
+                                <button type="button" class="btn btn-primary" id="btn-search-address">
+                                    <i class="bi bi-search"></i> Tìm
+                                </button>
+                            </div>
+                            <small class="text-muted">Nhập địa chỉ để tự động tìm vị trí trên bản đồ</small>
+                        </div>
+
                         <div class="post-map-container mb-3">
                             <div id="post-map" class="rounded-3" style="height: 300px; border: 2px solid #e9ecef;"></div>
                         </div>
                         <input type="hidden" name="latitude" id="post-latitude" required>
                         <input type="hidden" name="longitude" id="post-longitude" required>
-                        <button type="button" class="btn btn-outline-primary w-100 mb-2" id="btn-use-current-location">
-                            <i class="bi bi-crosshair"></i> Dùng vị trí hiện tại
-                        </button>
+                        
+                        <div class="d-flex gap-2 mb-2">
+                            <button type="button" class="btn btn-outline-primary flex-fill" id="btn-use-current-location">
+                                <i class="bi bi-crosshair"></i> Dùng vị trí hiện tại
+                            </button>
+                        </div>
                         <div class="alert alert-info small mb-0">
-                            <i class="bi bi-info-circle"></i> Bạn có thể chỉnh sửa vị trí sau
+                            <i class="bi bi-info-circle"></i> Bạn có thể chỉnh sửa vị trí sau bằng cách kéo marker trên bản đồ
                         </div>
                     </div>
 

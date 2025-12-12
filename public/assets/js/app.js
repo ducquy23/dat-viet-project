@@ -882,6 +882,8 @@ document.getElementById('postModal')?.addEventListener('shown.bs.modal', functio
                 postMap.on('click', function(e) {
                     const { lat, lng } = e.latlng;
                     setPostLocation(lat, lng);
+                    // Reverse geocode để cập nhật địa chỉ
+                    reverseGeocodeForPost(lat, lng);
                 });
 
                 // Set initial marker after map tiles load
@@ -962,9 +964,38 @@ function setPostLocation(lat, lng) {
     // Update location when marker is dragged
     postMarker.on('dragend', function(e) {
         const position = postMarker.getLatLng();
-        document.getElementById('post-latitude').value = position.lat;
-        document.getElementById('post-longitude').value = position.lng;
+        const latInput = document.getElementById('post-latitude');
+        const lngInput = document.getElementById('post-longitude');
+        if (latInput) latInput.value = position.lat;
+        if (lngInput) lngInput.value = position.lng;
+        
+        // Reverse geocode để cập nhật địa chỉ
+        reverseGeocodeForPost(position.lat, position.lng);
     });
+}
+
+// Reverse geocode: lấy địa chỉ từ tọa độ
+async function reverseGeocodeForPost(lat, lng) {
+    const addressInput = document.getElementById('post-address-search');
+    if (!addressInput) return;
+
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+            headers: {
+                'User-Agent': 'DatViet Real Estate App'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.display_name) {
+                addressInput.value = data.display_name;
+            }
+        }
+    } catch (error) {
+        console.error('Error reverse geocoding:', error);
+        // Không hiển thị lỗi cho người dùng, chỉ log
+    }
 }
 
 // Post modal step navigation
@@ -1057,6 +1088,92 @@ document.getElementById('btn-use-current-location')?.addEventListener('click', f
         { enableHighAccuracy: true, timeout: 10000 }
     );
 });
+
+// Tìm kiếm địa chỉ và cập nhật vị trí trên bản đồ
+document.getElementById('btn-search-address')?.addEventListener('click', function() {
+    searchAddressForPost();
+});
+
+document.getElementById('post-address-search')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        searchAddressForPost();
+    }
+});
+
+async function searchAddressForPost() {
+    if (!postMap) {
+        alert('Bản đồ chưa sẵn sàng. Vui lòng đợi một chút và thử lại.');
+        return;
+    }
+
+    const addressInput = document.getElementById('post-address-search');
+    const searchBtn = document.getElementById('btn-search-address');
+    
+    if (!addressInput || !addressInput.value.trim()) {
+        alert('Vui lòng nhập địa chỉ cần tìm');
+        return;
+    }
+
+    const address = addressInput.value.trim();
+    const originalBtnText = searchBtn.innerHTML;
+    searchBtn.disabled = true;
+    searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    try {
+        // Sử dụng Nominatim (OpenStreetMap Geocoding API) - miễn phí
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=vn`, {
+            headers: {
+                'User-Agent': 'DatViet Real Estate App'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Không thể kết nối đến dịch vụ tìm kiếm địa chỉ');
+        }
+
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const result = data[0];
+            const lat = parseFloat(result.lat);
+            const lng = parseFloat(result.lon);
+            
+            // Cập nhật vị trí trên bản đồ
+            setPostLocation(lat, lng);
+            
+            // Cập nhật input với địa chỉ chính xác
+            addressInput.value = result.display_name;
+            
+            // Hiển thị thông báo thành công
+            const existingAlert = addressInput.parentElement.parentElement.querySelector('.alert-success');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
+            alertDiv.innerHTML = `
+                <i class="bi bi-check-circle"></i> Đã tìm thấy: ${result.display_name}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            addressInput.parentElement.parentElement.appendChild(alertDiv);
+            
+            // Tự động ẩn thông báo sau 3 giây
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        } else {
+            alert('Không tìm thấy địa chỉ. Vui lòng thử lại với địa chỉ khác hoặc chọn trực tiếp trên bản đồ.');
+        }
+    } catch (error) {
+        console.error('Error searching address:', error);
+        alert('Có lỗi xảy ra khi tìm kiếm địa chỉ. Vui lòng thử lại hoặc chọn trực tiếp trên bản đồ.');
+    } finally {
+        searchBtn.disabled = false;
+        searchBtn.innerHTML = originalBtnText;
+    }
+}
 
 // Package selection
 document.querySelectorAll('.package-card').forEach(card => {
