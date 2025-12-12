@@ -14,7 +14,7 @@
         <div id="detail-panel-content" style="display: none;">
             <!-- Gallery -->
             <div class="gallery-main mb-2">
-                <img id="lot-main-img" src="" class="img-fluid rounded lot-image" alt="" onerror="this.src='{{ asset('images/placeholder.jpg') }}'">
+                <img id="lot-main-img" src="" class="img-fluid rounded lot-image" alt="" onerror="this.src='{{ asset('images/placeholder.jpg') }}'" style="cursor: pointer;" onclick="openImageModal(this.src)">
             </div>
             
             <div class="gallery-thumbs d-flex gap-2 mb-3" id="lot-thumbs"></div>
@@ -134,6 +134,12 @@
         const mainImg = document.getElementById('lot-main-img');
         if (mainImg) {
             mainImg.src = src;
+            // Update onclick handler for lightbox
+            mainImg.onclick = function() {
+                if (typeof openImageModal === 'function') {
+                    openImageModal(this.src);
+                }
+            };
         }
         document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
         if (element) element.classList.add('active');
@@ -207,5 +213,129 @@
         }).addTo(window.miniMap);
     }
     @endif
+
+    // Image Modal/Lightbox - Phóng to ảnh khi click
+    window.openImageModal = function(imageSrc) {
+        // Create modal if not exists
+        let modal = document.getElementById('image-lightbox-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'image-lightbox-modal';
+            modal.className = 'modal fade';
+            modal.setAttribute('tabindex', '-1');
+            modal.setAttribute('aria-hidden', 'true');
+            modal.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered modal-xl">
+                    <div class="modal-content bg-dark border-0" style="background: rgba(0,0,0,0.9) !important;">
+                        <div class="modal-header border-0 position-absolute top-0 end-0" style="z-index: 1051; background: transparent;">
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.8)); background-color: rgba(255,255,255,0.2);"></button>
+                        </div>
+                        <div class="modal-body p-0 text-center d-flex align-items-center justify-content-center" style="min-height: 90vh;">
+                            <img id="lightbox-image" src="" class="img-fluid" alt="Ảnh phóng to" style="max-height: 90vh; max-width: 100%; width: auto; object-fit: contain;">
+                        </div>
+                        <div class="modal-footer border-0 position-absolute bottom-0 start-50 translate-middle-x mb-3" style="z-index: 1051; background: transparent;">
+                            <button type="button" class="btn btn-sm btn-light me-2" id="lightbox-prev" onclick="changeLightboxImage(-1)" style="display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </button>
+                            <button type="button" class="btn btn-sm btn-light" id="lightbox-next" onclick="changeLightboxImage(1)" style="display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Set image source
+        const lightboxImg = document.getElementById('lightbox-image');
+        if (lightboxImg) {
+            lightboxImg.src = imageSrc;
+        }
+
+        // Show navigation buttons if there are multiple images
+        const thumbs = document.querySelectorAll('#lot-thumbs img');
+        if (thumbs.length > 1) {
+            document.getElementById('lightbox-prev').style.display = 'inline-block';
+            document.getElementById('lightbox-next').style.display = 'inline-block';
+        } else {
+            document.getElementById('lightbox-prev').style.display = 'none';
+            document.getElementById('lightbox-next').style.display = 'none';
+        }
+
+        // Show modal
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+
+        // Store current image index
+        window.currentLightboxIndex = Array.from(thumbs).findIndex(thumb => {
+            const thumbSrc = thumb.src || thumb.getAttribute('src');
+            return thumbSrc === imageSrc || (thumbSrc && imageSrc && thumbSrc.includes(imageSrc.split('/').pop()));
+        });
+        if (window.currentLightboxIndex === -1) {
+            window.currentLightboxIndex = 0;
+        }
+    };
+
+    window.changeLightboxImage = function(direction) {
+        const thumbs = document.querySelectorAll('#lot-thumbs img');
+        if (thumbs.length === 0) {
+            // Fallback: get images from main image and thumbnails
+            const mainImg = document.getElementById('lot-main-img');
+            if (mainImg && mainImg.src) {
+                const lightboxImg = document.getElementById('lightbox-image');
+                if (lightboxImg) {
+                    lightboxImg.src = mainImg.src;
+                }
+            }
+            return;
+        }
+
+        let currentIndex = window.currentLightboxIndex || 0;
+        currentIndex += direction;
+
+        if (currentIndex < 0) {
+            currentIndex = thumbs.length - 1;
+        } else if (currentIndex >= thumbs.length) {
+            currentIndex = 0;
+        }
+
+        window.currentLightboxIndex = currentIndex;
+        const thumb = thumbs[currentIndex];
+        const imageSrc = thumb.src || thumb.getAttribute('src');
+        
+        const lightboxImg = document.getElementById('lightbox-image');
+        if (lightboxImg && imageSrc) {
+            lightboxImg.src = imageSrc;
+        }
+        
+        // Update main image in detail panel
+        const mainImg = document.getElementById('lot-main-img');
+        if (mainImg && imageSrc) {
+            mainImg.src = imageSrc;
+        }
+        
+        // Update active thumbnail
+        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+        const thumbBtn = thumb.closest('.thumb');
+        if (thumbBtn) {
+            thumbBtn.classList.add('active');
+        }
+    };
+
+    // Keyboard navigation for lightbox
+    document.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('image-lightbox-modal');
+        if (modal && modal.classList.contains('show')) {
+            if (e.key === 'ArrowLeft') {
+                changeLightboxImage(-1);
+            } else if (e.key === 'ArrowRight') {
+                changeLightboxImage(1);
+            } else if (e.key === 'Escape') {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) bsModal.hide();
+            }
+        }
+    });
 </script>
 @endpush

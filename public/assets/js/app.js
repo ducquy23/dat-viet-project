@@ -241,8 +241,15 @@ function setGallery(lot) {
     // Set main image
     main.src = imgs[0];
     main.alt = lot.name || lot.title || 'Hình ảnh';
+    main.style.cursor = 'pointer';
     main.onerror = function() {
         this.src = '/images/placeholder.jpg';
+    };
+    // Add click handler for lightbox
+    main.onclick = function() {
+        if (typeof openImageModal === 'function') {
+            openImageModal(this.src);
+        }
     };
     
     // Clear and set thumbnails
@@ -251,11 +258,23 @@ function setGallery(lot) {
         imgs.slice(0, 4).forEach((url, idx) => {
             const btn = document.createElement("button");
             btn.className = `thumb ${idx === 0 ? "active" : ""}`;
-            btn.innerHTML = `<img src="${url}" alt="thumb" onerror="this.src='/images/placeholder.jpg'">`;
+            const thumbImg = document.createElement("img");
+            thumbImg.src = url;
+            thumbImg.alt = "thumb";
+            thumbImg.onerror = function() {
+                this.src = '/images/placeholder.jpg';
+            };
+            btn.appendChild(thumbImg);
             btn.onclick = () => {
                 main.src = url;
                 thumbsWrap.querySelectorAll(".thumb").forEach(t => t.classList.remove("active"));
                 btn.classList.add("active");
+                // Update main image click handler
+                main.onclick = function() {
+                    if (typeof openImageModal === 'function') {
+                        openImageModal(this.src);
+                    }
+                };
             };
             thumbsWrap.appendChild(btn);
         });
