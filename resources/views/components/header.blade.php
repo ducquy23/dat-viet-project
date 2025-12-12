@@ -15,9 +15,9 @@
             <span class="input-group-text bg-white border-end-0">
                 <i class="bi bi-search"></i>
             </span>
-            <input 
-                class="form-control border-start-0" 
-                type="text" 
+            <input
+                class="form-control border-start-0"
+                type="text"
                 name="q"
                 value="{{ request('q') }}"
                 placeholder="Tìm địa chỉ, từ khóa, sổ đỏ, tên chủ đất...">
@@ -28,14 +28,14 @@
         <button class="btn btn-outline-secondary d-none d-md-inline-flex" onclick="location.reload()">
             <i class="bi bi-arrow-clockwise"></i> Làm mới
         </button>
-        
+
         @auth
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-person-circle"></i> {{ Auth::user()->name ?? Auth::user()->phone }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="{{ route('dashboard') }}">
+                    <li><a class="dropdown-item" href="">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a></li>
                     <li><a class="dropdown-item" href="{{ route('listings.my-listings') }}">
@@ -60,7 +60,7 @@
                 Đăng ký
             </button>
         @endauth
-        
+
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#postModal">
             <i class="bi bi-plus-circle"></i> Đăng tin rao bán
         </button>
