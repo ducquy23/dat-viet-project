@@ -616,11 +616,24 @@ function updateRangeLabels() {
     areaLabel.textContent = `${filterAreaEl.value}+`;
 }
 
-document.getElementById("btn-apply-filters").addEventListener("click", applyFilters);
-document.getElementById("btn-nearby").addEventListener("click", locateUserAndPickNearest);
-filterPriceEl.addEventListener("input", updateRangeLabels);
-filterAreaEl.addEventListener("input", updateRangeLabels);
-updateRangeLabels();
+// Only add event listeners if elements exist (not all pages have filters)
+const btnApplyFilters = document.getElementById("btn-apply-filters");
+const btnNearby = document.getElementById("btn-nearby");
+if (btnApplyFilters) {
+    btnApplyFilters.addEventListener("click", applyFilters);
+}
+if (btnNearby) {
+    btnNearby.addEventListener("click", locateUserAndPickNearest);
+}
+if (filterPriceEl) {
+    filterPriceEl.addEventListener("input", updateRangeLabels);
+}
+if (filterAreaEl) {
+    filterAreaEl.addEventListener("input", updateRangeLabels);
+}
+if (priceLabel && areaLabel && filterPriceEl && filterAreaEl) {
+    updateRangeLabels();
+}
 
 // ===== JUMP TO LOT =====
 async function flyToLot(id) {
@@ -791,40 +804,71 @@ document.getElementById('postModal')?.addEventListener('shown.bs.modal', functio
     currentStep = 1;
     updatePostSteps();
 
-    // Initialize map if not exists
-    if (!postMap) {
-        // Wait a bit for modal to fully render
-        setTimeout(() => {
-            const mapContainer = document.getElementById('post-map');
-            if (!mapContainer) return;
+    // Wait for modal to fully render before initializing map
+    setTimeout(() => {
+        const mapContainer = document.getElementById('post-map');
+        if (!mapContainer) {
+            console.error('Map container #post-map not found');
+            return;
+        }
 
-            // Default location: Ho Chi Minh City
-            const defaultLat = 10.776;
-            const defaultLng = 106.700;
+        // Default location: Ho Chi Minh City
+        const defaultLat = 10.776;
+        const defaultLng = 106.700;
 
-            postMap = L.map('post-map', { zoomControl: true }).setView([defaultLat, defaultLng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-                attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(postMap);
+        // Check if Leaflet is loaded
+        if (typeof L === 'undefined') {
+            console.error('Leaflet library not loaded');
+            mapContainer.innerHTML = '<div class="alert alert-danger p-2">Lỗi: Thư viện bản đồ chưa được tải. Vui lòng tải lại trang.</div>';
+            return;
+        }
 
-            // Map click handler
-        postMap.on('click', function(e) {
-            const { lat, lng } = e.latlng;
-                setPostLocation(lat, lng);
-            });
+        // Initialize map if not exists
+        if (!postMap) {
+            try {
+                // Clear container first
+                mapContainer.innerHTML = '';
+                
+                postMap = L.map('post-map', { 
+                    zoomControl: true,
+                    attributionControl: true
+                }).setView([defaultLat, defaultLng], 15);
 
-            // Try to get current location automatically
-            getCurrentLocationForPost();
-        }, 100);
-    } else {
-        // Map already exists, just invalidate size in case modal was resized
-        setTimeout(() => {
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(postMap);
+
+                // Map click handler
+                postMap.on('click', function(e) {
+                    const { lat, lng } = e.latlng;
+                    setPostLocation(lat, lng);
+                });
+
+                // Set initial marker after map tiles load
+                postMap.whenReady(function() {
+                    setPostLocation(defaultLat, defaultLng);
+                });
+            } catch (error) {
+                console.error('Error initializing post map:', error);
+                mapContainer.innerHTML = '<div class="alert alert-danger p-2">Lỗi khởi tạo bản đồ: ' + error.message + '</div>';
+                return;
+            }
+        } else {
+            // Map already exists, invalidate size to recalculate
             postMap.invalidateSize();
-            // Try to get current location
+            postMap.setView([defaultLat, defaultLng], 15);
+            // Update marker
+            setTimeout(() => {
+                setPostLocation(defaultLat, defaultLng);
+            }, 100);
+        }
+
+        // Try to get current location automatically after a short delay
+        setTimeout(() => {
             getCurrentLocationForPost();
-        }, 100);
-    }
+        }, 500);
+    }, 400); // Increased delay to ensure modal is fully rendered
 });
 
 // Get current location for post modal
@@ -943,6 +987,12 @@ document.getElementById('btn-prev-step')?.addEventListener('click', function() {
 });
 
 document.getElementById('btn-use-current-location')?.addEventListener('click', function() {
+    if (!postMap) {
+        console.error('Post map not initialized');
+        alert('Bản đồ chưa sẵn sàng. Vui lòng đợi một chút và thử lại.');
+        return;
+    }
+    
     if (!navigator.geolocation) {
         alert('Trình duyệt không hỗ trợ định vị');
         return;
