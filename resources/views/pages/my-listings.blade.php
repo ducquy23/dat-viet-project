@@ -145,9 +145,10 @@
                       </td>
                     <td>
                       <div class="action-buttons">
-                        <button onclick="showListingDetail({{ $listing->id }})" 
-                                class="btn btn-sm btn-outline-primary" 
-                                title="Xem chi tiết">
+                        <button onclick="showListingDetail({{ $listing->id }}, this)" 
+                                class="btn btn-sm btn-outline-primary btn-view-detail" 
+                                title="Xem chi tiết"
+                                data-listing-id="{{ $listing->id }}">
                           <i class="bi bi-eye"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-danger" 
@@ -271,9 +272,10 @@
                       </td>
                       <td>
                         <div class="action-buttons">
-                          <button onclick="showListingDetail({{ $listing->id }})" 
-                                  class="btn btn-sm btn-outline-primary" 
-                                  title="Xem chi tiết">
+                          <button onclick="showListingDetail({{ $listing->id }}, this)" 
+                                  class="btn btn-sm btn-outline-primary btn-view-detail" 
+                                  title="Xem chi tiết"
+                                  data-listing-id="{{ $listing->id }}">
                             <i class="bi bi-eye"></i>
                           </button>
                         </div>
@@ -982,6 +984,8 @@
 @push('scripts')
 <script>
 let listingDetailModal = null;
+let isLoadingListing = false;
+let currentRequest = null;
 
 // Initialize modal
 document.addEventListener('DOMContentLoaded', function() {
@@ -991,7 +995,28 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-function showListingDetail(listingId) {
+function showListingDetail(listingId, buttonElement) {
+  // Prevent multiple simultaneous requests for the same listing
+  if (isLoadingListing) {
+    console.log('Đang tải dữ liệu, vui lòng đợi...');
+    return;
+  }
+  
+  // Disable all view buttons to prevent multiple clicks
+  const allViewButtons = document.querySelectorAll('.btn-view-detail');
+  allViewButtons.forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'not-allowed';
+  });
+  
+  // Cancel previous request if exists
+  if (currentRequest) {
+    currentRequest.abort();
+    currentRequest = null;
+  }
+  
+  isLoadingListing = true;
   const modalContent = document.getElementById('listingDetailContent');
   
   // Show loading state
@@ -1009,10 +1034,38 @@ function showListingDetail(listingId) {
     listingDetailModal.show();
   }
   
+  // Create AbortController for request cancellation
+  const abortController = new AbortController();
+  currentRequest = abortController;
+  
   // Load listing data
-  fetch(`/api/listings/${listingId}`)
-    .then(response => response.json())
+  fetch(`/api/listings/${listingId}`, {
+    signal: abortController.signal,
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+    .then(response => {
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Không tìm thấy tin đăng');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
+      isLoadingListing = false;
+      currentRequest = null;
+      
+      // Re-enable all view buttons
+      allViewButtons.forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      });
+      
       if (data.listing) {
         renderListingDetail(data.listing);
       } else {
@@ -1025,11 +1078,27 @@ function showListingDetail(listingId) {
       }
     })
     .catch(error => {
+      isLoadingListing = false;
+      currentRequest = null;
+      
+      // Re-enable all view buttons
+      allViewButtons.forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      });
+      
+      // Don't show error if request was aborted
+      if (error.name === 'AbortError') {
+        console.log('Request was cancelled');
+        return;
+      }
+      
       console.error('Error:', error);
       modalContent.innerHTML = `
         <div class="alert alert-danger">
           <i class="bi bi-exclamation-triangle"></i>
-          Có lỗi xảy ra khi tải thông tin
+          Có lỗi xảy ra khi tải thông tin: ${error.message || 'Vui lòng thử lại sau'}
         </div>
       `;
     });
