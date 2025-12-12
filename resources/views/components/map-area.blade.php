@@ -17,9 +17,9 @@
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(window.mainMap);
         }
-        
+
         const map = window.mainMap;
-        
+
         // Map pins (use from app.js if available)
         const iconNormal = window.iconNormal || L.divIcon({
             className: "",
@@ -39,7 +39,7 @@
 
         // Store markers
         let markers = [];
-        
+
         // Load listings from API
         function loadListingsForMap() {
             // Clear existing markers
@@ -61,14 +61,14 @@
                 .then(data => {
                     data.listings.forEach(listing => {
                         const icon = listing.is_vip ? iconVip : iconNormal;
-                        const imageUrl = listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '{{ asset("images/placeholder.jpg") }}';
+                        const imageUrl = listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '{{ asset("images/Image-not-found.png") }}';
                         const price = new Intl.NumberFormat('vi-VN').format(listing.price / 1000000);
-                        
+
                         const marker = L.marker([listing.latitude, listing.longitude], { icon })
                             .addTo(map)
                             .bindPopup(`
                                 <div style="width:180px">
-                                    <img src="${imageUrl}" style="width:100%; height:90px; object-fit:cover; border-radius:8px; margin-bottom:6px;" onerror="this.src='{{ asset("images/placeholder.jpg") }}'">
+                                    <img src="${imageUrl}" style="width:100%; height:90px; object-fit:cover; border-radius:8px; margin-bottom:6px;" onerror="this.src='{{ asset("images/Image-not-found.png") }}'">
                                     <div class="fw-semibold">${price} triệu • ${listing.area}m²</div>
                                     <div class="text-muted small mb-2">${listing.category || ''}</div>
                                     <button class="btn btn-primary btn-sm w-100" onclick="viewListing(${listing.id})" style="border:none; cursor:pointer;">
@@ -76,7 +76,7 @@
                                     </button>
                                 </div>
                             `);
-                        
+
                         marker.on('click', async () => {
                             // Load detail and update right panel
                             if (window.loadListingDetail && window.updateDetail) {
@@ -91,7 +91,7 @@
                                 document.getElementById('detail-panel')?.scrollIntoView({ behavior: 'smooth' });
                             }
                         });
-                        
+
                         markers.push(marker);
                     });
                 })
@@ -117,7 +117,7 @@
 
         // Load listings on page load
         loadListingsForMap();
-        
+
         // Reload listings when map bounds change (debounced)
         let reloadTimer;
         map.on('moveend', function() {

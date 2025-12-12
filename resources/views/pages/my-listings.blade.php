@@ -32,8 +32,8 @@
             @foreach($listings as $listing)
             <tr>
               <td>
-                <img src="{{ $listing->primaryImage?->image_url ?? asset('images/placeholder.jpg') }}" 
-                     alt="{{ $listing->title }}" 
+                <img src="{{ $listing->primaryImage?->image_url ?? asset('images/Image-not-found.png') }}"
+                     alt="{{ $listing->title }}"
                      style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">
               </td>
               <td>
@@ -74,7 +74,7 @@
           </tbody>
         </table>
       </div>
-      
+
       <!-- Pagination -->
       <div class="mt-4">
         {{ $listings->links() }}

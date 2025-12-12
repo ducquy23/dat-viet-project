@@ -9,14 +9,14 @@
             <i class="bi bi-map text-muted" style="font-size: 64px;"></i>
             <p class="text-muted mt-3">Chọn một lô đất trên bản đồ để xem chi tiết</p>
         </div>
-        
+
         <!-- Dynamic Content - Will be populated by JavaScript -->
         <div id="detail-panel-content" style="display: none;">
             <!-- Gallery -->
             <div class="gallery-main mb-2">
-                <img id="lot-main-img" src="" class="img-fluid rounded lot-image" alt="" onerror="this.src='{{ asset('images/placeholder.jpg') }}'" style="cursor: pointer;" onclick="openImageModal(this.src)">
+                <img id="lot-main-img" src="" class="img-fluid rounded lot-image" alt="" onerror="this.src='{{ asset('images/Image-not-found.png') }}'" style="cursor: pointer;" onclick="openImageModal(this.src)">
             </div>
-            
+
             <div class="gallery-thumbs d-flex gap-2 mb-3" id="lot-thumbs"></div>
 
             <!-- Price & Address -->
@@ -151,7 +151,7 @@
             alert('Vui lòng đăng nhập để sử dụng tính năng này');
             return;
         }
-        
+
         toggleFavorite(listingId);
     }
 
@@ -172,7 +172,7 @@
         })
         .then(data => {
             if (!data) return;
-            
+
             const btn = document.getElementById('favorite-btn');
             if (btn) {
                 const icon = btn.querySelector('i');
@@ -303,18 +303,18 @@
         window.currentLightboxIndex = currentIndex;
         const thumb = thumbs[currentIndex];
         const imageSrc = thumb.src || thumb.getAttribute('src');
-        
+
         const lightboxImg = document.getElementById('lightbox-image');
         if (lightboxImg && imageSrc) {
             lightboxImg.src = imageSrc;
         }
-        
+
         // Update main image in detail panel
         const mainImg = document.getElementById('lot-main-img');
         if (mainImg && imageSrc) {
             mainImg.src = imageSrc;
         }
-        
+
         // Update active thumbnail
         document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
         const thumbBtn = thumb.closest('.thumb');

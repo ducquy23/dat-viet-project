@@ -32,8 +32,8 @@
             @foreach($listings as $listing)
             <div class="listing-item mb-3 p-3 border rounded" onclick="window.location.href='{{ route('listings.show', $listing->slug) }}'">
               <div class="d-flex gap-3">
-                <img src="{{ $listing->primaryImage?->image_url ?? asset('images/placeholder.jpg') }}" 
-                     alt="{{ $listing->title }}" 
+                <img src="{{ $listing->primaryImage?->image_url ?? asset('images/Image-not-found.png') }}"
+                     alt="{{ $listing->title }}"
                      style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px;">
                 <div class="flex-grow-1">
                   <h6 class="fw-bold mb-1">{{ $listing->title }}</h6>
@@ -51,7 +51,7 @@
               </div>
             </div>
             @endforeach
-            
+
             <!-- Pagination -->
             <div class="mt-4">
               {{ $listings->links() }}

@@ -1,10 +1,10 @@
 <!-- Server-side rendered listing content -->
 <!-- Gallery -->
 <div class="gallery-main mb-2">
-    <img 
-        id="lot-main-img" 
-        src="{{ $listing->primaryImage?->image_url ?? ($listing->images->first()?->image_url ?? asset('images/placeholder.jpg')) }}"
-        class="img-fluid rounded lot-image" 
+    <img
+        id="lot-main-img"
+        src="{{ $listing->primaryImage?->image_url ?? ($listing->images->first()?->image_url ?? asset('images/Image-not-found.png')) }}"
+        class="img-fluid rounded lot-image"
         alt="{{ $listing->title }}"
         style="cursor: pointer;"
         onclick="openImageModal(this.src)">
@@ -28,7 +28,7 @@
         </p>
     </div>
     @auth('partner')
-    <button class="btn btn-light btn-fav {{ isset($isFavorited) && $isFavorited ? 'active' : '' }}" 
+    <button class="btn btn-light btn-fav {{ isset($isFavorited) && $isFavorited ? 'active' : '' }}"
             id="favorite-btn"
             onclick="toggleFavorite({{ $listing->id }})"
             title="Thêm vào yêu thích">
@@ -139,7 +139,7 @@
 <div id="similar-list">
     @foreach($relatedListings as $similar)
         <div class="similar-item" onclick="window.location.href='{{ route('listings.show', $similar->slug) }}'">
-            <img src="{{ $similar->primaryImage?->image_url ?? asset('images/placeholder.jpg') }}" alt="{{ $similar->title }}">
+            <img src="{{ $similar->primaryImage?->image_url ?? asset('images/Image-not-found.png') }}" alt="{{ $similar->title }}">
             <div class="flex-grow-1">
                 <div class="fw-bold">{{ number_format($similar->price) }} triệu</div>
                 <div class="text-muted small">{{ $similar->area }}m² • {{ $similar->category->name }}</div>

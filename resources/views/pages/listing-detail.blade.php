@@ -51,7 +51,7 @@
                 <span>{{ $listing->address }}, {{ $listing->district?->name }}, {{ $listing->city?->name }}</span>
               </div>
             </div>
-            <button class="btn btn-light btn-lg {{ isset($isFavorited) && $isFavorited ? 'active' : '' }}" 
+            <button class="btn btn-light btn-lg {{ isset($isFavorited) && $isFavorited ? 'active' : '' }}"
                     id="favorite-btn"
                     onclick="toggleFavorite({{ $listing->id }})"
                     title="Yêu thích">
@@ -234,8 +234,8 @@
           @foreach($relatedListings as $related)
           <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
             <a href="{{ route('listings.show', $related->slug) }}">
-              <img src="{{ $related->primaryImage?->image_url ?? asset('images/placeholder.jpg') }}" 
-                   alt="{{ $related->title }}" 
+              <img src="{{ $related->primaryImage?->image_url ?? asset('images/Image-not-found.png') }}"
+                   alt="{{ $related->title }}"
                    style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
             </a>
             <div class="flex-grow-1">
@@ -270,12 +270,12 @@
   // Initialize detail map
   @if(isset($listing) && $listing)
   const detailMap = L.map('detailMap').setView([{{ $listing->latitude }}, {{ $listing->longitude }}], 15);
-  
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(detailMap);
-  
+
   L.marker([{{ $listing->latitude }}, {{ $listing->longitude }}])
     .addTo(detailMap)
     .bindPopup('{{ $listing->address }}');
@@ -313,12 +313,12 @@
   function showContactForm(listingId) {
     const name = prompt('Nhập tên của bạn:');
     if (!name) return;
-    
+
     const phone = prompt('Nhập số điện thoại:');
     if (!phone) return;
-    
+
     const message = prompt('Nhập tin nhắn (tùy chọn):') || '';
-    
+
     fetch(`/api/listings/${listingId}/contact`, {
       method: 'POST',
       headers: {
