@@ -21,10 +21,6 @@ class Ad extends Model
         'is_active',
         'start_date',
         'end_date',
-        'views_count',
-        'clicks_count',
-        'price',
-        'pricing_type',
     ];
 
     protected $casts = [
@@ -32,9 +28,6 @@ class Ad extends Model
         'is_active' => 'boolean',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
-        'views_count' => 'integer',
-        'clicks_count' => 'integer',
-        'price' => 'decimal:2',
     ];
 
     /**
@@ -73,21 +66,6 @@ class Ad extends Model
         return $query->orderBy('sort_order')->orderBy('id');
     }
 
-    /**
-     * @return void
-     */
-    public function incrementViews(): void
-    {
-        $this->increment('views_count');
-    }
-
-    /**
-     * @return void
-     */
-    public function incrementClicks(): void
-    {
-        $this->increment('clicks_count');
-    }
 
     /**
      * @return bool

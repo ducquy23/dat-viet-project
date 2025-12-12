@@ -73,14 +73,72 @@ function renderMarkers(data) {
         return;
     }
 
-    markerLayers.forEach(m => currentMap.removeLayer(m));
+    // Clear existing markers from markerLayers
+    markerLayers.forEach(m => {
+        if (currentMap.hasLayer(m)) {
+            currentMap.removeLayer(m);
+        }
+    });
     markerLayers = [];
+    
+    // Also clear markers from map-area.blade.php if they exist
+    if (window.mapAreaMarkers && Array.isArray(window.mapAreaMarkers)) {
+        window.mapAreaMarkers.forEach(m => {
+            if (currentMap.hasLayer(m)) {
+                currentMap.removeLayer(m);
+            }
+        });
+        window.mapAreaMarkers = [];
+    }
 
+    // Track IDs to avoid duplicates
+    const addedIds = new Set();
+    
     data.forEach(lot => {
-        const marker = L.marker([lot.lat, lot.lng], { icon: lot.isVip ? iconVip : iconNormal }).addTo(currentMap);
-        marker.bindPopup(popupTemplate(lot));
+        // Skip if this ID was already added
+        if (addedIds.has(lot.id)) {
+            console.warn(`Duplicate listing ID ${lot.id} detected, skipping`);
+            return;
+        }
+        
+        // Validate coordinates
+        if (!lot.lat || !lot.lng || isNaN(lot.lat) || isNaN(lot.lng)) {
+            console.warn(`Invalid coordinates for listing ${lot.id}: lat=${lot.lat}, lng=${lot.lng}`);
+            return;
+        }
+        
+        // Validate coordinate ranges (Vietnam bounds approximately)
+        const lat = parseFloat(lot.lat);
+        const lng = parseFloat(lot.lng);
+        if (lat < 8.5 || lat > 23.5 || lng < 102.0 || lng > 110.0) {
+            console.warn(`Coordinates out of Vietnam bounds for listing ${lot.id}: lat=${lat}, lng=${lng}`);
+            return;
+        }
+        
+        addedIds.add(lot.id);
+        
+        const marker = L.marker([lat, lng], { 
+            icon: lot.isVip ? iconVip : iconNormal,
+            title: lot.name || lot.title || `Tin đăng ${lot.id}`,
+            riseOnHover: true,
+            zIndexOffset: lot.isVip ? 1000 : 500
+        }).addTo(currentMap);
+        
+        marker.bindPopup(popupTemplate(lot), {
+            maxWidth: 250,
+            className: 'custom-popup',
+            closeButton: true,
+            autoPan: true,
+            autoPanPadding: [50, 50]
+        });
 
         marker.on("click", async () => {
+            // Zoom to marker location
+            currentMap.setView([lot.lat, lot.lng], Math.max(currentMap.getZoom(), 16), {
+                animate: true,
+                duration: 0.5
+            });
+            
             // Load full detail and update right panel
             await loadListingDetail(lot.id);
             const fullLot = lots.find(l => l.id === lot.id) || lot;
@@ -105,16 +163,34 @@ function renderMarkers(data) {
 
         markerLayers.push(marker);
     });
+    
+    // Store markers globally so map-area can clear them
+    window.markerLayers = markerLayers;
 }
 
 function popupTemplate(lot) {
     const imageUrl = lot.img || '/images/Image-not-found.png';
+    const address = lot.address || lot.district || '';
+    const cityDistrict = [lot.district, lot.city].filter(Boolean).join(', ');
+    
     return `
-        <div style="width:180px">
-            <img src="${imageUrl}" style="width:100%; height:90px; object-fit:cover; border-radius:8px; margin-bottom:6px;" onerror="this.src='/images/Image-not-found.png'">
-            <div class="fw-semibold">${lot.price} • ${lot.size}</div>
-            <div class="text-muted small mb-2">${lot.type || ''}</div>
-            <a href="/tin-dang/${lot.slug || lot.id}" class="btn btn-primary btn-sm w-100" data-view-lot="${lot.id}">Xem chi tiết</a>
+        <div style="width:220px; font-family: 'SF Pro Display', sans-serif;">
+            <img src="${imageUrl}" style="width:100%; height:120px; object-fit:cover; border-radius:8px 8px 0 0; margin-bottom:8px; display:block;" onerror="this.src='/images/Image-not-found.png'">
+            <div style="padding: 0 8px 8px 8px;">
+                <div style="font-weight:700; font-size:15px; color:#335793; margin-bottom:6px; line-height:1.3;">
+                    ${lot.price} triệu • ${lot.size}
+                </div>
+                ${lot.type ? `<div style="color:#6c757d; font-size:12px; margin-bottom:4px;">
+                    <i class="bi bi-tag-fill" style="font-size:10px;"></i> ${lot.type}
+                </div>` : ''}
+                ${address ? `<div style="color:#6c757d; font-size:11px; margin-bottom:8px; line-height:1.4; display:flex; align-items:start; gap:4px;">
+                    <i class="bi bi-geo-alt-fill" style="font-size:11px; margin-top:2px; flex-shrink:0;"></i>
+                    <span>${address}${cityDistrict ? ', ' + cityDistrict : ''}</span>
+                </div>` : ''}
+                <a href="/tin-dang/${lot.slug || lot.id}" class="btn btn-primary btn-sm w-100" data-view-lot="${lot.id}" style="border:none; font-size:12px; padding:6px 12px; border-radius:6px;">
+                    <i class="bi bi-eye"></i> Xem chi tiết
+                </a>
+            </div>
         </div>
     `;
 }
@@ -511,31 +587,52 @@ async function loadListings(filters = {}) {
         const response = await fetch(url);
         const data = await response.json();
 
-        // Convert API data to app format
-        lots = data.listings.map(listing => ({
-            id: listing.id,
-            name: listing.title,
-            price: formatPrice(listing.price),
-            size: `${listing.area}m²`,
-            priceValue: listing.price,
-            sizeValue: listing.area,
-            lat: parseFloat(listing.latitude),
-            lng: parseFloat(listing.longitude),
-            slug: listing.slug,
-            img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/Image-not-found.png',
-            type: listing.category || 'Đất',
-            address: listing.address,
-            city: listing.city,
-            district: listing.district,
-            tags: [], // Will be loaded from detail
-            seller: { name: '', phone: '' }, // Will be loaded from detail
-            isVip: listing.is_vip || false,
-            legal: '',
-            front: '',
-            road: '',
-            depth: '',
-            roadWidth: '',
-            direction: '',
+        // Convert API data to app format with validation
+        lots = data.listings
+            .filter(listing => {
+                // Validate coordinates
+                if (!listing.latitude || !listing.longitude) {
+                    console.warn(`Listing ${listing.id} missing coordinates`);
+                    return false;
+                }
+                const lat = parseFloat(listing.latitude);
+                const lng = parseFloat(listing.longitude);
+                if (isNaN(lat) || isNaN(lng)) {
+                    console.warn(`Listing ${listing.id} has invalid coordinates`);
+                    return false;
+                }
+                // Validate Vietnam bounds
+                if (lat < 8.5 || lat > 23.5 || lng < 102.0 || lng > 110.0) {
+                    console.warn(`Listing ${listing.id} coordinates out of bounds`);
+                    return false;
+                }
+                return true;
+            })
+            .map(listing => ({
+                id: listing.id,
+                name: listing.title,
+                title: listing.title,
+                price: formatPrice(listing.price),
+                size: `${listing.area}m²`,
+                priceValue: listing.price,
+                sizeValue: listing.area,
+                lat: parseFloat(listing.latitude),
+                lng: parseFloat(listing.longitude),
+                slug: listing.slug,
+                img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/Image-not-found.png',
+                type: listing.category || 'Đất',
+                address: listing.address || '',
+                city: listing.city || '',
+                district: listing.district || '',
+                tags: [], // Will be loaded from detail
+                seller: { name: '', phone: '' }, // Will be loaded from detail
+                isVip: listing.is_vip || false,
+                legal: '',
+                front: '',
+                road: '',
+                depth: '',
+                roadWidth: '',
+                direction: '',
             roadAccess: false,
             pricePer: '',
             planning: '',
@@ -649,6 +746,57 @@ async function applyFilters() {
 function updateRangeLabels() {
     priceLabel.textContent = `${filterPriceEl.value}+`;
     areaLabel.textContent = `${filterAreaEl.value}+`;
+}
+
+// Load districts when city changes
+if (filterCityEl && filterDistrictEl) {
+    filterCityEl.addEventListener('change', async function() {
+        const cityId = this.value;
+        
+        if (cityId) {
+            try {
+                // Disable district select while loading
+                filterDistrictEl.disabled = true;
+                filterDistrictEl.innerHTML = '<option value="">Đang tải...</option>';
+                
+                const response = await fetch(`/api/districts?city_id=${cityId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                // Clear and populate districts
+                filterDistrictEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                
+                if (data.districts && Array.isArray(data.districts)) {
+                    data.districts.forEach(district => {
+                        const option = document.createElement('option');
+                        option.value = district.id;
+                        option.textContent = district.name;
+                        filterDistrictEl.appendChild(option);
+                    });
+                }
+                
+                // Re-enable district select
+                filterDistrictEl.disabled = false;
+            } catch (error) {
+                console.error('Error loading districts:', error);
+                filterDistrictEl.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+                filterDistrictEl.disabled = false;
+            }
+        } else {
+            // Clear districts if no city selected
+            filterDistrictEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+            filterDistrictEl.disabled = false;
+        }
+    });
+    
+    // Load districts on page load if city is already selected
+    if (filterCityEl.value) {
+        filterCityEl.dispatchEvent(new Event('change'));
+    }
 }
 
 // Only add event listeners if elements exist (not all pages have filters)
@@ -1528,3 +1676,16 @@ document.getElementById('btn-register-facebook')?.addEventListener('click', func
         confirmButtonText: 'Đã hiểu'
     });
 });
+
+// Track advertisement clicks
+function trackAdClick(adId) {
+    fetch(`/api/ads/${adId}/click`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    }).catch(error => {
+        console.error('Error tracking ad click:', error);
+    });
+}

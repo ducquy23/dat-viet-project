@@ -14,7 +14,7 @@
         <div class="ad-badge-small">Quảng cáo</div>
         <div class="ad-image-placeholder">
             @if($ad->image_url)
-                <img src="{{ $ad->full_image_url }}" alt="{{ $ad->title }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">
+                <img src="{{ $ad->full_image_url }}" alt="{{ $ad->title }}" loading="lazy">
             @else
                 <i class="bi bi-image"></i>
             @endif

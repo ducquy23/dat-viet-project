@@ -12,23 +12,21 @@
 
     <form class="d-none d-md-flex col-5" action="{{ route('search') }}" method="GET">
         <div class="input-group search-box">
-            <span class="input-group-text bg-white border-end-0">
-                <i class="bi bi-search"></i>
+            <span class="input-group-text bg-white border-end-0" style="padding: 12px 16px;">
+                <i class="bi bi-search" style="color: #64748b;"></i>
             </span>
             <input
                 class="form-control border-start-0"
                 type="text"
                 name="q"
                 value="{{ request('q') }}"
-                placeholder="Tìm địa chỉ, từ khóa, sổ đỏ, tên chủ đất...">
+                placeholder="Tìm địa chỉ, từ khóa, sổ đỏ, tên chủ đất..."
+                style="padding: 12px 16px; font-size: 14px;"
+                aria-label="Tìm kiếm">
         </div>
     </form>
 
     <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-outline-secondary d-none d-md-inline-flex" onclick="location.reload()">
-            <i class="bi bi-arrow-clockwise"></i> Làm mới
-        </button>
-
         @auth('partner')
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">

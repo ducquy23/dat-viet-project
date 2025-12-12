@@ -24,6 +24,11 @@ class CreateListing extends CreateRecord
         $this->galleryImages = $data['gallery_images'] ?? [];
         unset($data['thumbnail'], $data['gallery_images']);
 
+        // Tự động set approved_at khi status = 'approved'
+        if (isset($data['status']) && $data['status'] === 'approved') {
+            $data['approved_at'] = now();
+        }
+
         return $data;
     }
 

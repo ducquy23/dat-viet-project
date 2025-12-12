@@ -71,11 +71,7 @@ class ApiController extends Controller
      */
     public function trackAdClick($id): JsonResponse
     {
-        $ad = Ad::find($id);
-        if ($ad) {
-            $ad->increment('clicks_count');
-        }
-
+        // Track ad click (no longer storing clicks_count)
         return response()->json(['success' => true]);
     }
 

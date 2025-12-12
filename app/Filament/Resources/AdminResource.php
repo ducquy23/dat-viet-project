@@ -2,8 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
+use App\Filament\Resources\AdminResource\Pages;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,23 +10,22 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class UserResource extends Resource
+class AdminResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static ?string $navigationLabel = 'Đối Tác';
+    protected static ?string $navigationLabel = 'Quản Trị Viên';
 
-    protected static ?string $modelLabel = 'Đối Tác';
+    protected static ?string $modelLabel = 'Quản Trị Viên';
 
-    protected static ?string $pluralModelLabel = 'Đối Tác';
+    protected static ?string $pluralModelLabel = 'Quản Trị Viên';
 
     protected static ?string $navigationGroup = 'Quản Lý Người Dùng';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -37,52 +35,58 @@ class UserResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Họ tên')
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('phone')
-                            ->label('Số điện thoại')
-                            ->tel()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255),
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('email')
                             ->label('Email')
                             ->email()
+                            ->required()
                             ->unique(ignoreRecord: true)
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('password')
                             ->label('Mật khẩu')
                             ->password()
                             ->maxLength(255)
                             ->dehydrated(fn ($state) => filled($state))
-                            ->required(fn ($livewire) => $livewire instanceof \App\Filament\Resources\UserResource\Pages\CreateUser),
-                    ])->columns(2),
-                
-                Forms\Components\Section::make('Trạng thái')
+                            ->required(fn ($livewire) => $livewire instanceof \App\Filament\Resources\AdminResource\Pages\CreateAdmin)
+                            ->helperText('Để trống nếu không muốn thay đổi mật khẩu')
+                            ->columnSpanFull(),
+                    ]),
+
+                Forms\Components\Section::make('Vai trò và quyền')
                     ->schema([
+                        Forms\Components\Select::make('role')
+                            ->label('Vai trò')
+                            ->options([
+                                'admin' => 'Quản trị viên',
+                            ])
+                            ->required()
+                            ->default('admin')
+                            ->disabled(fn ($record) => $record !== null)
+                            ->helperText('Vai trò quản trị viên có toàn quyền truy cập'),
                         Forms\Components\Select::make('status')
                             ->label('Trạng thái')
                             ->options([
                                 'active' => 'Hoạt động',
                                 'inactive' => 'Không hoạt động',
-                                'banned' => 'Bị khóa',
                             ])
                             ->required()
                             ->default('active'),
-                        Forms\Components\TextInput::make('role')
-                            ->label('Vai trò')
-                            ->default('user')
-                            ->disabled()
-                            ->dehydrated(),
-                    ])->columns(2),
+                    ])
+                    ->columns(2),
 
                 Forms\Components\Section::make('Thống kê')
                     ->schema([
-                        Forms\Components\Placeholder::make('listings_count')
-                            ->label('Số tin đăng')
-                            ->content(fn ($record) => $record?->listings()->count() ?? 0),
                         Forms\Components\Placeholder::make('created_at')
-                            ->label('Ngày đăng ký')
+                            ->label('Ngày tạo')
                             ->content(fn ($record) => $record?->created_at?->format('d/m/Y H:i') ?? '-'),
-                    ])->columns(2)
+                        Forms\Components\Placeholder::make('updated_at')
+                            ->label('Cập nhật lần cuối')
+                            ->content(fn ($record) => $record?->updated_at?->format('d/m/Y H:i') ?? '-'),
+                    ])
+                    ->columns(2)
                     ->visible(fn ($record) => $record !== null),
             ]);
     }
@@ -90,41 +94,39 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->where('role', 'user'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->where('role', 'admin'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Họ tên')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('phone')
-                    ->label('Số điện thoại')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('role')
+                    ->label('Vai trò')
+                    ->badge()
+                    ->color('success')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'admin' => 'Quản trị viên',
+                        default => $state,
+                    }),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'active' => 'success',
                         'inactive' => 'warning',
-                        'banned' => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'active' => 'Hoạt động',
                         'inactive' => 'Không hoạt động',
-                        'banned' => 'Bị khóa',
                         default => $state,
                     }),
-                Tables\Columns\TextColumn::make('listings_count')
-                    ->label('Số tin đăng')
-                    ->counts('listings')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Ngày đăng ký')
+                    ->label('Ngày tạo')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
@@ -134,11 +136,9 @@ class UserResource extends Resource
                     ->options([
                         'active' => 'Hoạt động',
                         'inactive' => 'Không hoạt động',
-                        'banned' => 'Bị khóa',
                     ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -158,11 +158,10 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            // Không cho tạo user mới - đối tác tự đăng ký
-            // 'create' => Pages\CreateUser::route('/create'),
-            'view' => Pages\ViewUser::route('/{record}'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'index' => Pages\ListAdmins::route('/'),
+            'create' => Pages\CreateAdmin::route('/create'),
+            'edit' => Pages\EditAdmin::route('/{record}/edit'),
         ];
     }
 }
+

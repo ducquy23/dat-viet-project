@@ -1,13 +1,16 @@
 <!-- RIGHT PANEL - DETAIL -->
 <div class="col-12 col-md-3 col-lg-3 border-start p-3 bg-white sidebar-right" id="detail-panel">
+    <!-- RIGHT SIDEBAR AD BANNER -->
+    @include('components.ads.right-panel')
+    
     @if(isset($listing) && $listing)
         <!-- Server-side rendered listing (for detail page) -->
         @include('components.detail-panel-content', ['listing' => $listing])
     @else
         <!-- Empty State - Will be populated by JavaScript -->
-        <div id="detail-panel-empty" class="text-center py-5">
-            <i class="bi bi-map text-muted" style="font-size: 64px;"></i>
-            <p class="text-muted mt-3">Chọn một lô đất trên bản đồ để xem chi tiết</p>
+        <div id="detail-panel-empty" class="empty-state">
+            <i class="bi bi-map"></i>
+            <p>Chọn một lô đất trên bản đồ để xem chi tiết</p>
         </div>
 
         <!-- Dynamic Content - Will be populated by JavaScript -->

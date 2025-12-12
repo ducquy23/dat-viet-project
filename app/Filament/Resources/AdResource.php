@@ -33,58 +33,92 @@ class AdResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('description')
-                    ->columnSpanFull(),
-                Forms\Components\FileUpload::make('image_url')
-                    ->label('Hình ảnh quảng cáo')
-                    ->image()
-                    ->directory('ads')
-                    ->disk('public')
-                    ->imageEditor()
-                    ->imageEditorAspectRatios([
-                        null,
-                        '16:9',
-                        '4:3',
-                        '1:1',
+                Forms\Components\Section::make('Thông tin cơ bản')
+                    ->schema([
+                        Forms\Components\TextInput::make('title')
+                            ->label('Tiêu đề')
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpanFull(),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Mô tả')
+                            ->rows(3)
+                            ->columnSpanFull(),
                     ])
-                    ->maxSize(5120) // 5MB
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('link_url')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('link_text')
-                    ->maxLength(255),
-                Forms\Components\Select::make('position')
-                    ->label('Vị trí')
-                    ->options([
-                        'top' => 'Top Banner',
-                        'sidebar_left' => 'Sidebar Trái',
-                        'sidebar_right' => 'Sidebar Phải',
-                        'bottom' => 'Bottom Banner',
+                    ->columns(2),
+
+                Forms\Components\Section::make('Hình ảnh quảng cáo')
+                    ->schema([
+                        Forms\Components\FileUpload::make('image_url')
+                            ->label('Hình ảnh')
+                            ->image()
+                            ->directory('ads')
+                            ->disk('public')
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                null,
+                                '16:9',
+                                '4:3',
+                                '1:1',
+                            ])
+                            ->maxSize(5120) // 5MB
+                            ->helperText('Kích thước tối đa: 5MB. Tỷ lệ khuyến nghị: 16:9 cho banner, 1:1 cho sidebar')
+                            ->columnSpanFull(),
+                    ]),
+
+                Forms\Components\Section::make('Vị trí hiển thị')
+                    ->schema([
+                        Forms\Components\Select::make('position')
+                            ->label('Vị trí')
+                            ->options([
+                                'top' => 'Top Banner',
+                                'sidebar_left' => 'Sidebar Trái',
+                                'sidebar_right' => 'Sidebar Phải',
+                                'bottom' => 'Bottom Banner',
+                            ])
+                            ->required()
+                            ->native(false)
+                            ->helperText('Chọn vị trí hiển thị quảng cáo trên website'),
+                        Forms\Components\TextInput::make('sort_order')
+                            ->label('Thứ tự sắp xếp')
+                            ->required()
+                            ->numeric()
+                            ->default(0)
+                            ->helperText('Số nhỏ hơn sẽ hiển thị trước'),
                     ])
-                    ->required(),
-                Forms\Components\TextInput::make('sort_order')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                Forms\Components\Toggle::make('is_active')
-                    ->required(),
-                Forms\Components\DateTimePicker::make('start_date'),
-                Forms\Components\DateTimePicker::make('end_date'),
-                Forms\Components\TextInput::make('views_count')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                Forms\Components\TextInput::make('clicks_count')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                Forms\Components\TextInput::make('price')
-                    ->numeric()
-                    ->prefix('$'),
-                Forms\Components\TextInput::make('pricing_type'),
+                    ->columns(2),
+
+                Forms\Components\Section::make('Liên kết và CTA')
+                    ->schema([
+                        Forms\Components\TextInput::make('link_url')
+                            ->label('URL liên kết')
+                            ->url()
+                            ->maxLength(255)
+                            ->placeholder('https://example.com hoặc #')
+                            ->helperText('URL khi người dùng click vào quảng cáo'),
+                        Forms\Components\TextInput::make('link_text')
+                            ->label('Text nút CTA')
+                            ->maxLength(255)
+                            ->placeholder('Ví dụ: Khám phá ngay, Tải về')
+                            ->helperText('Text hiển thị trên nút Call-to-Action'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Trạng thái và thời gian')
+                    ->schema([
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Kích hoạt')
+                            ->required()
+                            ->default(true)
+                            ->helperText('Bật/tắt hiển thị quảng cáo'),
+                        Forms\Components\DateTimePicker::make('start_date')
+                            ->label('Ngày bắt đầu')
+                            ->helperText('Quảng cáo sẽ hiển thị từ ngày này (để trống = ngay lập tức)'),
+                        Forms\Components\DateTimePicker::make('end_date')
+                            ->label('Ngày kết thúc')
+                            ->helperText('Quảng cáo sẽ ẩn sau ngày này (để trống = không giới hạn)'),
+                    ])
+                    ->columns(3),
             ]);
     }
 
@@ -114,16 +148,6 @@ class AdResource extends Resource
                 Tables\Columns\TextColumn::make('end_date')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('views_count')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('clicks_count')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('price')
-                    ->money()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('pricing_type'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
