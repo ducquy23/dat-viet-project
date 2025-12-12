@@ -104,7 +104,20 @@ function popupTemplate(lot) {
 // ===== MINI MAP =====
 function updateMiniMap(lot) {
     const miniMapEl = document.getElementById('mini-map');
-    if (!miniMapEl) return;
+    if (!miniMapEl) {
+        console.warn('Element #mini-map not found');
+        return;
+    }
+
+    if (!lot || !lot.lat || !lot.lng) {
+        console.warn('Invalid lot data for mini map');
+        return;
+    }
+
+    if (typeof L === 'undefined') {
+        console.warn('Leaflet not loaded');
+        return;
+    }
 
     if (!miniMap) {
         miniMap = L.map('mini-map', {
@@ -283,6 +296,10 @@ function setGallery(lot) {
 
 function renderTags(tags = []) {
     const wrapper = document.getElementById("lot-tags");
+    if (!wrapper) {
+        console.warn('Element #lot-tags not found');
+        return;
+    }
     wrapper.innerHTML = "";
     tags.forEach(t => {
         wrapper.innerHTML += `<span class="badge rounded-pill bg-primary-subtle text-primary">${t}</span>`;
@@ -660,8 +677,10 @@ if (favBtn) {
 
 // Initialize: Load listings on page load
 loadListings().then(() => {
-    if (lots.length > 0) {
-updateDetail(lots[0]);
+    // Only update detail if detail panel exists
+    const detailPanel = document.getElementById('detail-panel');
+    if (lots.length > 0 && detailPanel) {
+        updateDetail(lots[0]);
     }
 });
 
@@ -693,8 +712,24 @@ window.renderMarkers = renderMarkers;
 
 // ===== POLYGON DRAW =====
 function drawPolygon(lot) {
+    if (!lot) {
+        console.warn('Invalid lot data for polygon');
+        return;
+    }
+
+    const currentMap = map || window.mainMap;
+    if (!currentMap) {
+        console.warn('Map not available for polygon');
+        return;
+    }
+
+    if (typeof L === 'undefined') {
+        console.warn('Leaflet not loaded');
+        return;
+    }
+
     if (activePolygon) {
-        map.removeLayer(activePolygon);
+        currentMap.removeLayer(activePolygon);
         activePolygon = null;
     }
     if (miniPolygon && miniMap) {
@@ -702,24 +737,28 @@ function drawPolygon(lot) {
         miniPolygon = null;
     }
 
-    if (lot.polygon && lot.polygon.length) {
-        activePolygon = L.polygon(lot.polygon, {
-            color: "#7c3aed",
-            weight: 2,
-            fillColor: "#a855f7",
-            fillOpacity: 0.2,
-            dashArray: "6 4"
-        }).addTo(map);
-        map.fitBounds(activePolygon.getBounds(), { maxZoom: 18, padding: [40, 40] });
-
-        if (miniMap) {
-            miniPolygon = L.polygon(lot.polygon, {
+    if (lot.polygon && Array.isArray(lot.polygon) && lot.polygon.length > 0) {
+        try {
+            activePolygon = L.polygon(lot.polygon, {
                 color: "#7c3aed",
                 weight: 2,
-                fillColor: "#c084fc",
-                fillOpacity: 0.25,
-                dashArray: "4 3"
-            }).addTo(miniMap);
+                fillColor: "#a855f7",
+                fillOpacity: 0.2,
+                dashArray: "6 4"
+            }).addTo(currentMap);
+            currentMap.fitBounds(activePolygon.getBounds(), { maxZoom: 18, padding: [40, 40] });
+
+            if (miniMap) {
+                miniPolygon = L.polygon(lot.polygon, {
+                    color: "#7c3aed",
+                    weight: 2,
+                    fillColor: "#c084fc",
+                    fillOpacity: 0.25,
+                    dashArray: "4 3"
+                }).addTo(miniMap);
+            }
+        } catch (error) {
+            console.error('Error drawing polygon:', error);
         }
     }
 }
