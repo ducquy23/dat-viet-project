@@ -111,7 +111,7 @@ class SearchController extends Controller
                 $query->latest();
         }
 
-        $listings = $query->paginate(20)->withQueryString();
+        $listings = $query->paginate(12)->withQueryString();
 
         return view('pages.search', [
             'listings' => $listings,

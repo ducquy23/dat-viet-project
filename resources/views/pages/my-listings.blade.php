@@ -76,9 +76,11 @@
       </div>
 
       <!-- Pagination -->
-      <div class="mt-4">
-        {{ $listings->links() }}
-      </div>
+      @if($listings->total() > 12)
+        <div class="mt-4">
+          {{ $listings->links() }}
+        </div>
+      @endif
       @else
       <div class="card">
         <div class="card-body text-center py-5">

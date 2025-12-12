@@ -282,7 +282,7 @@ class ListingController extends Controller
         $listings = Listing::where('user_id', $user->id)
             ->with(['category', 'city', 'district', 'package', 'primaryImage'])
             ->latest()
-            ->paginate(20);
+            ->paginate(12);
 
         if ($request->wantsJson() || $request->get('format') === 'json') {
             return response()->json([

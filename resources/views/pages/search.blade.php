@@ -218,9 +218,11 @@
                         @endforeach
 
                         <!-- Pagination -->
-                        <div class="mt-4">
-                            {{ $listings->links() }}
-                        </div>
+                        @if($listings->total() > 12)
+                            <div class="mt-4">
+                                {{ $listings->links() }}
+                            </div>
+                        @endif
                     </div>
                 @else
                     <div class="empty-search-state text-center py-5">
