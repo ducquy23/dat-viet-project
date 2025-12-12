@@ -10,8 +10,8 @@
         </a>
     </div>
 
-    <form class="d-none d-md-flex col-5" action="{{ route('search') }}" method="GET">
-        <div class="input-group search-box">
+    <form class="d-none d-md-flex col-5 position-relative" action="{{ route('search') }}" method="GET" id="header-search-form">
+        <div class="input-group search-box position-relative">
             <span class="input-group-text bg-white border-end-0" style="padding: 12px 16px;">
                 <i class="bi bi-search" style="color: #64748b;"></i>
             </span>
@@ -19,11 +19,22 @@
                 class="form-control border-start-0"
                 type="text"
                 name="q"
+                id="header-search-input"
                 value="{{ request('q') }}"
                 placeholder="Tìm địa chỉ, từ khóa, sổ đỏ, tên chủ đất..."
                 style="padding: 12px 16px; font-size: 14px;"
-                aria-label="Tìm kiếm">
+                aria-label="Tìm kiếm"
+                autocomplete="off">
+            @if(request('q'))
+            <button type="button" class="btn btn-link text-muted p-0 position-absolute end-0 top-50 translate-middle-y me-2" 
+                    onclick="document.getElementById('header-search-input').value=''; document.getElementById('header-search-form').submit();"
+                    style="text-decoration: none; z-index: 10;">
+                <i class="bi bi-x-circle"></i>
+            </button>
+            @endif
         </div>
+        <!-- Search suggestions dropdown -->
+        <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
     </form>
 
     <div class="d-flex align-items-center gap-2">
