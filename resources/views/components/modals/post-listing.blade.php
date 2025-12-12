@@ -72,7 +72,7 @@
                                     <span>Số điện thoại *</span>
                                 </label>
                                 <input type="tel" class="form-control form-control-lg" name="contact_phone" id="post-phone"
-                                       value="{{ auth()->user()?->phone }}" placeholder="09xx xxx xxx" required>
+                                       value="{{ auth('partner')->user()?->phone }}" placeholder="09xx xxx xxx" required>
                                 <small class="text-muted">Để người mua liên hệ với bạn</small>
                             </div>
                             <div class="col-12">

@@ -1,13 +1,7 @@
 @php
-    $ad = \App\Models\Ad::where('position', 'sidebar_left')
-        ->where('is_active', true)
-        ->where(function($q) {
-            $q->whereNull('start_date')->orWhere('start_date', '<=', now());
-        })
-        ->where(function($q) {
-            $q->whereNull('end_date')->orWhere('end_date', '>=', now());
-        })
-        ->orderBy('sort_order')
+    $ad = \App\Models\Ad::active()
+        ->ofPosition('sidebar_left')
+        ->ordered()
         ->first();
 @endphp
 
@@ -20,7 +14,7 @@
         <div class="ad-badge-small">Quảng cáo</div>
         <div class="ad-image-placeholder">
             @if($ad->image_url)
-                <img src="{{ $ad->image_url }}" alt="{{ $ad->title }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">
+                <img src="{{ $ad->full_image_url }}" alt="{{ $ad->title }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">
             @else
                 <i class="bi bi-image"></i>
             @endif

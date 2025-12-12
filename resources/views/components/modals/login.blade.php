@@ -19,11 +19,12 @@
             </div>
 
             <div class="modal-body">
-                <form action="" method="POST">
+                <form action="{{ route('partner.login.submit') }}" method="POST" id="loginForm">
                     @csrf
+                    <div id="loginErrors" class="alert alert-danger d-none"></div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Email hoặc Số điện thoại</label>
-                        <input type="text" class="form-control" name="login" placeholder="nhap@example.com hoặc 09xx xxx xxx" required>
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" class="form-control" name="email" value="{{ old('email') }}" placeholder="nhap@example.com" required autofocus>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Mật khẩu</label>
@@ -36,7 +37,10 @@
                         </div>
                         <a href="#" class="small text-primary">Quên mật khẩu?</a>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 mb-2">Đăng nhập</button>
+                    <button type="submit" class="btn btn-primary w-100 mb-2" id="loginSubmitBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
+                        <span class="btn-text">Đăng nhập</span>
+                    </button>
                     <button type="button" class="btn btn-outline-primary w-100" data-bs-target="#registerModal" data-bs-toggle="modal" data-bs-dismiss="modal">Tạo tài khoản</button>
                     <div class="auth-divider"><span>hoặc</span></div>
                     <div class="d-grid gap-2">
@@ -59,4 +63,82 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    // Xử lý submit form login qua AJAX
+    document.getElementById('loginForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const form = this;
+        const submitBtn = document.getElementById('loginSubmitBtn');
+        const spinner = submitBtn.querySelector('.spinner-border');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const errorDiv = document.getElementById('loginErrors');
+        const formData = new FormData(form);
+        
+        // Reset errors
+        errorDiv.classList.add('d-none');
+        errorDiv.innerHTML = '';
+        
+        // Disable button và hiển thị spinner
+        submitBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'Đang đăng nhập...';
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            return response.json().then(data => {
+                throw {status: response.status, errors: data.errors || data};
+            });
+        })
+        .then(data => {
+            if (data.success) {
+                // Đóng modal
+                const modalElement = document.getElementById('loginModal');
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Reload page để cập nhật header
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            // Hiển thị errors
+            let errorHtml = '<ul class="mb-0">';
+            if (error.errors) {
+                Object.keys(error.errors).forEach(key => {
+                    error.errors[key].forEach(msg => {
+                        errorHtml += '<li>' + msg + '</li>';
+                    });
+                });
+            } else if (error.message) {
+                errorHtml += '<li>' + error.message + '</li>';
+            } else {
+                errorHtml += '<li>Có lỗi xảy ra, vui lòng thử lại</li>';
+            }
+            errorHtml += '</ul>';
+            errorDiv.innerHTML = errorHtml;
+            errorDiv.classList.remove('d-none');
+            
+            // Enable button lại
+            submitBtn.disabled = false;
+            spinner.classList.add('d-none');
+            btnText.textContent = 'Đăng nhập';
+        });
+    });
+</script>
+@endpush
 

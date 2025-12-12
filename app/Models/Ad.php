@@ -125,5 +125,24 @@ class Ad extends Model
 
     return true;
   }
+
+  /**
+   * Lấy URL đầy đủ của hình ảnh quảng cáo
+   * @return string|null
+   */
+  public function getFullImageUrlAttribute()
+  {
+    if (!$this->attributes['image_url']) {
+      return null;
+    }
+    
+    $imageUrl = $this->attributes['image_url'];
+    
+    if (str_starts_with($imageUrl, 'http')) {
+      return $imageUrl;
+    }
+    
+    return asset('storage/' . $imageUrl);
+  }
 }
 

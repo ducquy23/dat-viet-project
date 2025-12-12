@@ -20,9 +20,9 @@
                         </span>
                     </div>
                     <div class="vip-card-image-wrapper">
-                        <img src="{{ $listing->primaryImage?->image_path ?? asset('images/placeholder.jpg') }}" alt="{{ $listing->title }}">
+                        <img src="{{ $listing->primaryImage?->image_url ?? asset('images/placeholder.jpg') }}" alt="{{ $listing->title }}">
                         <div class="vip-card-overlay">
-                            <span class="vip-price-badge">{{ $listing->formatted_price }}</span>
+                            <span class="vip-price-badge">{{ number_format($listing->price) }} triệu</span>
                         </div>
                     </div>
                     <div class="card-body">
@@ -46,14 +46,16 @@
                         </div>
                         
                         <div class="vip-card-tags mb-2">
-                            @foreach($listing->tags->take(3) ?? [] as $tag)
-                                <span class="badge badge-vip-card">{{ $tag }}</span>
-                            @endforeach
+                            @if($listing->tags && is_array($listing->tags))
+                                @foreach(array_slice($listing->tags, 0, 3) as $tag)
+                                    <span class="badge badge-vip-card">{{ $tag }}</span>
+                                @endforeach
+                            @endif
                         </div>
                         
-                        <button class="btn btn-primary btn-sm w-100 vip-card-btn" onclick="event.stopPropagation(); viewListing({{ $listing->id }})">
-                            <i class="bi bi-map"></i> Xem trên bản đồ
-                        </button>
+                        <a href="{{ route('listings.show', $listing->slug) }}" class="btn btn-primary btn-sm w-100 vip-card-btn" onclick="event.stopPropagation();">
+                            <i class="bi bi-map"></i> Xem chi tiết
+                        </a>
                     </div>
                 </div>
             @empty

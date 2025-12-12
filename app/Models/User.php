@@ -100,4 +100,32 @@ class User extends Authenticatable
     {
         return $this->favorites()->where('listing_id', $listingId)->exists();
     }
+
+    /**
+     * Kiểm tra xem user có phải admin không
+     * @return bool
+     */
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Kiểm tra xem user có phải đối tác không
+     * @return bool
+     */
+    public function isPartner()
+    {
+        return $this->role === 'user' || $this->role === 'moderator';
+    }
+
+    /**
+     * Kiểm tra xem user có thể truy cập Filament admin panel không
+     * Chỉ admin mới được truy cập
+     * @return bool
+     */
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        return $this->isAdmin();
+    }
 }

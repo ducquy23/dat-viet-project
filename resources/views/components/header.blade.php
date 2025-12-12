@@ -29,21 +29,18 @@
             <i class="bi bi-arrow-clockwise"></i> Làm mới
         </button>
 
-        @auth
+        @auth('partner')
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-circle"></i> {{ Auth::user()->name ?? Auth::user()->phone }}
+                    <i class="bi bi-person-circle"></i> {{ Auth::guard('partner')->user()->name ?? Auth::guard('partner')->user()->phone }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a></li>
                     <li><a class="dropdown-item" href="{{ route('listings.my-listings') }}">
                         <i class="bi bi-house-door"></i> Tin của tôi
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
-                        <form action="{{ route('logout') }}" method="POST">
+                        <form action="{{ route('partner.logout') }}" method="POST">
                             @csrf
                             <button type="submit" class="dropdown-item">
                                 <i class="bi bi-box-arrow-right"></i> Đăng xuất
@@ -55,9 +52,6 @@
         @else
             <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#loginModal">
                 Đăng nhập
-            </button>
-            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
-                Đăng ký
             </button>
         @endauth
 

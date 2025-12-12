@@ -5,15 +5,15 @@
         <div class="gallery-main mb-2">
             <img 
                 id="lot-main-img" 
-                src="{{ $listing->primaryImage?->image_path ?? $listing->images->first()?->image_path ?? asset('images/placeholder.jpg') }}"
+                src="{{ $listing->primaryImage?->image_url ?? ($listing->images->first()?->image_url ?? asset('images/placeholder.jpg')) }}"
                 class="img-fluid rounded lot-image"
                 alt="{{ $listing->title }}">
         </div>
         
         <div class="gallery-thumbs d-flex gap-2 mb-3" id="lot-thumbs">
             @foreach($listing->images->take(4) as $image)
-                <button class="thumb {{ $loop->first ? 'active' : '' }}" onclick="changeMainImage('{{ $image->image_path }}', this)">
-                    <img src="{{ $image->image_path }}" alt="Thumbnail">
+                <button class="thumb {{ $loop->first ? 'active' : '' }}" onclick="changeMainImage('{{ $image->image_url }}', this)">
+                    <img src="{{ $image->image_url }}" alt="Thumbnail">
                 </button>
             @endforeach
         </div>
@@ -21,18 +21,20 @@
         <!-- Price & Address -->
         <div class="d-flex align-items-start justify-content-between mb-3">
             <div class="flex-grow-1">
-                <h4 class="lot-price fw-bold mb-1">{{ $listing->formatted_price }} • {{ $listing->area }}m²</h4>
+                <h4 class="lot-price fw-bold mb-1">{{ number_format($listing->price) }} triệu • {{ $listing->area }}m²</h4>
                 <p class="text-muted small mb-0 d-flex align-items-center gap-1" id="lot-address">
                     <i class="bi bi-geo-alt-fill"></i>
                     <span>{{ $listing->address }}</span>
                 </p>
             </div>
-            <button class="btn btn-light btn-fav {{ auth()->check() && auth()->user()->favoriteListings->contains($listing->id) ? 'active' : '' }}" 
+            @auth('partner')
+            <button class="btn btn-light btn-fav {{ isset($isFavorited) && $isFavorited ? 'active' : '' }}" 
                     id="favorite-btn"
                     onclick="toggleFavorite({{ $listing->id }})"
                     title="Thêm vào yêu thích">
                 <i class="bi bi-heart"></i>
             </button>
+            @endauth
         </div>
 
         <!-- Mini Map -->
@@ -137,19 +139,21 @@
         @include('components.ads.right-panel')
 
         <!-- Similar Listings -->
+        @if(isset($relatedListings) && $relatedListings->count() > 0)
         <h5 class="fw-bold border-top pt-3 mb-3">CÁC LÔ ĐẤT TƯƠNG TỰ</h5>
         <div id="similar-list">
-            @foreach($similarListings ?? [] as $similar)
-                <div class="similar-item" onclick="viewListing({{ $similar->id }})">
-                    <img src="{{ $similar->primaryImage?->image_path ?? asset('images/placeholder.jpg') }}" alt="{{ $similar->title }}">
+            @foreach($relatedListings as $similar)
+                <div class="similar-item" onclick="window.location.href='{{ route('listings.show', $similar->slug) }}'">
+                    <img src="{{ $similar->primaryImage?->image_url ?? asset('images/placeholder.jpg') }}" alt="{{ $similar->title }}">
                     <div class="flex-grow-1">
-                        <div class="fw-bold">{{ $similar->formatted_price }}</div>
+                        <div class="fw-bold">{{ number_format($similar->price) }} triệu</div>
                         <div class="text-muted small">{{ $similar->area }}m² • {{ $similar->category->name }}</div>
-                        <button class="btn btn-outline-primary btn-sm mt-1">Xem trên bản đồ</button>
+                        <a href="{{ route('listings.show', $similar->slug) }}" class="btn btn-outline-primary btn-sm mt-1">Xem chi tiết</a>
                     </div>
                 </div>
             @endforeach
         </div>
+        @endif
     @else
         <!-- Empty State -->
         <div class="text-center py-5">
@@ -168,7 +172,7 @@
     }
 
     function toggleFavorite(listingId) {
-        fetch(`/listings/${listingId}/favorite`, {
+        fetch(`/api/listings/${listingId}/favorite`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -182,6 +186,12 @@
                 btn.classList.add('active');
             } else {
                 btn.classList.remove('active');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (error.message && error.message.includes('401')) {
+                alert('Vui lòng đăng nhập để sử dụng tính năng này');
             }
         });
     }

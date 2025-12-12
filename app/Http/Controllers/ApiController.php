@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\District;
+use App\Models\Listing;
+use App\Models\Ad;
 use Illuminate\Http\Request;
 
 /**
@@ -24,13 +27,13 @@ class ApiController extends Controller
       return response()->json(['districts' => []]);
     }
     
-    // TODO: Load quận/huyện từ database
-    // $districts = District::where('city_id', $cityId)
-    //   ->orderBy('name')
-    //   ->get(['id', 'name']);
+    $districts = District::where('city_id', $cityId)
+      ->active()
+      ->ordered()
+      ->get(['id', 'name']);
     
     return response()->json([
-      'districts' => [], // $districts
+      'districts' => $districts,
     ]);
   }
 
@@ -40,12 +43,10 @@ class ApiController extends Controller
    */
   public function trackAdClick($id)
   {
-    // TODO: Tăng click count và lưu log
-    // $ad = Ad::find($id);
-    // if ($ad) {
-    //   $ad->increment('clicks_count');
-    //   // Có thể lưu log click với IP, user agent, etc.
-    // }
+    $ad = Ad::find($id);
+    if ($ad) {
+      $ad->increment('clicks_count');
+    }
     
     return response()->json(['success' => true]);
   }
@@ -58,29 +59,84 @@ class ApiController extends Controller
   {
     // Lấy các tham số filter
     $bounds = $request->get('bounds'); // [north, east, south, west]
-    $cityId = $request->get('city_id');
-    $districtId = $request->get('district_id');
-    $categoryId = $request->get('category_id');
+    $cityId = $request->get('city');
+    $districtId = $request->get('district');
+    $categoryId = $request->get('category');
     $minPrice = $request->get('min_price');
     $maxPrice = $request->get('max_price');
     $minArea = $request->get('min_area');
     $maxArea = $request->get('max_area');
     
-    // TODO: Query listings trong bounds và filter
-    // $query = Listing::where('status', 'approved');
+    // Query listings trong bounds và filter
+    $query = Listing::active()
+      ->with(['city', 'district', 'category', 'primaryImage', 'package']);
     
-    // if ($bounds) {
-    //   $query->whereBetween('latitude', [$bounds['south'], $bounds['north']])
-    //     ->whereBetween('longitude', [$bounds['west'], $bounds['east']]);
-    // }
+    if ($bounds && is_array($bounds)) {
+      $query->whereBetween('latitude', [$bounds['south'] ?? -90, $bounds['north'] ?? 90])
+        ->whereBetween('longitude', [$bounds['west'] ?? -180, $bounds['east'] ?? 180]);
+    }
     
-    // // Apply filters...
-    // $listings = $query->with(['city', 'district', 'category', 'images'])
-    //   ->get(['id', 'title', 'price', 'area', 'latitude', 'longitude', 'slug']);
+    if ($cityId) {
+      $query->where('city_id', $cityId);
+    }
+    
+    if ($districtId) {
+      $query->where('district_id', $districtId);
+    }
+    
+    if ($categoryId) {
+      $query->where('category_id', $categoryId);
+    }
+    
+    if ($maxPrice) {
+      $query->where('price', '<=', $maxPrice);
+    }
+    
+    if ($maxArea) {
+      $query->where('area', '<=', $maxArea);
+    }
+    
+    if ($request->has('has_road') && $request->has_road) {
+      $query->where('has_road_access', true);
+    }
+    
+    $listings = $query->latest()->take(100)->get()->map(function ($listing) {
+      return [
+        'id' => $listing->id,
+        'title' => $listing->title,
+        'price' => $listing->price,
+        'area' => $listing->area,
+        'latitude' => $listing->latitude,
+        'longitude' => $listing->longitude,
+        'slug' => $listing->slug,
+        'address' => $listing->address,
+        'city' => $listing->city?->name,
+        'district' => $listing->district?->name,
+        'category' => $listing->category?->name,
+        'image' => $listing->primaryImage?->image_path ?? null,
+        'is_vip' => $listing->isVip(),
+      ];
+    });
     
     return response()->json([
-      'listings' => [],
+      'listings' => $listings,
+    ]);
+  }
+
+  /**
+   * Lấy chi tiết một tin đăng (AJAX)
+   * @param int $id - ID của tin đăng
+   */
+  public function getListing($id)
+  {
+    $listing = Listing::active()
+      ->with(['user', 'category', 'city', 'district', 'package', 'images' => function($query) {
+        $query->orderBy('is_primary', 'desc')->orderBy('sort_order');
+      }])
+      ->findOrFail($id);
+    
+    return response()->json([
+      'listing' => $listing,
     ]);
   }
 }
-

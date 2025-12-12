@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Listing;
+use App\Models\City;
+use App\Models\Category;
+use App\Models\District;
 use Illuminate\Http\Request;
 
 /**
@@ -28,69 +32,79 @@ class SearchController extends Controller
     $maxArea = $request->get('max_area');
     $sort = $request->get('sort', 'latest'); // latest, price_asc, price_desc, area_asc, area_desc
     
-    // TODO: Thực hiện tìm kiếm trong database
-    // $query = Listing::where('status', 'approved');
+    // Load cities và categories cho filter
+    $cities = City::active()->ordered()->get();
+    $categories = Category::active()->ordered()->get();
+    $districts = collect();
+    if ($cityId) {
+      $districts = District::where('city_id', $cityId)->active()->ordered()->get();
+    }
     
-    // if ($keyword) {
-    //   $query->where(function($q) use ($keyword) {
-    //     $q->where('title', 'like', "%{$keyword}%")
-    //       ->orWhere('description', 'like', "%{$keyword}%")
-    //       ->orWhere('address', 'like', "%{$keyword}%");
-    //   });
-    // }
+    // Thực hiện tìm kiếm trong database
+    $query = Listing::active()
+      ->with(['city', 'district', 'category', 'primaryImage', 'package']);
     
-    // if ($cityId) {
-    //   $query->where('city_id', $cityId);
-    // }
+    if ($keyword) {
+      $query->where(function($q) use ($keyword) {
+        $q->where('title', 'like', "%{$keyword}%")
+          ->orWhere('description', 'like', "%{$keyword}%")
+          ->orWhere('address', 'like', "%{$keyword}%");
+      });
+    }
     
-    // if ($districtId) {
-    //   $query->where('district_id', $districtId);
-    // }
+    if ($cityId) {
+      $query->where('city_id', $cityId);
+    }
     
-    // if ($categoryId) {
-    //   $query->where('category_id', $categoryId);
-    // }
+    if ($districtId) {
+      $query->where('district_id', $districtId);
+    }
     
-    // if ($minPrice) {
-    //   $query->where('price', '>=', $minPrice);
-    // }
+    if ($categoryId) {
+      $query->where('category_id', $categoryId);
+    }
     
-    // if ($maxPrice) {
-    //   $query->where('price', '<=', $maxPrice);
-    // }
+    if ($minPrice) {
+      $query->where('price', '>=', $minPrice);
+    }
     
-    // if ($minArea) {
-    //   $query->where('area', '>=', $minArea);
-    // }
+    if ($maxPrice) {
+      $query->where('price', '<=', $maxPrice);
+    }
     
-    // if ($maxArea) {
-    //   $query->where('area', '<=', $maxArea);
-    // }
+    if ($minArea) {
+      $query->where('area', '>=', $minArea);
+    }
     
-    // // Sắp xếp
-    // switch ($sort) {
-    //   case 'price_asc':
-    //     $query->orderBy('price', 'asc');
-    //     break;
-    //   case 'price_desc':
-    //     $query->orderBy('price', 'desc');
-    //     break;
-    //   case 'area_asc':
-    //     $query->orderBy('area', 'asc');
-    //     break;
-    //   case 'area_desc':
-    //     $query->orderBy('area', 'desc');
-    //     break;
-    //   default:
-    //     $query->latest();
-    // }
+    if ($maxArea) {
+      $query->where('area', '<=', $maxArea);
+    }
     
-    // $listings = $query->with(['city', 'district', 'category', 'images'])
-    //   ->paginate(20)
-    //   ->withQueryString();
+    // Sắp xếp
+    switch ($sort) {
+      case 'price_asc':
+        $query->orderBy('price', 'asc');
+        break;
+      case 'price_desc':
+        $query->orderBy('price', 'desc');
+        break;
+      case 'area_asc':
+        $query->orderBy('area', 'asc');
+        break;
+      case 'area_desc':
+        $query->orderBy('area', 'desc');
+        break;
+      default:
+        $query->latest();
+    }
+    
+    $listings = $query->paginate(20)->withQueryString();
     
     return view('pages.search', [
-      // 'listings' => $listings,
+      'listings' => $listings,
+      'cities' => $cities,
+      'categories' => $categories,
+      'districts' => $districts,
       'keyword' => $keyword,
       'filters' => [
         'city_id' => $cityId,

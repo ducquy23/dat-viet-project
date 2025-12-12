@@ -1,13 +1,7 @@
 @php
-    $ad = \App\Models\Ad::where('position', 'top')
-        ->where('is_active', true)
-        ->where(function($q) {
-            $q->whereNull('start_date')->orWhere('start_date', '<=', now());
-        })
-        ->where(function($q) {
-            $q->whereNull('end_date')->orWhere('end_date', '>=', now());
-        })
-        ->orderBy('sort_order')
+    $ad = \App\Models\Ad::active()
+        ->ofPosition('top')
+        ->ordered()
         ->first();
 @endphp
 

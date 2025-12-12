@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Listing;
+use App\Models\Category;
+use App\Models\Favorite;
+use App\Models\Contact;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * ListingController: Xử lý các trang liên quan đến tin đăng
@@ -18,26 +23,47 @@ class ListingController extends Controller
    */
   public function show($slug)
   {
-    // TODO: Load tin đăng từ database
-    // $listing = Listing::where('slug', $slug)
-    //   ->where('status', 'approved')
-    //   ->with(['user', 'category', 'city', 'district', 'images'])
-    //   ->firstOrFail();
+    $listing = Listing::where('slug', $slug)
+      ->active()
+      ->with(['user', 'category', 'city', 'district', 'package', 'images' => function($query) {
+        $query->orderBy('is_primary', 'desc')->orderBy('sort_order');
+      }])
+      ->firstOrFail();
     
     // Tăng view count
-    // $listing->increment('views_count');
+    $listing->increment('views_count');
+    
+    // Ghi log view
+    \App\Models\ListingView::create([
+      'listing_id' => $listing->id,
+      'user_id' => auth('partner')->id(), // null nếu guest
+      'ip_address' => request()->ip(),
+      'user_agent' => request()->userAgent(),
+      'viewed_at' => now(),
+    ]);
+    
+    // Kiểm tra user đã yêu thích chưa
+    $isFavorited = false;
+    $user = auth('partner')->user();
+    if ($user) {
+      $isFavorited = Favorite::where('user_id', $user->id)
+        ->where('listing_id', $listing->id)
+        ->exists();
+    }
     
     // Load tin liên quan
-    // $relatedListings = Listing::where('category_id', $listing->category_id)
-    //   ->where('id', '!=', $listing->id)
-    //   ->where('status', 'approved')
-    //   ->latest()
-    //   ->take(6)
-    //   ->get();
+    $relatedListings = Listing::where('category_id', $listing->category_id)
+      ->where('id', '!=', $listing->id)
+      ->active()
+      ->with(['city', 'district', 'category', 'primaryImage'])
+      ->latest()
+      ->take(6)
+      ->get();
     
     return view('pages.listing-detail', [
-      // 'listing' => $listing,
-      // 'relatedListings' => $relatedListings,
+      'listing' => $listing,
+      'relatedListings' => $relatedListings,
+      'isFavorited' => $isFavorited,
     ]);
   }
 
@@ -67,32 +93,31 @@ class ListingController extends Controller
    */
   public function toggleFavorite(Request $request, $id)
   {
-    // TODO: Xử lý thêm/xóa yêu thích
-    // if (!auth()->check()) {
-    //   return response()->json(['error' => 'Vui lòng đăng nhập'], 401);
-    // }
+    // Cho phép cả partner và guest (nếu cần)
+    $user = auth('partner')->user();
     
-    // $listing = Listing::findOrFail($id);
-    // $user = auth()->user();
+    if (!$user) {
+      return response()->json(['error' => 'Vui lòng đăng nhập'], 401);
+    }
     
-    // $favorite = Favorite::where('user_id', $user->id)
-    //   ->where('listing_id', $id)
-    //   ->first();
+    $listing = Listing::findOrFail($id);
     
-    // if ($favorite) {
-    //   $favorite->delete();
-    //   $listing->decrement('favorites_count');
-    //   return response()->json(['favorited' => false]);
-    // } else {
-    //   Favorite::create([
-    //     'user_id' => $user->id,
-    //     'listing_id' => $id,
-    //   ]);
-    //   $listing->increment('favorites_count');
-    //   return response()->json(['favorited' => true]);
-    // }
+    $favorite = Favorite::where('user_id', $user->id)
+      ->where('listing_id', $id)
+      ->first();
     
-    return response()->json(['message' => 'Chức năng đang phát triển']);
+    if ($favorite) {
+      $favorite->delete();
+      $listing->decrement('favorites_count');
+      return response()->json(['favorited' => false, 'message' => 'Đã bỏ yêu thích']);
+    } else {
+      Favorite::create([
+        'user_id' => $user->id,
+        'listing_id' => $id,
+      ]);
+      $listing->increment('favorites_count');
+      return response()->json(['favorited' => true, 'message' => 'Đã thêm vào yêu thích']);
+    }
   }
 
   /**
@@ -102,25 +127,28 @@ class ListingController extends Controller
    */
   public function contact(Request $request, $id)
   {
-    // TODO: Xử lý gửi liên hệ
-    // $request->validate([
-    //   'name' => 'required|string|max:255',
-    //   'phone' => 'required|string|max:20',
-    //   'message' => 'nullable|string|max:1000',
-    // ]);
+    $request->validate([
+      'name' => 'required|string|max:255',
+      'phone' => 'required|string|max:20',
+      'message' => 'nullable|string|max:1000',
+    ]);
     
-    // $listing = Listing::findOrFail($id);
+    $listing = Listing::findOrFail($id);
+    $userId = auth('partner')->id(); // Có thể null nếu guest
     
-    // Contact::create([
-    //   'listing_id' => $id,
-    //   'name' => $request->name,
-    //   'phone' => $request->phone,
-    //   'message' => $request->message,
-    // ]);
+    Contact::create([
+      'listing_id' => $id,
+      'user_id' => $userId, // null nếu guest
+      'visitor_name' => $request->name,
+      'visitor_phone' => $request->phone,
+      'message' => $request->message,
+      'contact_type' => 'message',
+      'status' => 'pending',
+    ]);
     
-    // $listing->increment('contacts_count');
+    $listing->increment('contacts_count');
     
-    return response()->json(['message' => 'Gửi liên hệ thành công']);
+    return response()->json(['success' => true, 'message' => 'Gửi liên hệ thành công']);
   }
 
   /**
@@ -172,13 +200,15 @@ class ListingController extends Controller
    */
   public function myListings()
   {
-    // TODO: Load tin đăng của user
-    // $listings = Listing::where('user_id', auth()->id())
-    //   ->latest()
-    //   ->paginate(20);
+    $user = auth('partner')->user();
+    
+    $listings = Listing::where('user_id', $user->id)
+      ->with(['category', 'city', 'district', 'package', 'primaryImage'])
+      ->latest()
+      ->paginate(20);
     
     return view('pages.my-listings', [
-      // 'listings' => $listings,
+      'listings' => $listings,
     ]);
   }
 }
