@@ -156,11 +156,15 @@ class ApiController extends Controller
      */
     public function getListing($id): JsonResponse
     {
-        $listing = Listing::active()
-            ->with(['user', 'category', 'city', 'district', 'package', 'images' => function ($query) {
+        $listing = Listing::with(['user', 'category', 'city', 'district', 'package', 'images' => function ($query) {
                 $query->orderBy('is_primary', 'desc')->orderBy('sort_order');
             }])
             ->findOrFail($id);
+
+        $user = auth('partner')->user();
+        if (!$listing->is_active && (!$user || $listing->user_id !== $user->id)) {
+            abort(404);
+        }
 
         return response()->json([
             'listing' => $listing,
