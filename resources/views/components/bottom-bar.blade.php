@@ -13,7 +13,7 @@
         </div>
         <div id="vip-carousel" class="vip-carousel d-flex gap-3 overflow-auto pb-2">
             @forelse($vipListings ?? [] as $listing)
-                <div class="vip-card" onclick="viewListing({{ $listing->id }})">
+                <div class="vip-card" onclick="window.location.href='{{ route('listings.show', $listing->slug) }}'">
                     <div class="vip-badge-top">
                         <span class="vip-label">
                             <i class="bi bi-star-fill"></i> VIP
