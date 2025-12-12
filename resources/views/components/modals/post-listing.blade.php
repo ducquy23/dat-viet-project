@@ -26,6 +26,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
+            @auth('partner')
             <form action="{{ route('listings.store') }}" method="POST" enctype="multipart/form-data" id="post-form">
                 @csrf
                 <div class="modal-body">
@@ -148,6 +149,25 @@
                     </button>
                 </div>
             </form>
+            @else
+            <div class="modal-body text-center py-5">
+                <i class="bi bi-lock-fill text-muted" style="font-size: 64px;"></i>
+                <h5 class="mt-3 mb-2">Vui lòng đăng nhập</h5>
+                <p class="text-muted mb-4">Bạn cần đăng nhập để đăng tin rao bán</p>
+                <button type="button" class="btn btn-primary" data-bs-target="#loginModal" data-bs-toggle="modal" data-bs-dismiss="modal">
+                    <i class="bi bi-box-arrow-in-right"></i> Đăng nhập ngay
+                </button>
+                <div class="mt-3">
+                    <small class="text-muted">Chưa có tài khoản? </small>
+                    <button type="button" class="btn btn-link p-0 small" data-bs-target="#registerModal" data-bs-toggle="modal" data-bs-dismiss="modal">
+                        Đăng ký ngay
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+            @endauth
         </div>
     </div>
 </div>

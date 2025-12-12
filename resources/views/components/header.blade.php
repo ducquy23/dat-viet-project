@@ -55,9 +55,15 @@
             </button>
         @endauth
 
+        @auth('partner')
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#postModal">
             <i class="bi bi-plus-circle"></i> Đăng tin rao bán
         </button>
+        @else
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal" onclick="setRedirectAfterLogin('postModal')">
+            <i class="bi bi-plus-circle"></i> Đăng tin rao bán
+        </button>
+        @endauth
     </div>
 </nav>
 

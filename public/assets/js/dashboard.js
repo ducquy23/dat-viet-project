@@ -3,11 +3,33 @@ let listings = [];
 let loading = false;
 
 async function loadListings() {
+    // Check if we're on the dashboard page
+    if (!document.getElementById("listing-body")) {
+        return; // Exit early if not on dashboard page
+    }
+    
     if (loading) return;
     loading = true;
 
     try {
-        const response = await fetch('/tin-cua-toi?format=json');
+        const response = await fetch('/tin-cua-toi?format=json', {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        // Check if response is ok
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                // User not logged in, use fallback
+                parseListingsFromTable();
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         listings = data.listings || data.data || [];
@@ -176,30 +198,48 @@ function deleteListing(id) {
     }
 }
 
-// Filters
-if (filterStatus) filterStatus.addEventListener("change", render);
-if (filterType) filterType.addEventListener("change", render);
-if (filterVip) filterVip.addEventListener("change", render);
-if (filterSearch) {
-    filterSearch.addEventListener("input", () => {
-        clearTimeout(window.__filterTimer);
-        window.__filterTimer = setTimeout(render, 150);
-    });
+// Filters - Only initialize if on dashboard page
+function initFilters() {
+    if (!document.getElementById("listing-body")) {
+        return; // Exit early if not on dashboard page
+    }
+    
+    if (filterStatus) filterStatus.addEventListener("change", render);
+    if (filterType) filterType.addEventListener("change", render);
+    if (filterVip) filterVip.addEventListener("change", render);
+    if (filterSearch) {
+        filterSearch.addEventListener("input", () => {
+            clearTimeout(window.__filterTimer);
+            window.__filterTimer = setTimeout(render, 150);
+        });
+    }
+
+    if (document.getElementById("btn-clear")) {
+        document.getElementById("btn-clear").addEventListener("click", () => {
+            if (filterStatus) filterStatus.value = "";
+            if (filterType) filterType.value = "";
+            if (filterVip) filterVip.value = "";
+            if (filterSearch) filterSearch.value = "";
+            render();
+        });
+    }
 }
 
-if (document.getElementById("btn-clear")) {
-    document.getElementById("btn-clear").addEventListener("click", () => {
-        if (filterStatus) filterStatus.value = "";
-        if (filterType) filterType.value = "";
-        if (filterVip) filterVip.value = "";
-        if (filterSearch) filterSearch.value = "";
-        render();
-    });
+initFilters();
+
+// Load data on page load - Only if we're on the dashboard page
+function initDashboard() {
+    const isDashboardPage = document.getElementById("listing-body") !== null;
+    if (!isDashboardPage) {
+        return; // Exit early if not on dashboard page
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadListings);
+    } else {
+        loadListings();
+    }
 }
 
-// Load data on page load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadListings);
-} else {
-    loadListings();
-}
+// Only initialize if on dashboard page
+initDashboard();

@@ -42,16 +42,20 @@ class PartnerLoginController extends Controller
         if (Auth::guard('partner')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
             
+            // Kiểm tra redirect sau login (từ sessionStorage)
+            $redirectTo = $request->get('redirect_to', 'listings.my-listings');
+            
             // Nếu là AJAX request (từ modal), trả về JSON
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Đăng nhập thành công',
-                    'redirect' => route('listings.my-listings')
+                    'redirect' => route($redirectTo),
+                    'openModal' => $request->get('open_modal') // Có thể mở modal sau khi login
                 ]);
             }
             
-            return redirect()->intended(route('listings.my-listings'))
+            return redirect()->intended(route($redirectTo))
                 ->with('success', 'Đăng nhập thành công');
         }
 

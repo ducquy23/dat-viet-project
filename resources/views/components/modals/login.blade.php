@@ -111,8 +111,17 @@
                     modal.hide();
                 }
                 
-                // Reload page để cập nhật header
-                window.location.reload();
+                // Kiểm tra xem có cần mở modal khác không (từ sessionStorage)
+                const redirectModal = sessionStorage.getItem('redirectAfterLogin');
+                if (redirectModal) {
+                    sessionStorage.removeItem('redirectAfterLogin');
+                    // Mở modal đăng tin sau khi login
+                    const postModal = new bootstrap.Modal(document.getElementById(redirectModal));
+                    postModal.show();
+                } else {
+                    // Reload page để cập nhật header
+                    window.location.reload();
+                }
             }
         })
         .catch(error => {

@@ -12,6 +12,9 @@ use App\Http\Controllers\Auth\PartnerLoginController;
 Route::post('/dang-nhap', [PartnerLoginController::class, 'login'])->name('partner.login.submit');
 Route::post('/dang-xuat', [PartnerLoginController::class, 'logout'])->name('partner.logout');
 
+// Đăng ký đối tác (qua modal)
+Route::post('/dang-ky', [App\Http\Controllers\Auth\PartnerRegisterController::class, 'register'])->name('partner.register.submit');
+
 // Trang chủ
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/tin-dang', [HomeController::class, 'index'])->name('listings.index'); // Alias cho filter form
