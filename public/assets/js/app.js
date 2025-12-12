@@ -1342,13 +1342,22 @@ document.querySelectorAll('.package-card').forEach(card => {
     });
 });
 
-// Submit post
-document.getElementById('btn-submit-post')?.addEventListener('click', function() {
-    const price = document.getElementById('post-price').value;
-    const area = document.getElementById('post-area').value;
-    const phone = document.getElementById('post-phone').value;
-    const lat = document.getElementById('post-latitude').value;
-    const lng = document.getElementById('post-longitude').value;
+// Submit post - dùng AJAX để nhận JSON, tránh hiển thị thô trên trình duyệt
+document.getElementById('post-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await submitPostForm();
+});
+
+document.getElementById('btn-submit-post')?.addEventListener('click', async function() {
+    await submitPostForm();
+});
+
+async function submitPostForm() {
+    const price = document.getElementById('post-price')?.value;
+    const area = document.getElementById('post-area')?.value;
+    const phone = document.getElementById('post-phone')?.value;
+    const lat = document.getElementById('post-latitude')?.value;
+    const lng = document.getElementById('post-longitude')?.value;
 
     if (!price || !area || !phone || !lat || !lng) {
         Swal.fire({
@@ -1360,12 +1369,72 @@ document.getElementById('btn-submit-post')?.addEventListener('click', function()
         return;
     }
 
-    // Submit form
     const form = document.getElementById('post-form');
-    if (form) {
-        form.submit();
+    if (!form) return;
+
+    const btn = document.getElementById('btn-submit-post');
+    const btnNext = document.getElementById('btn-next-step');
+    const btnPrev = document.getElementById('btn-prev-step');
+    const originalText = btn ? btn.innerHTML : '';
+
+    try {
+        // Khoá nút
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+        }
+        if (btnNext) btnNext.disabled = true;
+        if (btnPrev) btnPrev.disabled = true;
+
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || result.error) {
+            const msg = result.error || result.message || 'Có lỗi xảy ra, vui lòng thử lại.';
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: msg,
+                confirmButtonText: 'Đã hiểu'
+            });
+            return;
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Thành công',
+            text: result.message || 'Tin đăng đã được gửi và đang chờ duyệt',
+            confirmButtonText: 'Xem tin của tôi'
+        }).then(() => {
+            const redirectUrl = result.redirect_to || '/tin-cua-toi';
+            window.location.href = redirectUrl;
+        });
+    } catch (error) {
+        console.error('Error submit post:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Không thể gửi tin đăng. Vui lòng thử lại.',
+            confirmButtonText: 'Đã hiểu'
+        });
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText || '<i class="bi bi-check-lg"></i> Đăng tin ngay';
+        }
+        if (btnNext) btnNext.disabled = false;
+        if (btnPrev) btnPrev.disabled = false;
     }
-});
+}
 
 // ===== REGISTER MODAL - 1-2 BƯỚC =====
 document.getElementById('btn-send-otp')?.addEventListener('click', function() {
