@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ListingResource\Pages;
+use App\Filament\Resources\ListingResource\RelationManagers;
 use App\Models\Listing;
 use App\Models\User;
 use App\Models\Category;
@@ -17,11 +18,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-/**
- * ListingResource: Quản lý tin đăng bất động sản
- * - Admin có thể xem, duyệt, từ chối tin đăng
- * - Hiển thị thông tin đối tác và thống kê
- */
+
 class ListingResource extends Resource
 {
     protected static ?string $model = Listing::class;
@@ -42,6 +39,57 @@ class ListingResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Section::make('Hình ảnh')
+                    ->description('Thumbnail là ảnh đại diện chính, Gallery là các ảnh bổ sung')
+                    ->schema([
+                        Forms\Components\FileUpload::make('thumbnail')
+                            ->label('Ảnh đại diện (Thumbnail)')
+                            ->image()
+                            ->directory('listings/thumbnails')
+                            ->disk('public')
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                null,
+                                '16:9',
+                                '4:3',
+                                '1:1',
+                            ])
+                            ->maxSize(5120) // 5MB
+                            ->helperText('Ảnh này sẽ hiển thị làm ảnh đại diện cho tin đăng')
+                            ->columnSpanFull(),
+                        Forms\Components\Repeater::make('gallery_images')
+                            ->label('Gallery ảnh')
+                            ->schema([
+                                Forms\Components\FileUpload::make('image')
+                                    ->label('Hình ảnh')
+                                    ->image()
+                                    ->directory('listings/gallery')
+                                    ->disk('public')
+                                    ->imageEditor()
+                                    ->imageEditorAspectRatios([
+                                        null,
+                                        '16:9',
+                                        '4:3',
+                                        '1:1',
+                                    ])
+                                    ->maxSize(5120) // 5MB
+                                    ->required(),
+                                Forms\Components\TextInput::make('sort_order')
+                                    ->label('Thứ tự')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->minValue(0),
+                            ])
+                            ->defaultItems(0)
+                            ->addActionLabel('Thêm ảnh')
+                            ->reorderableWithButtons()
+                            ->collapsible()
+                            ->itemLabel(fn (array $state): ?string => $state['image'] ?? 'Ảnh mới')
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->collapsed(false),
+
                 Forms\Components\Section::make('Thông tin cơ bản')
                     ->schema([
                         Forms\Components\Select::make('user_id')
@@ -410,7 +458,8 @@ class ListingResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            // Đã chuyển sang section "Hình ảnh" trong form chính
+            // RelationManagers\ImagesRelationManager::class,
         ];
     }
 

@@ -39,7 +39,19 @@ class AdResource extends Resource
                 Forms\Components\Textarea::make('description')
                     ->columnSpanFull(),
                 Forms\Components\FileUpload::make('image_url')
-                    ->image(),
+                    ->label('Hình ảnh quảng cáo')
+                    ->image()
+                    ->directory('ads')
+                    ->disk('public')
+                    ->imageEditor()
+                    ->imageEditorAspectRatios([
+                        null,
+                        '16:9',
+                        '4:3',
+                        '1:1',
+                    ])
+                    ->maxSize(5120) // 5MB
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('link_url')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('link_text')
@@ -82,7 +94,10 @@ class AdResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable(),
-                Tables\Columns\ImageColumn::make('image_url'),
+                Tables\Columns\ImageColumn::make('image_url')
+                    ->label('Hình ảnh')
+                    ->disk('public')
+                    ->size(100),
                 Tables\Columns\TextColumn::make('link_url')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('link_text')
