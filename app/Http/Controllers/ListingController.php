@@ -6,8 +6,11 @@ use App\Models\Listing;
 use App\Models\Category;
 use App\Models\Favorite;
 use App\Models\Contact;
+use App\Models\ListingImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * ListingController: Xử lý các trang liên quan đến tin đăng
@@ -157,42 +160,118 @@ class ListingController extends Controller
    */
   public function store(Request $request)
   {
-    // TODO: Validate và lưu tin đăng
-    // $request->validate([
-    //   'latitude' => 'required|numeric',
-    //   'longitude' => 'required|numeric',
-    //   'price' => 'required|numeric|min:0',
-    //   'area' => 'required|numeric|min:0',
-    //   'contact_phone' => 'required|string|max:20',
-    //   'images.*' => 'nullable|image|max:5120', // 5MB
-    // ]);
-    
-    // $listing = Listing::create([
-    //   'user_id' => auth()->id(),
-    //   'latitude' => $request->latitude,
-    //   'longitude' => $request->longitude,
-    //   'price' => $request->price,
-    //   'area' => $request->area,
-    //   'contact_phone' => $request->contact_phone,
-    //   'package_id' => $request->package_id ?? 1,
-    //   // ... các trường khác
-    // ]);
-    
-    // // Upload images
-    // if ($request->hasFile('images')) {
-    //   foreach ($request->file('images') as $image) {
-    //     $path = $image->store('listings', 'public');
-    //     ListingImage::create([
-    //       'listing_id' => $listing->id,
-    //       'image_path' => $path,
-    //     ]);
-    //   }
-    // }
-    
-    return response()->json([
-      'success' => true,
-      'message' => 'Tin đăng đã được gửi và đang chờ duyệt',
+    $request->validate([
+      'category_id' => 'required|exists:categories,id',
+      'city_id' => 'required|exists:cities,id',
+      'district_id' => 'nullable|exists:districts,id',
+      'title' => 'required|string|max:255',
+      'address' => 'required|string|max:255',
+      'latitude' => 'required|numeric|between:-90,90',
+      'longitude' => 'required|numeric|between:-180,180',
+      'price' => 'required|numeric|min:0',
+      'area' => 'required|numeric|min:0',
+      'front_width' => 'nullable|numeric|min:0',
+      'depth' => 'nullable|numeric|min:0',
+      'road_width' => 'nullable|numeric|min:0',
+      'legal_status' => 'nullable|string|max:255',
+      'road_type' => 'nullable|string|max:255',
+      'direction' => 'nullable|string|max:255',
+      'has_road_access' => 'nullable|boolean',
+      'description' => 'nullable|string|max:5000',
+      'contact_name' => 'required|string|max:255',
+      'contact_phone' => 'required|string|max:20',
+      'contact_zalo' => 'nullable|string|max:255',
+      'package_id' => 'required|exists:packages,id',
+      'images.*' => 'nullable|image|max:5120', // 5MB
+    ], [
+      'category_id.required' => 'Vui lòng chọn loại đất',
+      'city_id.required' => 'Vui lòng chọn tỉnh/thành phố',
+      'title.required' => 'Vui lòng nhập tiêu đề',
+      'address.required' => 'Vui lòng nhập địa chỉ',
+      'latitude.required' => 'Vui lòng chọn vị trí trên bản đồ',
+      'longitude.required' => 'Vui lòng chọn vị trí trên bản đồ',
+      'price.required' => 'Vui lòng nhập giá bán',
+      'area.required' => 'Vui lòng nhập diện tích',
+      'contact_name.required' => 'Vui lòng nhập tên người liên hệ',
+      'contact_phone.required' => 'Vui lòng nhập số điện thoại',
     ]);
+
+    DB::beginTransaction();
+    try {
+      // Tính toán giá trị
+      $pricePerM2 = $request->area > 0 ? ($request->price * 1000000) / $request->area : null;
+      
+      // Tạo slug từ title
+      $baseSlug = Str::slug($request->title);
+      $slug = $baseSlug;
+      $counter = 1;
+      while (Listing::where('slug', $slug)->exists()) {
+        $slug = $baseSlug . '-' . $counter;
+        $counter++;
+      }
+
+      $listing = Listing::create([
+        'user_id' => auth('partner')->id(),
+        'category_id' => $request->category_id,
+        'city_id' => $request->city_id,
+        'district_id' => $request->district_id,
+        'package_id' => $request->package_id ?? 1,
+        'title' => $request->title,
+        'description' => $request->description,
+        'address' => $request->address,
+        'latitude' => $request->latitude,
+        'longitude' => $request->longitude,
+        'price' => $request->price * 1000000, // Convert triệu đồng sang đồng
+        'price_per_m2' => $pricePerM2,
+        'area' => $request->area,
+        'front_width' => $request->front_width,
+        'depth' => $request->depth,
+        'road_width' => $request->road_width,
+        'legal_status' => $request->legal_status,
+        'road_type' => $request->road_type,
+        'direction' => $request->direction,
+        'has_road_access' => $request->has('has_road_access') ? true : false,
+        'contact_name' => $request->contact_name,
+        'contact_phone' => $request->contact_phone,
+        'contact_zalo' => $request->contact_zalo,
+        'slug' => $slug,
+        'status' => 'pending', // Mặc định chờ duyệt
+      ]);
+
+      // Upload images
+      if ($request->hasFile('images')) {
+        $images = $request->file('images');
+        $imageCount = 0;
+        
+        foreach ($images as $index => $image) {
+          if ($imageCount >= 5) break; // Tối đa 5 ảnh
+          
+          $path = $image->store('listings/gallery', 'public');
+          
+          ListingImage::create([
+            'listing_id' => $listing->id,
+            'image_path' => $path,
+            'is_primary' => $index === 0, // Ảnh đầu tiên là primary
+            'sort_order' => $index,
+          ]);
+          
+          $imageCount++;
+        }
+      }
+
+      DB::commit();
+      
+      return response()->json([
+        'success' => true,
+        'message' => 'Tin đăng đã được gửi và đang chờ duyệt',
+        'redirect_to' => route('listings.my-listings')
+      ]);
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return response()->json([
+        'error' => 'Có lỗi xảy ra khi đăng tin: ' . $e->getMessage()
+      ], 500);
+    }
   }
 
   /**

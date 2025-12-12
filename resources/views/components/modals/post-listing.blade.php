@@ -73,30 +73,198 @@
                     <!-- BƯỚC 2: THÔNG TIN -->
                     <div class="post-step-content" id="step2">
                         <div class="row g-3">
+                            <!-- Danh mục và Tỉnh/Thành phố -->
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-tag-fill text-primary"></i>
+                                    <span>Loại đất *</span>
+                                </label>
+                                <select class="form-select form-control-lg" name="category_id" id="post-category" required>
+                                    <option value="">Chọn loại đất</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-geo-alt-fill text-primary"></i>
+                                    <span>Tỉnh/Thành phố *</span>
+                                </label>
+                                <select class="form-select form-control-lg" name="city_id" id="post-city" required>
+                                    <option value="">Chọn Tỉnh/Thành phố</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-pin-map-fill text-primary"></i>
+                                    <span>Quận/Huyện</span>
+                                </label>
+                                <select class="form-select form-control-lg" name="district_id" id="post-district">
+                                    <option value="">Chọn Quận/Huyện</option>
+                                </select>
+                            </div>
+
+                            <!-- Tiêu đề và Địa chỉ -->
                             <div class="col-12">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-card-heading text-primary"></i>
+                                    <span>Tiêu đề tin đăng *</span>
+                                </label>
+                                <input type="text" class="form-control form-control-lg" name="title" id="post-title" 
+                                       placeholder="Ví dụ: Bán lô đất mặt tiền đường Láng, 200m²" required maxlength="255">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-geo-alt text-primary"></i>
+                                    <span>Địa chỉ chi tiết *</span>
+                                </label>
+                                <input type="text" class="form-control form-control-lg" name="address" id="post-address" 
+                                       placeholder="Ví dụ: 123 Đường Láng, Phường Láng Thượng" required maxlength="255">
+                                <small class="text-muted">Địa chỉ sẽ được tự động điền từ tìm kiếm ở bước 1</small>
+                            </div>
+
+                            <!-- Mô tả -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-card-text text-primary"></i>
+                                    <span>Mô tả chi tiết</span>
+                                </label>
+                                <textarea class="form-control" name="description" id="post-description" rows="4" 
+                                          placeholder="Mô tả về lô đất: vị trí, tiện ích xung quanh, pháp lý..."></textarea>
+                            </div>
+
+                            <!-- Giá và Diện tích -->
+                            <div class="col-12 col-md-6">
                                 <label class="form-label fw-semibold d-flex align-items-center gap-2">
                                     <i class="bi bi-currency-dollar text-primary"></i>
                                     <span>Giá bán (triệu đồng) *</span>
                                 </label>
-                                <input type="number" class="form-control form-control-lg" name="price" id="post-price" placeholder="Ví dụ: 1500" required>
+                                <input type="number" class="form-control form-control-lg" name="price" id="post-price" 
+                                       placeholder="Ví dụ: 1500" step="0.01" min="0" required>
                             </div>
-                            <div class="col-12">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label fw-semibold d-flex align-items-center gap-2">
                                     <i class="bi bi-rulers text-primary"></i>
                                     <span>Diện tích (m²) *</span>
                                 </label>
-                                <input type="number" class="form-control form-control-lg" name="area" id="post-area" placeholder="Ví dụ: 200" required>
+                                <input type="number" class="form-control form-control-lg" name="area" id="post-area" 
+                                       placeholder="Ví dụ: 200" step="0.01" min="0" required>
                             </div>
+
+                            <!-- Mặt tiền và Chiều sâu -->
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-arrows-expand text-primary"></i>
+                                    <span>Mặt tiền (m)</span>
+                                </label>
+                                <input type="number" class="form-control form-control-lg" name="front_width" id="post-front-width" 
+                                       placeholder="Ví dụ: 5" step="0.01" min="0">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-arrows-collapse text-primary"></i>
+                                    <span>Chiều sâu (m)</span>
+                                </label>
+                                <input type="number" class="form-control form-control-lg" name="depth" id="post-depth" 
+                                       placeholder="Ví dụ: 40" step="0.01" min="0">
+                            </div>
+
+                            <!-- Pháp lý và Đường -->
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-file-earmark-check text-primary"></i>
+                                    <span>Tình trạng pháp lý</span>
+                                </label>
+                                <select class="form-select form-control-lg" name="legal_status" id="post-legal-status">
+                                    <option value="">Chọn tình trạng pháp lý</option>
+                                    <option value="Sổ đỏ">Sổ đỏ</option>
+                                    <option value="Sổ hồng">Sổ hồng</option>
+                                    <option value="Đang làm sổ">Đang làm sổ</option>
+                                    <option value="Giấy tờ khác">Giấy tờ khác</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-road text-primary"></i>
+                                    <span>Loại đường</span>
+                                </label>
+                                <select class="form-select form-control-lg" name="road_type" id="post-road-type">
+                                    <option value="">Chọn loại đường</option>
+                                    <option value="Ô tô">Ô tô</option>
+                                    <option value="Hẻm">Hẻm</option>
+                                    <option value="Đường đất">Đường đất</option>
+                                </select>
+                            </div>
+
+                            <!-- Độ rộng đường và Hướng -->
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-arrows-angle-expand text-primary"></i>
+                                    <span>Độ rộng đường (m)</span>
+                                </label>
+                                <input type="number" class="form-control form-control-lg" name="road_width" id="post-road-width" 
+                                       placeholder="Ví dụ: 6" step="0.01" min="0">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-compass text-primary"></i>
+                                    <span>Hướng</span>
+                                </label>
+                                <select class="form-select form-control-lg" name="direction" id="post-direction">
+                                    <option value="">Chọn hướng</option>
+                                    <option value="Đông">Đông</option>
+                                    <option value="Tây">Tây</option>
+                                    <option value="Nam">Nam</option>
+                                    <option value="Bắc">Bắc</option>
+                                    <option value="Đông Nam">Đông Nam</option>
+                                    <option value="Đông Bắc">Đông Bắc</option>
+                                    <option value="Tây Nam">Tây Nam</option>
+                                    <option value="Tây Bắc">Tây Bắc</option>
+                                </select>
+                            </div>
+
+                            <!-- Đường ô tô vào -->
                             <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_road_access" id="post-has-road" value="1">
+                                    <label class="form-check-label" for="post-has-road">
+                                        <i class="bi bi-check-circle text-primary"></i> Có đường ô tô vào
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Thông tin liên hệ -->
+                            <div class="col-12">
+                                <hr class="my-3">
+                                <h6 class="fw-bold mb-3">Thông tin liên hệ</h6>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-person text-primary"></i>
+                                    <span>Tên người liên hệ *</span>
+                                </label>
+                                <input type="text" class="form-control form-control-lg" name="contact_name" id="post-contact-name" 
+                                       value="{{ auth('partner')->user()?->name }}" placeholder="Tên của bạn" required maxlength="255">
+                            </div>
+                            <div class="col-12 col-md-6">
                                 <label class="form-label fw-semibold d-flex align-items-center gap-2">
                                     <i class="bi bi-telephone text-primary"></i>
                                     <span>Số điện thoại *</span>
                                 </label>
                                 <input type="tel" class="form-control form-control-lg" name="contact_phone" id="post-phone"
-                                       value="{{ auth('partner')->user()?->phone }}" placeholder="09xx xxx xxx" required>
+                                       value="{{ auth('partner')->user()?->phone }}" placeholder="09xx xxx xxx" required maxlength="20">
                                 <small class="text-muted">Để người mua liên hệ với bạn</small>
                             </div>
                             <div class="col-12">
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <i class="bi bi-chat-dots text-primary"></i>
+                                    <span>Zalo (tùy chọn)</span>
+                                </label>
+                                <input type="text" class="form-control form-control-lg" name="contact_zalo" id="post-zalo" 
+                                       placeholder="Số điện thoại Zalo" maxlength="255">
+                            </div>
+
+                            <!-- Ảnh -->
+                            <div class="col-12">
+                                <hr class="my-3">
                                 <label class="form-label fw-semibold d-flex align-items-center gap-2">
                                     <i class="bi bi-image text-primary"></i>
                                     <span>Ảnh lô đất (tùy chọn)</span>

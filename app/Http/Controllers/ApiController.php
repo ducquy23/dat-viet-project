@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\District;
 use App\Models\Listing;
 use App\Models\Ad;
+use App\Models\Category;
+use App\Models\City;
 use Illuminate\Http\Request;
 
 /**
@@ -15,6 +17,34 @@ use Illuminate\Http\Request;
  */
 class ApiController extends Controller
 {
+  /**
+   * Lấy danh sách danh mục
+   */
+  public function getCategories()
+  {
+    $categories = Category::active()
+      ->ordered()
+      ->get(['id', 'name']);
+    
+    return response()->json([
+      'categories' => $categories,
+    ]);
+  }
+
+  /**
+   * Lấy danh sách tỉnh/thành phố
+   */
+  public function getCities()
+  {
+    $cities = City::active()
+      ->ordered()
+      ->get(['id', 'name']);
+    
+    return response()->json([
+      'cities' => $cities,
+    ]);
+  }
+
   /**
    * Lấy danh sách quận/huyện theo thành phố
    * @param Request $request - Chứa city_id

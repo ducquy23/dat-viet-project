@@ -40,8 +40,14 @@ Route::prefix('api')->group(function () {
   // Liên hệ
   Route::post('/listings/{id}/contact', [ListingController::class, 'contact'])->name('api.listings.contact');
 
-  // Lấy quận/huyện theo thành phố
-  Route::get('/districts', [ApiController::class, 'getDistricts'])->name('api.districts');
+        // Lấy danh mục
+        Route::get('/categories', [ApiController::class, 'getCategories'])->name('api.categories');
+        
+        // Lấy tỉnh/thành phố
+        Route::get('/cities', [ApiController::class, 'getCities'])->name('api.cities');
+        
+        // Lấy quận/huyện theo thành phố
+        Route::get('/districts', [ApiController::class, 'getDistricts'])->name('api.districts');
 
   // Track click quảng cáo
   Route::post('/ads/{id}/click', [ApiController::class, 'trackAdClick'])->name('api.ads.click');

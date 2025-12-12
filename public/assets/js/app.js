@@ -838,10 +838,13 @@ let postMarker;
 let selectedPackage = 'vip';
 
 // Initialize post map when modal opens
-document.getElementById('postModal')?.addEventListener('shown.bs.modal', function() {
+document.getElementById('postModal')?.addEventListener('shown.bs.modal', async function() {
     // Reset step
     currentStep = 1;
     updatePostSteps();
+
+    // Load form data (categories, cities)
+    await loadPostFormData();
 
     // Wait for modal to fully render before initializing map
     setTimeout(() => {
@@ -1018,9 +1021,73 @@ function updatePostSteps() {
     const btnNext = document.getElementById('btn-next-step');
     const btnSubmit = document.getElementById('btn-submit-post');
 
-    btnPrev.style.display = currentStep > 1 ? 'inline-flex' : 'none';
-    btnNext.style.display = currentStep < 3 ? 'inline-flex' : 'none';
-    btnSubmit.style.display = currentStep === 3 ? 'inline-flex' : 'none';
+    if (btnPrev) btnPrev.style.display = currentStep > 1 ? 'inline-flex' : 'none';
+    if (btnNext) btnNext.style.display = currentStep < 3 ? 'inline-flex' : 'none';
+    if (btnSubmit) btnSubmit.style.display = currentStep === 3 ? 'inline-flex' : 'none';
+}
+
+// Load categories, cities, districts
+async function loadPostFormData() {
+    // Load categories
+    try {
+        const categoriesRes = await fetch('/api/categories');
+        const categoriesData = await categoriesRes.json();
+        const categorySelect = document.getElementById('post-category');
+        if (categorySelect && categoriesData.categories) {
+            categorySelect.innerHTML = '<option value="">Chọn loại đất</option>';
+            categoriesData.categories.forEach(cat => {
+                categorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+
+    // Load cities
+    try {
+        const citiesRes = await fetch('/api/cities');
+        const citiesData = await citiesRes.json();
+        const citySelect = document.getElementById('post-city');
+        if (citySelect && citiesData.cities) {
+            citySelect.innerHTML = '<option value="">Chọn Tỉnh/Thành phố</option>';
+            citiesData.cities.forEach(city => {
+                citySelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading cities:', error);
+    }
+
+    // Load districts when city changes
+    const citySelect = document.getElementById('post-city');
+    if (citySelect) {
+        // Remove existing listener to avoid duplicates
+        const newCitySelect = citySelect.cloneNode(true);
+        citySelect.parentNode.replaceChild(newCitySelect, citySelect);
+        
+        newCitySelect.addEventListener('change', async function() {
+            const cityId = this.value;
+            const districtSelect = document.getElementById('post-district');
+            
+            if (!cityId) {
+                if (districtSelect) districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                return;
+            }
+
+            try {
+                const districtsRes = await fetch(`/api/districts?city_id=${cityId}`);
+                const districtsData = await districtsRes.json();
+                if (districtSelect && districtsData.districts) {
+                    districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                    districtsData.districts.forEach(district => {
+                        districtSelect.innerHTML += `<option value="${district.id}">${district.name}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading districts:', error);
+            }
+        });
+    }
 }
 
 document.getElementById('btn-next-step')?.addEventListener('click', function() {
@@ -1144,6 +1211,12 @@ async function searchAddressForPost() {
             
             // Cập nhật input với địa chỉ chính xác
             addressInput.value = result.display_name;
+            
+            // Cập nhật input address trong form
+            const formAddressInput = document.getElementById('post-address');
+            if (formAddressInput) {
+                formAddressInput.value = result.display_name;
+            }
             
             // Hiển thị thông báo thành công
             const existingAlert = addressInput.parentElement.parentElement.querySelector('.alert-success');
