@@ -17,13 +17,11 @@
       <div class="panel-content">
         <div class="panel-header">
           <h5 class="mb-0">
-            <!-- TODO: Hiển thị tên danh mục -->
             Danh sách tin đăng
           </h5>
         </div>
 
         <div class="panel-body">
-          <!-- TODO: Hiển thị danh sách tin đăng -->
           <div class="listings-list">
             <p class="text-center text-muted py-5">
               Đang tải danh sách tin đăng...

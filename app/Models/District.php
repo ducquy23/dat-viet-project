@@ -2,77 +2,60 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * District Model: Quản lý thông tin quận/huyện
- * - Lưu trữ danh sách các quận/huyện
- * - Thuộc về một thành phố (city)
- */
 class District extends Model
 {
-  use HasFactory;
+    use HasFactory;
 
-  /**
-   * Các trường có thể gán hàng loạt (mass assignment)
-   */
-  protected $fillable = [
-    'city_id',     // ID thành phố
-    'name',        // Tên quận/huyện
-    'type',        // Loại: Quận / Huyện / Phường (theo yêu cầu)
-    'code',        // Mã code hành chính
-    'sort_order',      // Thứ tự
-  ];
+    protected $fillable = [
+        'city_id',
+        'name',
+        'type',
+        'code',
+        'sort_order',
+    ];
 
-  /**
-   * Các trường được cast sang kiểu dữ liệu cụ thể
-   */
-  protected $casts = [
-    'city_id' => 'integer',
-    'sort_order' => 'integer',
-  ];
+    protected $casts = [
+        'city_id' => 'integer',
+        'sort_order' => 'integer',
+    ];
 
-  /**
-   * Quan hệ: Một quận/huyện thuộc về một thành phố
-   * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-   */
-  public function city()
-  {
-    return $this->belongsTo(City::class);
-  }
+    /**
+     * @return BelongsTo
+     */
+    public function city(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
 
-  /**
-   * Quan hệ: Một quận/huyện có nhiều tin đăng
-   * @return \Illuminate\Database\Eloquent\Relations\HasMany
-   */
-  public function listings()
-  {
-    return $this->hasMany(Listing::class);
-  }
+    /**
+     * @return HasMany
+     */
+    public function listings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Listing::class);
+    }
 
-  // Không còn quan hệ wards theo cấu trúc mới
+    /**
+     * @param $query
+     * @return mixed
+     */
+    public function scopeActive($query): mixed
+    {
+        return $query;
+    }
 
-  /**
-   * Scope: Chỉ lấy các quận/huyện đang hoạt động
-   * @param Builder $query
-   * @return Builder
-   */
-  public function scopeActive($query)
-  {
-    // Giữ tương thích cũ: không lọc gì (vì bỏ cột is_active)
-    return $query;
-  }
-
-  /**
-   * Scope: Sắp xếp theo thứ tự
-   * @param Builder $query
-   * @return Builder
-   */
-  public function scopeOrdered($query)
-  {
-    return $query->orderBy('sort_order')->orderBy('name');
-  }
+    /**
+     * @param $query
+     * @return mixed
+     */
+    public function scopeOrdered($query): mixed
+    {
+        return $query->orderBy('sort_order')->orderBy('name');
+    }
 }
 

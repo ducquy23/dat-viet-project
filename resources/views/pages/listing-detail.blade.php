@@ -313,8 +313,7 @@
       }
     });
   }
-
-  // Show contact form
+\
   function showContactForm(listingId) {
     Swal.fire({
       title: 'Liên hệ với người đăng',
@@ -331,12 +330,12 @@
         const name = document.getElementById('swal-name').value;
         const phone = document.getElementById('swal-phone').value;
         const message = document.getElementById('swal-message').value || '';
-        
+
         if (!name || !phone) {
           Swal.showValidationMessage('Vui lòng điền đầy đủ thông tin');
           return false;
         }
-        
+
         return { name, phone, message };
       }
     }).then((result) => {

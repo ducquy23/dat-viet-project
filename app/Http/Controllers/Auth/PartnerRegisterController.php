@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -11,10 +13,12 @@ use Illuminate\Validation\Rules\Password;
 
 class PartnerRegisterController extends Controller
 {
+
     /**
-     * Xử lý đăng ký cho đối tác
+     * @param Request $request
+     * @return JsonResponse|RedirectResponse
      */
-    public function register(Request $request)
+    public function register(Request $request): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'username' => 'required|string|max:255|unique:users,name',
@@ -34,7 +38,6 @@ class PartnerRegisterController extends Controller
             'agree_terms.accepted' => 'Bạn phải đồng ý với điều khoản sử dụng',
         ]);
 
-        // Tạo user mới với role mặc định là 'user' (đối tác)
         $user = User::create([
             'name' => $request->username,
             'email' => $request->email,
@@ -43,10 +46,8 @@ class PartnerRegisterController extends Controller
             'status' => 'active',
         ]);
 
-        // Tự động đăng nhập sau khi đăng ký
         Auth::guard('partner')->login($user);
 
-        // Nếu là AJAX request, trả về JSON
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,

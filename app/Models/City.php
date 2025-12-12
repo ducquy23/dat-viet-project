@@ -4,67 +4,50 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * City Model: Quản lý thông tin tỉnh/thành phố
- * - Lưu trữ danh sách các tỉnh/thành phố
- * - Có quan hệ với districts (quận/huyện)
- */
 class City extends Model
 {
     use HasFactory;
 
-    /**
-     * Các trường có thể gán hàng loạt (mass assignment)
-     */
     protected $fillable = [
         'name',
         'type',
         'code',
     ];
 
-    /**
-     * Các trường được cast sang kiểu dữ liệu cụ thể
-     */
     protected $casts = [];
 
     /**
-     * Quan hệ: Một thành phố có nhiều quận/huyện
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
-    public function districts()
+    public function districts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(District::class);
     }
 
     /**
-     * Quan hệ: Một thành phố có nhiều tin đăng
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
-    public function listings()
+    public function listings(): HasMany
     {
         return $this->hasMany(Listing::class);
     }
 
-    // Không còn quan hệ wards theo cấu trúc mới
-
     /**
-     * Scope: Chỉ lấy các thành phố đang hoạt động
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param $query
+     * @return mixed
      */
-    public function scopeActive($query)
+    public function scopeActive($query): mixed
     {
-        // Giữ tương thích cũ: không lọc gì (vì bỏ cột is_active)
         return $query;
     }
 
     /**
-     * Scope: Sắp xếp theo thứ tự
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param $query
+     * @return mixed
      */
-    public function scopeOrdered($query)
+    public function scopeOrdered($query): mixed
     {
         return $query->orderBy('name');
     }
