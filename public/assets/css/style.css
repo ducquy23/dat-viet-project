@@ -979,6 +979,7 @@ small {
     pointer-events: none;
     z-index: 5;
     transition: opacity 0.3s ease;
+    opacity: 0;
 }
 
 .vip-carousel-gradient-left {
@@ -989,6 +990,15 @@ small {
 .vip-carousel-gradient-right {
     right: 0;
     background: linear-gradient(to left, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* Only show gradients when needed */
+.vip-carousel-wrapper:not(:hover) .vip-carousel-gradient-left {
+    opacity: 0 !important;
+}
+
+.vip-carousel-wrapper:not(:hover) .vip-carousel-gradient-right {
+    opacity: 0 !important;
 }
 
 /* Slider controls */

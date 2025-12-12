@@ -181,17 +181,27 @@ function updateVipSliderButtons() {
         nextBtn.style.opacity = vipCarousel.scrollLeft >= maxScroll - 10 ? '0.5' : '1';
     }
     
-    // Update gradient overlays
+    // Update gradient overlays - chỉ hiển thị khi cần
     const leftGradient = document.querySelector('.vip-carousel-gradient-left');
     const rightGradient = document.querySelector('.vip-carousel-gradient-right');
     
     if (leftGradient) {
-        leftGradient.style.opacity = vipCarousel.scrollLeft > 10 ? '0' : '1';
+        // Chỉ hiển thị gradient trái khi đã scroll và có thể scroll về trước
+        if (vipCarousel.scrollLeft > 10) {
+            leftGradient.style.opacity = '0';
+        } else {
+            leftGradient.style.opacity = '0';
+        }
     }
     
     if (rightGradient) {
         const maxScroll = vipCarousel.scrollWidth - vipCarousel.clientWidth;
-        rightGradient.style.opacity = vipCarousel.scrollLeft < maxScroll - 10 ? '1' : '0';
+        // Chỉ hiển thị gradient phải khi có thể scroll tiếp
+        if (vipCarousel.scrollLeft < maxScroll - 10) {
+            rightGradient.style.opacity = '1';
+        } else {
+            rightGradient.style.opacity = '0';
+        }
     }
 }
 
