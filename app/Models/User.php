@@ -45,4 +45,59 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Quan hệ: Một user có nhiều tin đăng
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function listings()
+    {
+        return $this->hasMany(Listing::class);
+    }
+
+    /**
+     * Quan hệ: Một user có nhiều yêu thích
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    /**
+     * Quan hệ: Một user có nhiều liên hệ
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function contacts()
+    {
+        return $this->hasMany(Contact::class);
+    }
+
+    /**
+     * Quan hệ: Một user có nhiều thanh toán
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Quan hệ: Một user có nhiều lượt xem
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function listingViews()
+    {
+        return $this->hasMany(ListingView::class);
+    }
+
+    /**
+     * Kiểm tra xem user có yêu thích tin đăng này không
+     * @param int $listingId
+     * @return bool
+     */
+    public function hasFavorited($listingId)
+    {
+        return $this->favorites()->where('listing_id', $listingId)->exists();
+    }
 }

@@ -10,7 +10,7 @@
         </a>
     </div>
 
-    <form class="d-none d-md-flex col-5" action="{{ route('listings.search') }}" method="GET">
+    <form class="d-none d-md-flex col-5" action="{{ route('search') }}" method="GET">
         <div class="input-group search-box">
             <span class="input-group-text bg-white border-end-0">
                 <i class="bi bi-search"></i>

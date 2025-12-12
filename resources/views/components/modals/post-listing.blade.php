@@ -25,7 +25,7 @@
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
+
             <form action="{{ route('listings.store') }}" method="POST" enctype="multipart/form-data" id="post-form">
                 @csrf
                 <div class="modal-body">
@@ -71,7 +71,7 @@
                                     <i class="bi bi-telephone text-primary"></i>
                                     <span>Số điện thoại *</span>
                                 </label>
-                                <input type="tel" class="form-control form-control-lg" name="contact_phone" id="post-phone" 
+                                <input type="tel" class="form-control form-control-lg" name="contact_phone" id="post-phone"
                                        value="{{ auth()->user()?->phone }}" placeholder="09xx xxx xxx" required>
                                 <small class="text-muted">Để người mua liên hệ với bạn</small>
                             </div>
@@ -95,7 +95,7 @@
                             <h5 class="mb-2">Chọn gói đăng tin</h5>
                             <p class="text-muted">Chọn gói phù hợp để tin của bạn được hiển thị tốt nhất</p>
                         </div>
-                        
+
                         <div class="row g-3 mb-3">
                             <div class="col-6">
                                 <div class="package-card" data-package="normal">
@@ -133,7 +133,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-outline-secondary" id="btn-prev-step" style="display: none;">
                         <i class="bi bi-arrow-left"></i> Quay lại
@@ -152,7 +152,5 @@
     </div>
 </div>
 
-@push('scripts')
-<script src="{{ asset('assets/js/post-modal.js') }}"></script>
-@endpush
+
 
