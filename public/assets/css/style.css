@@ -2204,6 +2204,16 @@ html {
 }
 
 @media (max-width: 768px) {
+    /* Trên mobile không khóa chiều cao theo 100vh để tránh khoảng trắng thừa bên dưới */
+    .main-layout {
+        min-height: auto;
+    }
+
+    .layout-row {
+        height: auto;
+        min-height: auto;
+    }
+
     .top-banner-ad,
     .bottom-ad-banner {
         display: none !important;
