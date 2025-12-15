@@ -22,12 +22,12 @@
 <script>
     // Filter form handlers
     document.getElementById('filter-price')?.addEventListener('input', function() {
-        document.getElementById('price-label').textContent = 
+        document.getElementById('price-label').textContent =
             new Intl.NumberFormat('vi-VN').format(this.value) + '+';
     });
 
     document.getElementById('filter-area')?.addEventListener('input', function() {
-        document.getElementById('area-label').textContent = 
+        document.getElementById('area-label').textContent =
             new Intl.NumberFormat('vi-VN').format(this.value) + '+';
     });
 
@@ -35,14 +35,14 @@
     document.getElementById('filter-city')?.addEventListener('change', function() {
         const cityId = this.value;
         const districtSelect = document.getElementById('filter-district');
-        
+
         if (cityId) {
             fetch(`/api/districts?city_id=${cityId}`)
                 .then(response => response.json())
                 .then(data => {
                     districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
                     data.districts.forEach(district => {
-                        districtSelect.innerHTML += 
+                        districtSelect.innerHTML +=
                             `<option value="${district.id}">${district.name}</option>`;
                     });
                 });
@@ -50,8 +50,7 @@
             districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
         }
     });
-
-    // Track ad clicks
+\
     function trackAdClick(adId) {
         fetch(`/api/ads/${adId}/click`, {
             method: 'POST',

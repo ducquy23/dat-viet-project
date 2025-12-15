@@ -8,9 +8,8 @@
   <div class="row">
     <div class="col-12">
       <h1 class="mb-4">Danh mục bất động sản</h1>
-      
+
       <div class="row">
-        <!-- TODO: Hiển thị danh sách danh mục -->
         <div class="col-md-4 mb-4">
           <div class="card">
             <div class="card-body">

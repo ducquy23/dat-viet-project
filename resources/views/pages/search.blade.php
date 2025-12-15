@@ -71,10 +71,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-  // Xử lý filter và tìm kiếm
-  // TODO: Implement search functionality
-</script>
-@endpush
-
