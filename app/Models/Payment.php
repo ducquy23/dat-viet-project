@@ -19,9 +19,15 @@ class Payment extends Model
         'amount',
         'currency',
         'payment_method',
+        'provider',
+        'provider_ref',
         'status',
         'payment_info',
         'notes',
+        'qr_url',
+        'checkout_url',
+        'expired_at',
+        'meta',
         'paid_at',
     ];
 
@@ -31,7 +37,9 @@ class Payment extends Model
         'package_id' => 'integer',
         'amount' => 'decimal:2',
         'payment_info' => 'array',
+        'meta' => 'array',
         'paid_at' => 'datetime',
+        'expired_at' => 'datetime',
     ];
 
     /**
