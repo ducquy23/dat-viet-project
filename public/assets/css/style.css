@@ -333,10 +333,14 @@ small {
 /* Layout */
 .main-layout {
     min-height: calc(100vh - 70px);
+    padding: 16px 55px;
 }
 
 .layout-row {
+    /* Chiều cao full viewport (trừ header) để 3 cột luôn nằm ngang */
     height: calc(100vh - 70px);
+    gap: 16px;
+    align-items: stretch;
 }
 
 #map {
@@ -345,11 +349,13 @@ small {
 }
 
 .map-wrapper {
+    /* Chiều cao full theo hàng cha */
     height: 100%;
-    background: #fff;
-    border-radius: var(--dv-radius-lg);
-    box-shadow: var(--dv-shadow-lg);
-    padding: 16px;
+    min-height: 0;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+    padding: 18px;
     transition: var(--dv-transition);
     position: relative;
     overflow: hidden;
@@ -381,9 +387,12 @@ small {
 .sidebar-left,
 .sidebar-right {
     height: 100%;
+    max-height: 100%;
     overflow-y: auto;
-    background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
-    box-shadow: var(--dv-shadow-md);
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+    padding: 18px 16px;
     scrollbar-width: thin;
     scrollbar-color: rgba(51, 87, 147, 0.3) transparent;
 }
@@ -2203,15 +2212,31 @@ html {
     }
 }
 
-@media (max-width: 768px) {
-    /* Trên mobile không khóa chiều cao theo 100vh để tránh khoảng trắng thừa bên dưới */
+/* Tablet & mobile: bỏ chiều cao cố định theo viewport để tránh khoảng trắng lớn */
+@media (max-width: 992px) {
     .main-layout {
         min-height: auto;
+        padding: 12px 8px 20px;
     }
 
     .layout-row {
         height: auto;
         min-height: auto;
+        gap: 12px;
+    }
+
+    /* Đảm bảo bản đồ có chiều cao cố định trên mobile & cảm giác nổi */
+    .map-wrapper {
+        height: 60vh;
+        min-height: 320px;
+        margin-bottom: 16px;
+        border-radius: 22px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+    }
+
+    #map {
+        height: 100%;
+        border-radius: 18px;
     }
 
     .top-banner-ad,

@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="container-fluid p-0">
-    <div class="row g-0 layout-row">
+    <div class="row g-0 layout-row flex-lg-nowrap">
         <!-- LEFT FILTER -->
         @include('components.filter-sidebar')
 
