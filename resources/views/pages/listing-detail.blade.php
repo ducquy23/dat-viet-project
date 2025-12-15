@@ -3,6 +3,14 @@
 @section('title', $listing->title ?? 'Chi tiết tin đăng')
 @section('description', $listing->meta_description ?? Str::limit($listing->description ?? '', 160))
 
+{{-- SEO cho Google + Open Graph cho share Zalo/Facebook --}}
+@section('canonical', route('listings.show', $listing->slug))
+@section('og_type', 'article')
+@section('og_title', $listing->title ?? 'Chi tiết tin đăng')
+@section('og_description', $listing->meta_description ?? Str::limit($listing->description ?? '', 160))
+@section('og_url', route('listings.show', $listing->slug))
+@section('og_image', $listing->images->first()->image_url ?? asset('images/default-og.png'))
+
 @section('content')
 @if(isset($listing) && $listing)
 <div class="container-fluid px-0">
