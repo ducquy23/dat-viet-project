@@ -60,3 +60,4 @@ class PartnerRegisterController extends Controller
     }
 }
 
+

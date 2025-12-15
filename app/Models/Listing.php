@@ -255,3 +255,4 @@ class Listing extends Model
   }
 }
 
+

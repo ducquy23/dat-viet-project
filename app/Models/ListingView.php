@@ -98,3 +98,4 @@ class ListingView extends Model
   }
 }
 
+
