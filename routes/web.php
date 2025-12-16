@@ -45,10 +45,10 @@ Route::prefix('api')->withoutMiddleware([VerifyCsrfToken::class])->group(functio
 
     // Lấy danh mục
     Route::get('/categories', [ApiController::class, 'getCategories'])->name('api.categories');
-    
+
     // Lấy tỉnh/thành phố
     Route::get('/cities', [ApiController::class, 'getCities'])->name('api.cities');
-    
+
     // Lấy quận/huyện theo thành phố
     Route::get('/districts', [ApiController::class, 'getDistricts'])->name('api.districts');
 
@@ -57,7 +57,7 @@ Route::prefix('api')->withoutMiddleware([VerifyCsrfToken::class])->group(functio
 
     // Lấy tin đăng cho map
     Route::get('/listings/map', [ApiController::class, 'getListingsForMap'])->name('api.listings.map');
-    
+
     // Lấy chi tiết tin đăng
     Route::get('/listings/{id}', [ApiController::class, 'getListing'])->name('api.listings.show');
 

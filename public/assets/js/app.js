@@ -313,16 +313,23 @@ function updateMiniMap(lot) {
 
 // ===== UPDATE RIGHT PANEL =====
 async function updateDetail(lot) {
+    // Show skeleton loader while loading
+    const skeleton = document.getElementById('detail-panel-skeleton');
+    const emptyState = document.getElementById('detail-panel-empty');
+    const detailContent = document.getElementById('detail-panel-content');
+    
+    if (skeleton) skeleton.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    if (detailContent) detailContent.style.display = 'none';
+    
     // Load full detail if not loaded yet
     if (!lot.desc && lot.id) {
         await loadListingDetail(lot.id);
         lot = currentListing || lot;
     }
 
-    // Show detail content and hide empty state
-    const emptyState = document.getElementById('detail-panel-empty');
-    const detailContent = document.getElementById('detail-panel-content');
-
+    // Hide skeleton and show detail content
+    if (skeleton) skeleton.style.display = 'none';
     if (emptyState) emptyState.style.display = 'none';
     if (detailContent) detailContent.style.display = 'block';
 
@@ -641,6 +648,12 @@ async function renderVipCarousel() {
 async function loadListings(filters = {}) {
     if (loadingListings) return;
     loadingListings = true;
+    
+    // Show loading state on map (optional - can add overlay)
+    const mapElement = document.getElementById('map');
+    if (mapElement) {
+        mapElement.style.opacity = '0.7';
+    }
 
     try {
         const params = new URLSearchParams();
@@ -729,11 +742,31 @@ async function loadListings(filters = {}) {
             // Clear markers if no results
             markerLayers.forEach(m => map.removeLayer(m));
             markerLayers = [];
+            // Only show toast if filters are applied (not on initial page load)
+            const urlParams = new URLSearchParams(window.location.search);
+            const filterParams = ['city', 'district', 'category', 'max_price', 'max_area', 'has_road', 'vip'];
+            const hasUrlFilters = filterParams.some(param => urlParams.has(param));
+            const hasAppliedFilters = Object.keys(filters).length > 0;
+            
+            // Only show toast if user has explicitly applied filters, not on initial page load
+            // Check if this is initial load (no filters in URL and no filters passed)
+            const isInitialLoad = !hasUrlFilters && !hasAppliedFilters;
+            
+            if (!isInitialLoad && window.showToast) {
+                window.showToast('Không tìm thấy tin đăng nào phù hợp', 'info', 3000);
+            }
         }
     } catch (error) {
         console.error('Error loading listings:', error);
+        if (window.showToast) {
+            window.showToast('Có lỗi xảy ra khi tải dữ liệu', 'error', 3000);
+        }
     } finally {
         loadingListings = false;
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            mapElement.style.opacity = '1';
+        }
     }
 }
 

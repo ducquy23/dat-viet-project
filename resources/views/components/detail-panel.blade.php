@@ -13,6 +13,20 @@
             <p>Chọn một lô đất trên bản đồ để xem chi tiết</p>
         </div>
 
+        <!-- Skeleton Loader -->
+        <div id="detail-panel-skeleton" class="skeleton-loader detail-panel" style="display: none;">
+            <div class="skeleton skeleton-image" style="height: 250px; margin-bottom: 16px;"></div>
+            <div class="skeleton skeleton-title" style="width: 70%; margin-bottom: 12px;"></div>
+            <div class="skeleton skeleton-text" style="width: 50%; margin-bottom: 16px;"></div>
+            <div class="skeleton skeleton-text" style="margin-bottom: 8px;"></div>
+            <div class="skeleton skeleton-text" style="width: 80%; margin-bottom: 8px;"></div>
+            <div class="skeleton skeleton-text" style="width: 60%; margin-bottom: 16px;"></div>
+            <div class="skeleton skeleton-image" style="height: 150px; margin-bottom: 16px;"></div>
+            <div class="skeleton skeleton-text" style="margin-bottom: 8px;"></div>
+            <div class="skeleton skeleton-text" style="width: 90%; margin-bottom: 8px;"></div>
+            <div class="skeleton skeleton-text" style="width: 75%;"></div>
+        </div>
+
         <!-- Dynamic Content - Will be populated by JavaScript -->
         <div id="detail-panel-content" style="display: none;">
             <!-- Gallery -->

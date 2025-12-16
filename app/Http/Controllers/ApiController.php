@@ -171,4 +171,92 @@ class ApiController extends Controller
             'listing' => $listing,
         ]);
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getSearchSuggestions(Request $request): JsonResponse
+    {
+        $query = $request->get('q', '');
+        
+        if (strlen($query) < 2) {
+            return response()->json(['suggestions' => []]);
+        }
+        
+        $suggestions = [];
+        
+        // Search in cities
+        $cities = City::active()
+            ->where('name', 'like', "%{$query}%")
+            ->take(3)
+            ->get(['id', 'name']);
+        
+        foreach ($cities as $city) {
+            $suggestions[] = [
+                'title' => $city->name,
+                'subtitle' => 'Tỉnh/Thành phố',
+                'type' => 'city',
+                'id' => $city->id
+            ];
+        }
+        
+        // Search in districts
+        $districts = District::active()
+            ->where('name', 'like', "%{$query}%")
+            ->with('city')
+            ->take(3)
+            ->get(['id', 'name', 'city_id']);
+        
+        foreach ($districts as $district) {
+            $suggestions[] = [
+                'title' => $district->name,
+                'subtitle' => $district->city ? $district->city->name : 'Quận/Huyện',
+                'type' => 'district',
+                'id' => $district->id
+            ];
+        }
+        
+        // Search in categories
+        $categories = Category::active()
+            ->where('name', 'like', "%{$query}%")
+            ->take(2)
+            ->get(['id', 'name']);
+        
+        foreach ($categories as $category) {
+            $suggestions[] = [
+                'title' => $category->name,
+                'subtitle' => 'Loại đất',
+                'type' => 'category',
+                'id' => $category->id
+            ];
+        }
+        
+        // Search in listings (titles and addresses)
+        $listings = Listing::active()
+            ->where(function($q) use ($query) {
+                $q->where('title', 'like', "%{$query}%")
+                  ->orWhere('address', 'like', "%{$query}%");
+            })
+            ->with(['city', 'district'])
+            ->take(3)
+            ->get(['id', 'title', 'address', 'city_id', 'district_id']);
+        
+        foreach ($listings as $listing) {
+            $location = [];
+            if ($listing->district) $location[] = $listing->district->name;
+            if ($listing->city) $location[] = $listing->city->name;
+            
+            $suggestions[] = [
+                'title' => $listing->title,
+                'subtitle' => implode(', ', $location),
+                'type' => 'listing',
+                'id' => $listing->id
+            ];
+        }
+        
+        return response()->json([
+            'suggestions' => array_slice($suggestions, 0, 8)
+        ]);
+    }
 }

@@ -71,6 +71,9 @@
         @include('components.bottom-bar')
     @endif
 
+    <!-- Toast Container -->
+    @include('components.toast-container')
+
     <!-- Modals -->
     @include('components.modals.post-listing')
     @include('components.modals.login')
