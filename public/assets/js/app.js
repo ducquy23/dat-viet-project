@@ -739,17 +739,13 @@ async function loadListings(filters = {}) {
             // Load first listing detail
             await loadListingDetail(lots[0].id);
         } else {
-            // Clear markers if no results
             markerLayers.forEach(m => map.removeLayer(m));
             markerLayers = [];
-            // Only show toast if filters are applied (not on initial page load)
             const urlParams = new URLSearchParams(window.location.search);
             const filterParams = ['city', 'district', 'category', 'max_price', 'max_area', 'has_road', 'vip'];
             const hasUrlFilters = filterParams.some(param => urlParams.has(param));
             const hasAppliedFilters = Object.keys(filters).length > 0;
-            
-            // Only show toast if user has explicitly applied filters, not on initial page load
-            // Check if this is initial load (no filters in URL and no filters passed)
+        
             const isInitialLoad = !hasUrlFilters && !hasAppliedFilters;
             
             if (!isInitialLoad && window.showToast) {
@@ -777,13 +773,10 @@ async function loadListingDetail(listingId) {
         const data = await response.json();
         const listing = data.listing;
 
-        // Find and update the lot in lots array
         const lotIndex = lots.findIndex(l => l.id === listingId);
         if (lotIndex === -1) return;
 
         const lot = lots[lotIndex];
-
-        // Update lot with full details
         lot.name = listing.title;
         lot.desc = listing.description || '';
         lot.legal = listing.legal_status || '';
