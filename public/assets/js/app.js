@@ -761,7 +761,7 @@ async function loadListingDetail(listingId) {
         lot.direction = listing.direction || '';
         lot.roadAccess = listing.has_road_access || false;
         lot.price = formatPrice(listing.price);
-        lot.pricePer = listing.price_per_m2 ? `${(listing.price_per_m2 / 1000000).toFixed(1)}tr/m²` : '';
+        lot.pricePer = listing.price_per_m2 ? `${parseFloat(listing.price_per_m2).toFixed(1)}tr/m²` : '';
         lot.planning = listing.planning_info || '';
         lot.depositOnline = listing.deposit_online ? 'Có' : 'Không';
         lot.tags = listing.tags && Array.isArray(listing.tags) ? listing.tags : [];
@@ -790,8 +790,7 @@ async function loadListingDetail(listingId) {
 
 function formatPrice(price) {
     if (!price) return '0 triệu';
-    const millions = price / 1000000;
-    return new Intl.NumberFormat('vi-VN').format(millions) + ' triệu';
+    return new Intl.NumberFormat('vi-VN').format(price) + ' triệu';
 }
 
 // ===== FILTERS =====

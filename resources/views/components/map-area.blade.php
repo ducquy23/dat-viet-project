@@ -97,7 +97,7 @@
                         
                         const icon = listing.is_vip ? iconVip : iconNormal;
                         const imageUrl = listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '{{ asset("images/Image-not-found.png") }}';
-                        const price = new Intl.NumberFormat('vi-VN').format(listing.price / 1000000);
+                        const price = new Intl.NumberFormat('vi-VN').format(listing.price);
                         const address = listing.address || '';
                         const cityDistrict = [listing.district, listing.city].filter(Boolean).join(', ');
 

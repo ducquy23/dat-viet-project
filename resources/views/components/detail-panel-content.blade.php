@@ -99,7 +99,7 @@
         </li>
         <li class="d-flex justify-content-between py-1">
             <span class="text-muted">Đơn giá</span>
-            <span class="fw-semibold text-dark">{{ $listing->price_per_m2 ? number_format($listing->price_per_m2 / 1000000, 1) . 'tr/m²' : 'Đang cập nhật' }}</span>
+            <span class="fw-semibold text-dark">{{ $listing->price_per_m2 ? number_format($listing->price_per_m2, 1) . 'tr/m²' : 'Đang cập nhật' }}</span>
         </li>
     </ul>
 </div>
@@ -142,7 +142,7 @@
         <div class="similar-item" onclick="window.location.href='{{ route('listings.show', $similar->slug) }}'">
             <img src="{{ $similar->primaryImage?->image_url ?? asset('images/Image-not-found.png') }}" alt="{{ $similar->title }}">
             <div class="flex-grow-1">
-                <div class="fw-bold">{{ number_format($similar->price / 1000000, 0) }} triệu</div>
+                <div class="fw-bold">{{ number_format($similar->price, 0) }} triệu</div>
                 <div class="text-muted small">{{ $similar->area }}m² • {{ $similar->category->name }}</div>
                 <a href="{{ route('listings.show', $similar->slug) }}" class="btn btn-outline-primary btn-sm mt-1">Xem chi tiết</a>
             </div>
