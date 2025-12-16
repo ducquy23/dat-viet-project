@@ -73,14 +73,72 @@ function renderMarkers(data) {
         return;
     }
 
-    markerLayers.forEach(m => currentMap.removeLayer(m));
+    // Clear existing markers from markerLayers
+    markerLayers.forEach(m => {
+        if (currentMap.hasLayer(m)) {
+            currentMap.removeLayer(m);
+        }
+    });
     markerLayers = [];
 
+    // Also clear markers from map-area.blade.php if they exist
+    if (window.mapAreaMarkers && Array.isArray(window.mapAreaMarkers)) {
+        window.mapAreaMarkers.forEach(m => {
+            if (currentMap.hasLayer(m)) {
+                currentMap.removeLayer(m);
+            }
+        });
+        window.mapAreaMarkers = [];
+    }
+
+    // Track IDs to avoid duplicates
+    const addedIds = new Set();
+
     data.forEach(lot => {
-        const marker = L.marker([lot.lat, lot.lng], { icon: lot.isVip ? iconVip : iconNormal }).addTo(currentMap);
-        marker.bindPopup(popupTemplate(lot));
+        // Skip if this ID was already added
+        if (addedIds.has(lot.id)) {
+            console.warn(`Duplicate listing ID ${lot.id} detected, skipping`);
+            return;
+        }
+
+        // Validate coordinates
+        if (!lot.lat || !lot.lng || isNaN(lot.lat) || isNaN(lot.lng)) {
+            console.warn(`Invalid coordinates for listing ${lot.id}: lat=${lot.lat}, lng=${lot.lng}`);
+            return;
+        }
+
+        // Validate coordinate ranges (Vietnam bounds approximately)
+        const lat = parseFloat(lot.lat);
+        const lng = parseFloat(lot.lng);
+        if (lat < 8.5 || lat > 23.5 || lng < 102.0 || lng > 110.0) {
+            console.warn(`Coordinates out of Vietnam bounds for listing ${lot.id}: lat=${lat}, lng=${lng}`);
+            return;
+        }
+
+        addedIds.add(lot.id);
+
+        const marker = L.marker([lat, lng], {
+            icon: lot.isVip ? iconVip : iconNormal,
+            title: lot.name || lot.title || `Tin đăng ${lot.id}`,
+            riseOnHover: true,
+            zIndexOffset: lot.isVip ? 1000 : 500
+        }).addTo(currentMap);
+
+        marker.bindPopup(popupTemplate(lot), {
+            maxWidth: 250,
+            className: 'custom-popup',
+            closeButton: true,
+            autoPan: true,
+            autoPanPadding: [50, 50]
+        });
 
         marker.on("click", async () => {
+            // Zoom to marker location
+            currentMap.setView([lot.lat, lot.lng], Math.max(currentMap.getZoom(), 16), {
+                animate: true,
+                duration: 0.5
+            });
+
             // Load full detail and update right panel
             await loadListingDetail(lot.id);
             const fullLot = lots.find(l => l.id === lot.id) || lot;
@@ -105,16 +163,34 @@ function renderMarkers(data) {
 
         markerLayers.push(marker);
     });
+
+    // Store markers globally so map-area can clear them
+    window.markerLayers = markerLayers;
 }
 
 function popupTemplate(lot) {
     const imageUrl = lot.img || '/images/Image-not-found.png';
+    const address = lot.address || lot.district || '';
+    const cityDistrict = [lot.district, lot.city].filter(Boolean).join(', ');
+
     return `
-        <div style="width:180px">
-            <img src="${imageUrl}" style="width:100%; height:90px; object-fit:cover; border-radius:8px; margin-bottom:6px;" onerror="this.src='/images/Image-not-found.png'">
-            <div class="fw-semibold">${lot.price} • ${lot.size}</div>
-            <div class="text-muted small mb-2">${lot.type || ''}</div>
-            <a href="/tin-dang/${lot.slug || lot.id}" class="btn btn-primary btn-sm w-100" data-view-lot="${lot.id}">Xem chi tiết</a>
+        <div style="width:220px; font-family: 'SF Pro Display', sans-serif;">
+            <img src="${imageUrl}" style="width:100%; height:120px; object-fit:cover; border-radius:8px 8px 0 0; margin-bottom:8px; display:block;" onerror="this.src='/images/Image-not-found.png'">
+            <div style="padding: 0 8px 8px 8px;">
+                <div style="font-weight:700; font-size:15px; color:#335793; margin-bottom:6px; line-height:1.3;">
+                    ${lot.price} triệu • ${lot.size}
+                </div>
+                ${lot.type ? `<div style="color:#6c757d; font-size:12px; margin-bottom:4px;">
+                    <i class="bi bi-tag-fill" style="font-size:10px;"></i> ${lot.type}
+                </div>` : ''}
+                ${address ? `<div style="color:#6c757d; font-size:11px; margin-bottom:8px; line-height:1.4; display:flex; align-items:start; gap:4px;">
+                    <i class="bi bi-geo-alt-fill" style="font-size:11px; margin-top:2px; flex-shrink:0;"></i>
+                    <span>${address}${cityDistrict ? ', ' + cityDistrict : ''}</span>
+                </div>` : ''}
+                <a href="/tin-dang/${lot.slug || lot.id}" class="btn btn-primary btn-sm w-100" data-view-lot="${lot.id}" style="border:none; font-size:12px; padding:6px 12px; border-radius:6px;">
+                    <i class="bi bi-eye"></i> Xem chi tiết
+                </a>
+            </div>
         </div>
     `;
 }
@@ -511,31 +587,52 @@ async function loadListings(filters = {}) {
         const response = await fetch(url);
         const data = await response.json();
 
-        // Convert API data to app format
-        lots = data.listings.map(listing => ({
-            id: listing.id,
-            name: listing.title,
-            price: formatPrice(listing.price),
-            size: `${listing.area}m²`,
-            priceValue: listing.price,
-            sizeValue: listing.area,
-            lat: parseFloat(listing.latitude),
-            lng: parseFloat(listing.longitude),
-            slug: listing.slug,
-            img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/Image-not-found.png',
-            type: listing.category || 'Đất',
-            address: listing.address,
-            city: listing.city,
-            district: listing.district,
-            tags: [], // Will be loaded from detail
-            seller: { name: '', phone: '' }, // Will be loaded from detail
-            isVip: listing.is_vip || false,
-            legal: '',
-            front: '',
-            road: '',
-            depth: '',
-            roadWidth: '',
-            direction: '',
+        // Convert API data to app format with validation
+        lots = data.listings
+            .filter(listing => {
+                // Validate coordinates
+                if (!listing.latitude || !listing.longitude) {
+                    console.warn(`Listing ${listing.id} missing coordinates`);
+                    return false;
+                }
+                const lat = parseFloat(listing.latitude);
+                const lng = parseFloat(listing.longitude);
+                if (isNaN(lat) || isNaN(lng)) {
+                    console.warn(`Listing ${listing.id} has invalid coordinates`);
+                    return false;
+                }
+                // Validate Vietnam bounds
+                if (lat < 8.5 || lat > 23.5 || lng < 102.0 || lng > 110.0) {
+                    console.warn(`Listing ${listing.id} coordinates out of bounds`);
+                    return false;
+                }
+                return true;
+            })
+            .map(listing => ({
+                id: listing.id,
+                name: listing.title,
+                title: listing.title,
+                price: formatPrice(listing.price),
+                size: `${listing.area}m²`,
+                priceValue: listing.price,
+                sizeValue: listing.area,
+                lat: parseFloat(listing.latitude),
+                lng: parseFloat(listing.longitude),
+                slug: listing.slug,
+                img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/Image-not-found.png',
+                type: listing.category || 'Đất',
+                address: listing.address || '',
+                city: listing.city || '',
+                district: listing.district || '',
+                tags: [], // Will be loaded from detail
+                seller: { name: '', phone: '' }, // Will be loaded from detail
+                isVip: listing.is_vip || false,
+                legal: '',
+                front: '',
+                road: '',
+                depth: '',
+                roadWidth: '',
+                direction: '',
             roadAccess: false,
             pricePer: '',
             planning: '',
@@ -584,6 +681,7 @@ async function loadListingDetail(listingId) {
         lot.roadWidth = listing.road_width ? `${listing.road_width}m` : '';
         lot.direction = listing.direction || '';
         lot.roadAccess = listing.has_road_access || false;
+        lot.price = formatPrice(listing.price);
         lot.pricePer = listing.price_per_m2 ? `${(listing.price_per_m2 / 1000000).toFixed(1)}tr/m²` : '';
         lot.planning = listing.planning_info || '';
         lot.depositOnline = listing.deposit_online ? 'Có' : 'Không';
@@ -627,44 +725,206 @@ const filterRoadEl = document.getElementById("filter-road");
 const priceLabel = document.getElementById("price-label");
 const areaLabel = document.getElementById("area-label");
 
-async function applyFilters() {
-    const category = filterTypeEl?.value;
-    const city = filterCityEl?.value;
-    const district = filterDistrictEl?.value;
+async function applyFilters(e) {
+    // Prevent form submission if event is passed
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    const category = filterTypeEl?.value || '';
+    const city = filterCityEl?.value || '';
+    const district = filterDistrictEl?.value || '';
     const priceMax = Number(filterPriceEl?.value || 5000);
     const areaMax = Number(filterAreaEl?.value || 1000);
-    const needRoad = filterRoadEl?.checked;
+    const needRoad = filterRoadEl?.checked || false;
 
     const filters = {};
     if (category) filters.category = category;
     if (city) filters.city = city;
     if (district) filters.district = district;
-    if (priceMax) filters.maxPrice = priceMax;
-    if (areaMax) filters.maxArea = areaMax;
+
+    // Convert triệu đồng to VND (đồng) for API
+    // Only apply filter if value is less than max (meaning user changed it)
+    if (priceMax && priceMax < 5000) {
+        filters.maxPrice = priceMax * 1000000; // Convert triệu to đồng
+    }
+    if (areaMax && areaMax < 1000) {
+        filters.maxArea = areaMax;
+    }
     if (needRoad) filters.hasRoad = true;
 
     await loadListings(filters);
+
+    // Update URL without reloading page
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (city) params.append('city', city);
+    if (district) params.append('district', district);
+    // Only add to URL if not default values
+    if (priceMax < 5000) params.append('max_price', priceMax);
+    if (areaMax < 1000) params.append('max_area', areaMax);
+    if (needRoad) params.append('has_road', '1');
+
+    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.pushState({}, '', newUrl);
+
+    // Update filter count badge
+    updateFilterCount();
+}
+
+function updateFilterCount() {
+    const filterCountEl = document.getElementById('filter-count');
+    if (!filterCountEl) return;
+
+    let count = 0;
+    if (filterTypeEl?.value) count++;
+    if (filterCityEl?.value) count++;
+    if (filterDistrictEl?.value) count++;
+    if (filterPriceEl?.value && filterPriceEl.value < 5000) count++;
+    if (filterAreaEl?.value && filterAreaEl.value < 1000) count++;
+    if (filterRoadEl?.checked) count++;
+
+    filterCountEl.textContent = count > 0 ? `${count} tiêu chí` : '0 tiêu chí';
 }
 
 function updateRangeLabels() {
-    priceLabel.textContent = `${filterPriceEl.value}+`;
-    areaLabel.textContent = `${filterAreaEl.value}+`;
+    if (priceLabel) {
+        const priceValue = parseInt(filterPriceEl.value);
+        priceLabel.textContent = `${new Intl.NumberFormat('vi-VN').format(priceValue)} triệu`;
+    }
+    if (areaLabel) {
+        const areaValue = parseInt(filterAreaEl.value);
+        areaLabel.textContent = `${new Intl.NumberFormat('vi-VN').format(areaValue)} m²`;
+    }
+}
+
+// Load districts when city changes
+if (filterCityEl && filterDistrictEl) {
+    filterCityEl.addEventListener('change', async function() {
+        const cityId = this.value;
+
+        if (cityId) {
+            try {
+                // Disable district select while loading
+                filterDistrictEl.disabled = true;
+                filterDistrictEl.innerHTML = '<option value="">Đang tải...</option>';
+
+                const response = await fetch(`/api/districts?city_id=${cityId}`);
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+
+                // Clear and populate districts
+                filterDistrictEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+
+                if (data.districts && Array.isArray(data.districts)) {
+                    data.districts.forEach(district => {
+                        const option = document.createElement('option');
+                        option.value = district.id;
+                        option.textContent = district.name;
+                        filterDistrictEl.appendChild(option);
+                    });
+                }
+
+                // Re-enable district select
+                filterDistrictEl.disabled = false;
+
+                // Update filter count
+                updateFilterCount();
+            } catch (error) {
+                console.error('Error loading districts:', error);
+                filterDistrictEl.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+                filterDistrictEl.disabled = false;
+            }
+        } else {
+            // Clear districts if no city selected
+            filterDistrictEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+            filterDistrictEl.disabled = false;
+
+            // Update filter count
+            updateFilterCount();
+        }
+    });
+
+    // Load districts on page load if city is already selected
+    if (filterCityEl.value) {
+        filterCityEl.dispatchEvent(new Event('change'));
+    }
+}
+
+// Update filter count when other filters change
+if (filterTypeEl) {
+    filterTypeEl.addEventListener('change', updateFilterCount);
+}
+if (filterPriceEl) {
+    filterPriceEl.addEventListener('input', function() {
+        updateRangeLabels();
+        updateFilterCount();
+    });
+}
+if (filterAreaEl) {
+    filterAreaEl.addEventListener('input', function() {
+        updateRangeLabels();
+        updateFilterCount();
+    });
+}
+if (filterRoadEl) {
+    filterRoadEl.addEventListener('change', updateFilterCount);
+}
+
+// Initialize filter count on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateFilterCount);
+} else {
+    updateFilterCount();
 }
 
 // Only add event listeners if elements exist (not all pages have filters)
 const btnApplyFilters = document.getElementById("btn-apply-filters");
 const btnNearby = document.getElementById("btn-nearby");
+const filterForm = document.getElementById("filter-form");
+
 if (btnApplyFilters) {
     btnApplyFilters.addEventListener("click", applyFilters);
+}
+
+// Prevent form submission, use AJAX instead
+if (filterForm) {
+    filterForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        applyFilters(e);
+    });
 }
 if (btnNearby) {
     btnNearby.addEventListener("click", locateUserAndPickNearest);
 }
 if (filterPriceEl) {
-    filterPriceEl.addEventListener("input", updateRangeLabels);
+    filterPriceEl.addEventListener("input", function() {
+        updateRangeLabels();
+        updateFilterCount();
+        // Update slider progress visual
+        const progress = ((this.value - this.min) / (this.max - this.min)) * 100;
+        this.style.setProperty('--range-progress', progress + '%');
+    });
+    // Initialize progress on load
+    const priceProgress = ((filterPriceEl.value - filterPriceEl.min) / (filterPriceEl.max - filterPriceEl.min)) * 100;
+    filterPriceEl.style.setProperty('--range-progress', priceProgress + '%');
 }
 if (filterAreaEl) {
-    filterAreaEl.addEventListener("input", updateRangeLabels);
+    filterAreaEl.addEventListener("input", function() {
+        updateRangeLabels();
+        updateFilterCount();
+        // Update slider progress visual
+        const progress = ((this.value - this.min) / (this.max - this.min)) * 100;
+        this.style.setProperty('--range-progress', progress + '%');
+    });
+    // Initialize progress on load
+    const areaProgress = ((filterAreaEl.value - filterAreaEl.min) / (filterAreaEl.max - filterAreaEl.min)) * 100;
+    filterAreaEl.style.setProperty('--range-progress', areaProgress + '%');
 }
 if (priceLabel && areaLabel && filterPriceEl && filterAreaEl) {
     updateRangeLabels();
@@ -888,8 +1148,8 @@ document.getElementById('postModal')?.addEventListener('shown.bs.modal', async f
             try {
                 // Clear container first
                 mapContainer.innerHTML = '';
-                
-                postMap = L.map('post-map', { 
+
+                postMap = L.map('post-map', {
                     zoomControl: true,
                     attributionControl: true
                 }).setView([defaultLat, defaultLng], 15);
@@ -989,7 +1249,7 @@ function setPostLocation(lat, lng) {
         const lngInput = document.getElementById('post-longitude');
         if (latInput) latInput.value = position.lat;
         if (lngInput) lngInput.value = position.lng;
-        
+
         // Reverse geocode để cập nhật địa chỉ
         reverseGeocodeForPost(position.lat, position.lng);
     });
@@ -1082,11 +1342,11 @@ async function loadPostFormData() {
         // Remove existing listener to avoid duplicates
         const newCitySelect = citySelect.cloneNode(true);
         citySelect.parentNode.replaceChild(newCitySelect, citySelect);
-        
+
         newCitySelect.addEventListener('change', async function() {
             const cityId = this.value;
             const districtSelect = document.getElementById('post-district');
-            
+
             if (!cityId) {
                 if (districtSelect) districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
                 return;
@@ -1195,7 +1455,7 @@ document.getElementById('btn-use-current-location')?.addEventListener('click', f
         });
         return;
     }
-    
+
     if (!navigator.geolocation) {
         Swal.fire({
             icon: 'warning',
@@ -1264,7 +1524,7 @@ async function searchAddressForPost() {
 
     const addressInput = document.getElementById('post-address-search');
     const searchBtn = document.getElementById('btn-search-address');
-    
+
     if (!addressInput || !addressInput.value.trim()) {
         Swal.fire({
             icon: 'warning',
@@ -1298,25 +1558,25 @@ async function searchAddressForPost() {
             const result = data[0];
             const lat = parseFloat(result.lat);
             const lng = parseFloat(result.lon);
-            
+
             // Cập nhật vị trí trên bản đồ
             setPostLocation(lat, lng);
-            
+
             // Cập nhật input với địa chỉ chính xác
             addressInput.value = result.display_name;
-            
+
             // Cập nhật input address trong form
             const formAddressInput = document.getElementById('post-address');
             if (formAddressInput) {
                 formAddressInput.value = result.display_name;
             }
-            
+
             // Hiển thị thông báo thành công
             const existingAlert = addressInput.parentElement.parentElement.querySelector('.alert-success');
             if (existingAlert) {
                 existingAlert.remove();
             }
-            
+
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
             alertDiv.innerHTML = `
@@ -1324,7 +1584,7 @@ async function searchAddressForPost() {
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             addressInput.parentElement.parentElement.appendChild(alertDiv);
-            
+
             // Tự động ẩn thông báo sau 3 giây
             setTimeout(() => {
                 alertDiv.remove();
@@ -1500,7 +1760,7 @@ document.getElementById('btn-verify-otp')?.addEventListener('click', function() 
         confirmButtonText: 'Đồng ý'
     }).then(() => {
         bootstrap.Modal.getInstance(document.getElementById('registerModal'))?.hide();
-        
+
         // Reset form
         document.getElementById('register-phone').value = '';
         document.getElementById('register-otp').value = '';
@@ -1528,3 +1788,16 @@ document.getElementById('btn-register-facebook')?.addEventListener('click', func
         confirmButtonText: 'Đã hiểu'
     });
 });
+
+// Track advertisement clicks
+function trackAdClick(adId) {
+    fetch(`/api/ads/${adId}/click`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    }).catch(error => {
+        console.error('Error tracking ad click:', error);
+    });
+}

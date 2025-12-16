@@ -46,7 +46,18 @@ class SearchController extends Controller
             $query->where(function ($q) use ($keyword) {
                 $q->where('title', 'like', "%{$keyword}%")
                     ->orWhere('description', 'like', "%{$keyword}%")
-                    ->orWhere('address', 'like', "%{$keyword}%");
+                    ->orWhere('address', 'like', "%{$keyword}%")
+                    ->orWhere('contact_name', 'like', "%{$keyword}%")
+                    ->orWhere('legal_status', 'like', "%{$keyword}%")
+                    ->orWhereHas('city', function ($cityQuery) use ($keyword) {
+                        $cityQuery->where('name', 'like', "%{$keyword}%");
+                    })
+                    ->orWhereHas('district', function ($districtQuery) use ($keyword) {
+                        $districtQuery->where('name', 'like', "%{$keyword}%");
+                    })
+                    ->orWhereHas('category', function ($categoryQuery) use ($keyword) {
+                        $categoryQuery->where('name', 'like', "%{$keyword}%");
+                    });
             });
         }
 
@@ -63,11 +74,15 @@ class SearchController extends Controller
         }
 
         if ($minPrice) {
-            $query->where('price', '>=', $minPrice);
+            // Convert triệu to VND if needed
+            $minPriceFilter = $minPrice < 10000 ? $minPrice * 1000000 : $minPrice;
+            $query->where('price', '>=', $minPriceFilter);
         }
 
         if ($maxPrice) {
-            $query->where('price', '<=', $maxPrice);
+            // Convert triệu to VND if needed
+            $maxPriceFilter = $maxPrice < 10000 ? $maxPrice * 1000000 : $maxPrice;
+            $query->where('price', '<=', $maxPriceFilter);
         }
 
         if ($minArea) {
@@ -96,7 +111,7 @@ class SearchController extends Controller
                 $query->latest();
         }
 
-        $listings = $query->paginate(20)->withQueryString();
+        $listings = $query->paginate(12)->withQueryString();
 
         return view('pages.search', [
             'listings' => $listings,

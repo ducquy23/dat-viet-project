@@ -279,10 +279,26 @@ class ListingController extends Controller
     {
         $user = auth('partner')->user();
 
-        $listings = Listing::where('user_id', $user->id)
-            ->with(['category', 'city', 'district', 'package', 'primaryImage'])
-            ->latest()
-            ->paginate(20);
+        $tab = $request->get('tab', 'my-listings'); // my-listings or favorites
+        
+        if ($tab === 'favorites') {
+            // Load favorite listings
+            $favoriteIds = \App\Models\Favorite::where('user_id', $user->id)
+                ->pluck('listing_id');
+            
+            $listings = Listing::whereIn('id', $favoriteIds)
+                ->with(['category', 'city', 'district', 'package', 'primaryImage'])
+                ->latest()
+                ->paginate(12)
+                ->withQueryString();
+        } else {
+            // Load user's listings
+            $listings = Listing::where('user_id', $user->id)
+                ->with(['category', 'city', 'district', 'package', 'primaryImage'])
+                ->latest()
+                ->paginate(12)
+                ->withQueryString();
+        }
 
         if ($request->wantsJson() || $request->get('format') === 'json') {
             return response()->json([
@@ -312,6 +328,7 @@ class ListingController extends Controller
 
         return view('pages.my-listings', [
             'listings' => $listings,
+            'activeTab' => $tab,
         ]);
     }
 }

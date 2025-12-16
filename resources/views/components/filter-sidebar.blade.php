@@ -53,7 +53,13 @@
 
             <!-- Khoảng giá -->
             <div class="mb-3">
-                <label class="form-label fw-semibold small text-uppercase text-muted">Khoảng giá (triệu)</label>
+                <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
+                    <span>Giá tối đa</span>
+                    <span class="badge bg-primary-subtle text-primary" id="price-label">{{ number_format(request('max_price', 5000)) }} triệu</span>
+                </label>
+                <div class="small text-muted mb-2">
+                    <i class="bi bi-info-circle"></i> Tìm các lô đất có giá ≤ giá tối đa (đơn vị: triệu đồng)
+                </div>
                 <input 
                     type="range" 
                     class="form-range" 
@@ -62,16 +68,23 @@
                     step="50" 
                     id="filter-price" 
                     name="max_price"
-                    value="{{ request('max_price', 5000) }}">
-                <div class="d-flex justify-content-between small text-muted">
-                    <span>300</span>
-                    <span id="price-label">{{ number_format(request('max_price', 5000)) }}+</span>
+                    value="{{ request('max_price', 5000) }}"
+                    aria-label="Giá tối đa">
+                <div class="d-flex justify-content-between small text-muted mt-1">
+                    <span>300 triệu</span>
+                    <span>5000 triệu</span>
                 </div>
             </div>
 
             <!-- Diện tích -->
             <div class="mb-4">
-                <label class="form-label fw-semibold small text-uppercase text-muted">Diện tích (m²)</label>
+                <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
+                    <span>Diện tích tối đa</span>
+                    <span class="badge bg-primary-subtle text-primary" id="area-label">{{ number_format(request('max_area', 1000)) }} m²</span>
+                </label>
+                <div class="small text-muted mb-2">
+                    <i class="bi bi-info-circle"></i> Tìm các lô đất có diện tích ≤ diện tích tối đa (đơn vị: mét vuông)
+                </div>
                 <input 
                     type="range" 
                     class="form-range" 
@@ -80,10 +93,11 @@
                     step="10" 
                     id="filter-area" 
                     name="max_area"
-                    value="{{ request('max_area', 1000) }}">
-                <div class="d-flex justify-content-between small text-muted">
-                    <span>50</span>
-                    <span id="area-label">{{ number_format(request('max_area', 1000)) }}+</span>
+                    value="{{ request('max_area', 1000) }}"
+                    aria-label="Diện tích tối đa">
+                <div class="d-flex justify-content-between small text-muted mt-1">
+                    <span>50 m²</span>
+                    <span>1000 m²</span>
                 </div>
             </div>
 

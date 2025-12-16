@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="container-fluid p-0">
-    <div class="row g-0 layout-row">
+    <div class="row g-0 layout-row flex-lg-nowrap">
         <!-- LEFT FILTER -->
         @include('components.filter-sidebar')
 
@@ -31,26 +31,6 @@
             new Intl.NumberFormat('vi-VN').format(this.value) + '+';
     });
 
-    // City change - load districts
-    document.getElementById('filter-city')?.addEventListener('change', function() {
-        const cityId = this.value;
-        const districtSelect = document.getElementById('filter-district');
-
-        if (cityId) {
-            fetch(`/api/districts?city_id=${cityId}`)
-                .then(response => response.json())
-                .then(data => {
-                    districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-                    data.districts.forEach(district => {
-                        districtSelect.innerHTML +=
-                            `<option value="${district.id}">${district.name}</option>`;
-                    });
-                });
-        } else {
-            districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-        }
-    });
-\
     function trackAdClick(adId) {
         fetch(`/api/ads/${adId}/click`, {
             method: 'POST',

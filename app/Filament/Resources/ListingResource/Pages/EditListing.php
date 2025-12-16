@@ -65,6 +65,17 @@ class EditListing extends EditRecord
         // Xóa khỏi data để không lưu vào listing
         unset($data['thumbnail'], $data['gallery_images']);
         
+        // Tự động set approved_at khi status = 'approved'
+        if (isset($data['status']) && $data['status'] === 'approved') {
+            // Nếu đang chuyển từ trạng thái khác sang approved và chưa có approved_at
+            if ($this->record->status !== 'approved' || !$this->record->approved_at) {
+                $data['approved_at'] = now();
+            }
+        } elseif (isset($data['status']) && $data['status'] !== 'approved') {
+            // Nếu đổi từ approved sang trạng thái khác, xóa approved_at
+            $data['approved_at'] = null;
+        }
+        
         return $data;
     }
 

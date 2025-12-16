@@ -12,9 +12,13 @@
     </button>
     <a href="{{ $ad->link_url ?? '#' }}" class="ad-link-horizontal" target="_blank" onclick="trackAdClick({{ $ad->id }})">
         <div class="ad-badge-small">Quảng cáo</div>
-        <div class="ad-content-horizontal">
-            <div class="ad-icon">
-                <i class="bi bi-bank"></i>
+        <div class="ad-content-horizontal d-flex align-items-center gap-3">
+            <div class="ad-thumb">
+                @if($ad->image_url)
+                    <img src="{{ $ad->full_image_url }}" alt="{{ $ad->title }}" loading="lazy">
+                @else
+                    <i class="bi bi-image" style="font-size:28px; color:#9ca3af;"></i>
+                @endif
             </div>
             <div class="ad-text-horizontal">
                 <strong>{{ $ad->title }}</strong>

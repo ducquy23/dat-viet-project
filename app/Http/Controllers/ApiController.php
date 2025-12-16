@@ -71,11 +71,7 @@ class ApiController extends Controller
      */
     public function trackAdClick($id): JsonResponse
     {
-        $ad = Ad::find($id);
-        if ($ad) {
-            $ad->increment('clicks_count');
-        }
-
+        // Track ad click (no longer storing clicks_count)
         return response()->json(['success' => true]);
     }
 
@@ -117,7 +113,10 @@ class ApiController extends Controller
         }
 
         if ($maxPrice) {
-            $query->where('price', '<=', $maxPrice);
+            // maxPrice can be in millions (from form) or VND (from API)
+            // If it's less than 10000, assume it's in millions and convert
+            $priceFilter = $maxPrice < 10000 ? $maxPrice * 1000000 : $maxPrice;
+            $query->where('price', '<=', $priceFilter);
         }
 
         if ($maxArea) {
@@ -157,11 +156,16 @@ class ApiController extends Controller
      */
     public function getListing($id): JsonResponse
     {
-        $listing = Listing::active()
-            ->with(['user', 'category', 'city', 'district', 'package', 'images' => function ($query) {
+        $listing = Listing::with(['user', 'category', 'city', 'district', 'package', 'images' => function ($query) {
                 $query->orderBy('is_primary', 'desc')->orderBy('sort_order');
             }])
             ->findOrFail($id);
+
+        $user = auth('partner')->user();
+    
+        if (!$listing->is_active && (!$user || $listing->user_id !== $user->id)) {
+            abort(404);
+        }
 
         return response()->json([
             'listing' => $listing,

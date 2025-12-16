@@ -281,18 +281,17 @@ class ListingResource extends Resource
                                 'sold' => 'Đã bán',
                             ])
                             ->required()
-                            ->default('pending'),
+                            ->default('pending')
+                            ->helperText('Khi đổi trạng thái thành "Đã duyệt", ngày duyệt sẽ tự động được cập nhật'),
                         Forms\Components\Textarea::make('rejection_reason')
                             ->label('Lý do từ chối')
                             ->rows(3)
                             ->visible(fn (Forms\Get $get) => $get('status') === 'rejected')
                             ->columnSpanFull(),
-                        Forms\Components\DateTimePicker::make('approved_at')
-                            ->label('Ngày duyệt')
-                            ->visible(fn (Forms\Get $get) => $get('status') === 'approved'),
                         Forms\Components\DateTimePicker::make('expires_at')
                             ->label('Ngày hết hạn')
-                            ->nullable(),
+                            ->nullable()
+                            ->helperText('Ngày tin đăng hết hạn (để trống nếu không giới hạn)'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Thông tin khác')

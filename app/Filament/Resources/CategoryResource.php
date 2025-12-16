@@ -33,30 +33,54 @@ class CategoryResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Tên danh mục')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('slug')
-                    ->label('Slug (URL)')
-                    ->required()
-                    ->maxLength(255)
-                    ->unique(ignoreRecord: true),
-                Forms\Components\TextInput::make('icon')
-                    ->label('Icon (Bootstrap icon class)')
-                    ->placeholder('bi-house-door')
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('description')
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('sort_order')
-                    ->label('Thứ tự sắp xếp')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                Forms\Components\Toggle::make('is_active')
-                    ->label('Kích hoạt')
-                    ->default(true)
-                    ->required(),
+                Forms\Components\Section::make('Thông tin cơ bản')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Tên danh mục')
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpanFull()
+                            ->helperText('Tên hiển thị của danh mục'),
+                        Forms\Components\TextInput::make('slug')
+                            ->label('Slug (URL)')
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true)
+                            ->helperText('URL-friendly version của tên danh mục (tự động tạo từ tên nếu để trống)')
+                            ->columnSpanFull(),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Mô tả')
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->helperText('Mô tả ngắn về danh mục này'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Hiển thị')
+                    ->schema([
+                        Forms\Components\TextInput::make('icon')
+                            ->label('Icon')
+                            ->placeholder('bi-house-door')
+                            ->maxLength(255)
+                            ->helperText('Tên class icon Bootstrap Icons (ví dụ: bi-house-door, bi-building)')
+                            ->columnSpanFull(),
+                        Forms\Components\TextInput::make('sort_order')
+                            ->label('Thứ tự sắp xếp')
+                            ->required()
+                            ->numeric()
+                            ->default(0)
+                            ->helperText('Số nhỏ hơn sẽ hiển thị trước'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Trạng thái')
+                    ->schema([
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Kích hoạt')
+                            ->default(true)
+                            ->required()
+                            ->helperText('Bật/tắt hiển thị danh mục trên website'),
+                    ]),
             ]);
     }
 

@@ -33,31 +33,71 @@ class PackageResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('code')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('description')
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('price')
-                    ->label('Giá (VND)')
-                    ->required()
-                    ->numeric()
-                    ->default(0.00)
-                    ->prefix('₫'),
-                Forms\Components\TextInput::make('duration_days')
-                    ->required()
-                    ->numeric()
-                    ->default(30),
-                Forms\Components\TextInput::make('priority')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                Forms\Components\TextInput::make('features'),
-                Forms\Components\Toggle::make('is_active')
-                    ->required(),
+                Forms\Components\Section::make('Thông tin cơ bản')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Tên gói')
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpanFull()
+                            ->helperText('Tên hiển thị của gói đăng tin (ví dụ: Gói Cơ Bản, Gói VIP)'),
+                        Forms\Components\TextInput::make('code')
+                            ->label('Mã gói')
+                            ->required()
+                            ->maxLength(255)
+                            ->helperText('Mã định danh duy nhất cho gói (ví dụ: BASIC, VIP, PREMIUM)')
+                            ->columnSpanFull(),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Mô tả')
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->helperText('Mô tả chi tiết về gói đăng tin'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Giá và thời hạn')
+                    ->schema([
+                        Forms\Components\TextInput::make('price')
+                            ->label('Giá (VND)')
+                            ->required()
+                            ->numeric()
+                            ->default(0.00)
+                            ->prefix('₫')
+                            ->helperText('Giá của gói tính bằng VND'),
+                        Forms\Components\TextInput::make('duration_days')
+                            ->label('Thời hạn (ngày)')
+                            ->required()
+                            ->numeric()
+                            ->default(30)
+                            ->suffix('ngày')
+                            ->helperText('Số ngày tin đăng được hiển thị'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Tính năng và ưu tiên')
+                    ->schema([
+                        Forms\Components\TextInput::make('priority')
+                            ->label('Độ ưu tiên')
+                            ->required()
+                            ->numeric()
+                            ->default(0)
+                            ->helperText('Số càng cao, tin đăng càng được ưu tiên hiển thị'),
+                        Forms\Components\Textarea::make('features')
+                            ->label('Tính năng')
+                            ->rows(4)
+                            ->columnSpanFull()
+                            ->helperText('Danh sách các tính năng của gói (mỗi tính năng một dòng)'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Trạng thái')
+                    ->schema([
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Kích hoạt')
+                            ->default(true)
+                            ->required()
+                            ->helperText('Bật/tắt hiển thị gói trên website'),
+                    ]),
             ]);
     }
 

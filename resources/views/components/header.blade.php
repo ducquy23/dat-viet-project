@@ -10,25 +10,34 @@
         </a>
     </div>
 
-    <form class="d-none d-md-flex col-5" action="{{ route('search') }}" method="GET">
-        <div class="input-group search-box">
-            <span class="input-group-text bg-white border-end-0">
-                <i class="bi bi-search"></i>
+    <form class="d-none d-md-flex col-5 position-relative" action="{{ route('search') }}" method="GET" id="header-search-form">
+        <div class="input-group search-box position-relative">
+            <span class="input-group-text bg-white border-end-0" style="padding: 12px 16px;">
+                <i class="bi bi-search" style="color: #64748b;"></i>
             </span>
             <input
                 class="form-control border-start-0"
                 type="text"
                 name="q"
+                id="header-search-input"
                 value="{{ request('q') }}"
-                placeholder="Tìm địa chỉ, từ khóa, sổ đỏ, tên chủ đất...">
+                placeholder="Tìm địa chỉ, từ khóa, sổ đỏ, tên chủ đất..."
+                style="padding: 12px 16px; font-size: 14px;"
+                aria-label="Tìm kiếm"
+                autocomplete="off">
+            @if(request('q'))
+            <button type="button" class="btn btn-link text-muted p-0 position-absolute end-0 top-50 translate-middle-y me-2" 
+                    onclick="document.getElementById('header-search-input').value=''; document.getElementById('header-search-form').submit();"
+                    style="text-decoration: none; z-index: 10;">
+                <i class="bi bi-x-circle"></i>
+            </button>
+            @endif
         </div>
+        <!-- Search suggestions dropdown -->
+        <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
     </form>
 
     <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-outline-secondary d-none d-md-inline-flex" onclick="location.reload()">
-            <i class="bi bi-arrow-clockwise"></i> Làm mới
-        </button>
-
         @auth('partner')
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">

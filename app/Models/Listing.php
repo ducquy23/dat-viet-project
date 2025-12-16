@@ -222,6 +222,16 @@ class Listing extends Model
     }
 
     /**
+     * Check if listing is active (approved and not expired)
+     * @return bool
+     */
+    public function getIsActiveAttribute(): bool
+    {
+        return $this->status === 'approved' && 
+               ($this->expires_at === null || $this->expires_at > now());
+    }
+
+    /**
      * @return bool
      */
     public function isExpired(): bool
