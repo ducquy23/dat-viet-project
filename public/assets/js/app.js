@@ -22,19 +22,85 @@ let currentListing = null;
 let loadingListings = false;
 
 // ===== MAP ICONS =====
-// Custom marker style (dashed tím + pin vàng)
+// Custom marker style (dashed tím + pin vàng) - Improved design
 function ensureLotMarkerStyle() {
     if (document.getElementById('lot-marker-style')) return;
     const style = document.createElement('style');
     style.id = 'lot-marker-style';
     style.innerHTML = `
-      .lot-marker { position: relative; width: 30px; height: 40px; transform: translate(-50%, -100%); }
-      .lot-marker .lot-rect { position: absolute; top: 6px; left: 2px; width: 26px; height: 24px; border: 2px dashed #7c3aed; border-radius: 6px; background: rgba(124,58,237,0.1); box-sizing: border-box; }
-      .lot-marker .lot-pin { position: absolute; left: 50%; top: -2px; transform: translateX(-50%); width: 18px; height: 18px; background: #fbbf24; border: 2px solid #fef3c7; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
-      .lot-marker .lot-pin:after { content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 10px solid #fbbf24; }
-      .lot-marker.vip .lot-rect { border-color: #f97316; background: rgba(249,115,22,0.12); }
-      .lot-marker.vip .lot-pin { background: #facc15; border-color: #fef9c3; }
-      .lot-marker.vip .lot-pin:after { border-top-color: #facc15; }
+      .lot-marker { 
+        position: relative; 
+        width: 36px; 
+        height: 48px; 
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
+      }
+      .lot-marker:hover {
+        transform: scale(1.15);
+        filter: drop-shadow(0 6px 16px rgba(0,0,0,0.25));
+        z-index: 1000;
+      }
+      .lot-marker .lot-rect { 
+        position: absolute; 
+        top: 8px; 
+        left: 3px; 
+        width: 30px; 
+        height: 28px; 
+        border: 2.5px dashed #7c3aed; 
+        border-radius: 8px; 
+        background: linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(139,92,246,0.1) 100%); 
+        box-sizing: border-box;
+        animation: pulse-border 2s ease-in-out infinite;
+      }
+      .lot-marker .lot-pin { 
+        position: absolute; 
+        left: 50%; 
+        top: -4px; 
+        transform: translateX(-50%); 
+        width: 22px; 
+        height: 22px; 
+        background: linear-gradient(135deg, #335793 0%, #4a6ba8 100%); 
+        border: 3px solid #ffffff; 
+        border-radius: 50%; 
+        box-shadow: 0 3px 8px rgba(51,87,147,0.4), 0 0 0 2px rgba(51,87,147,0.2);
+        z-index: 2;
+      }
+      .lot-marker .lot-pin:after { 
+        content: ''; 
+        position: absolute; 
+        left: 50%; 
+        bottom: -10px; 
+        transform: translateX(-50%); 
+        width: 0; 
+        height: 0; 
+        border-left: 6px solid transparent; 
+        border-right: 6px solid transparent; 
+        border-top: 12px solid #335793;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+      }
+      .lot-marker.vip .lot-rect { 
+        border-color: #f97316; 
+        background: linear-gradient(135deg, rgba(249,115,22,0.2) 0%, rgba(251,146,60,0.15) 100%);
+        border-width: 3px;
+        animation: pulse-border-vip 2s ease-in-out infinite;
+      }
+      .lot-marker.vip .lot-pin { 
+        background: linear-gradient(135deg, #f4b400 0%, #ffd700 100%); 
+        border-color: #fff3cd;
+        box-shadow: 0 3px 10px rgba(244,180,0,0.5), 0 0 0 2px rgba(244,180,0,0.3);
+      }
+      .lot-marker.vip .lot-pin:after { 
+        border-top-color: #f4b400;
+      }
+      @keyframes pulse-border {
+        0%, 100% { border-color: #7c3aed; opacity: 1; }
+        50% { border-color: #a855f7; opacity: 0.8; }
+      }
+      @keyframes pulse-border-vip {
+        0%, 100% { border-color: #f97316; opacity: 1; }
+        50% { border-color: #fb923c; opacity: 0.8; }
+      }
     `;
     document.head.appendChild(style);
 }
@@ -43,17 +109,17 @@ ensureLotMarkerStyle();
 const iconNormal = L.divIcon({
     className: "",
     html: '<div class="lot-marker"><div class="lot-rect"></div><div class="lot-pin"></div></div>',
-    iconSize: [30, 40],
-    iconAnchor: [15, 36],
-    popupAnchor: [0, -36]
+    iconSize: [36, 48],
+    iconAnchor: [18, 48],
+    popupAnchor: [0, -48]
 });
 
 const iconVip = L.divIcon({
     className: "",
     html: '<div class="lot-marker vip"><div class="lot-rect"></div><div class="lot-pin"></div></div>',
-    iconSize: [30, 40],
-    iconAnchor: [15, 36],
-    popupAnchor: [0, -36]
+    iconSize: [36, 48],
+    iconAnchor: [18, 48],
+    popupAnchor: [0, -48]
 });
 
 let miniMap;
@@ -172,22 +238,35 @@ function popupTemplate(lot) {
     const imageUrl = lot.img || '/images/Image-not-found.png';
     const address = lot.address || lot.district || '';
     const cityDistrict = [lot.district, lot.city].filter(Boolean).join(', ');
+    const isVip = lot.isVip || false;
 
     return `
-        <div style="width:220px; font-family: 'SF Pro Display', sans-serif;">
-            <img src="${imageUrl}" style="width:100%; height:120px; object-fit:cover; border-radius:8px 8px 0 0; margin-bottom:8px; display:block;" onerror="this.src='/images/Image-not-found.png'">
-            <div style="padding: 0 8px 8px 8px;">
-                <div style="font-weight:700; font-size:15px; color:#335793; margin-bottom:6px; line-height:1.3;">
-                    ${lot.price} triệu • ${lot.size}
+        <div style="width:260px; font-family: 'SF Pro Display', sans-serif; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12);">
+            <div style="position: relative;">
+                ${isVip ? `<div style="position: absolute; top: 10px; right: 10px; z-index: 10; background: linear-gradient(135deg, #f4b400 0%, #ffd700 100%); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; box-shadow: 0 2px 8px rgba(244,180,0,0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="bi bi-star-fill" style="font-size: 9px;"></i> VIP
+                </div>` : ''}
+                <img src="${imageUrl}" style="width:100%; height:140px; object-fit:cover; display:block; transition: transform 0.3s;" onerror="this.src='/images/Image-not-found.png'" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%); padding: 12px;">
+                    <div style="color: #fff; font-weight: 800; font-size: 18px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                        ${lot.price} triệu
+                    </div>
                 </div>
-                ${lot.type ? `<div style="color:#6c757d; font-size:12px; margin-bottom:4px;">
-                    <i class="bi bi-tag-fill" style="font-size:10px;"></i> ${lot.type}
+            </div>
+            <div style="padding: 14px;">
+                <div style="font-weight: 700; font-size: 16px; color: #1a202c; margin-bottom: 8px; line-height: 1.3; display: flex; align-items: center; gap: 6px;">
+                    <span style="color: #335793;">${lot.price}</span>
+                    <span style="color: #6c757d; font-weight: 500;">•</span>
+                    <span style="color: #335793;">${lot.size}</span>
+                </div>
+                ${lot.type ? `<div style="display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, rgba(51,87,147,0.1) 0%, rgba(74,107,168,0.08) 100%); color: #335793; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-bottom: 8px;">
+                    <i class="bi bi-tag-fill" style="font-size: 10px;"></i> ${lot.type}
                 </div>` : ''}
-                ${address ? `<div style="color:#6c757d; font-size:11px; margin-bottom:8px; line-height:1.4; display:flex; align-items:start; gap:4px;">
-                    <i class="bi bi-geo-alt-fill" style="font-size:11px; margin-top:2px; flex-shrink:0;"></i>
-                    <span>${address}${cityDistrict ? ', ' + cityDistrict : ''}</span>
+                ${address ? `<div style="color: #4a5568; font-size: 12px; margin-bottom: 12px; line-height: 1.5; display: flex; align-items: start; gap: 6px; padding: 8px; background: rgba(51,87,147,0.03); border-radius: 8px;">
+                    <i class="bi bi-geo-alt-fill" style="font-size: 13px; color: #335793; margin-top: 2px; flex-shrink: 0;"></i>
+                    <span style="flex: 1;">${address}${cityDistrict ? ', ' + cityDistrict : ''}</span>
                 </div>` : ''}
-                <a href="/tin-dang/${lot.slug || lot.id}" class="btn btn-primary btn-sm w-100" data-view-lot="${lot.id}" style="border:none; font-size:12px; padding:6px 12px; border-radius:6px;">
+                <a href="/tin-dang/${lot.slug || lot.id}" class="btn btn-primary btn-sm w-100" data-view-lot="${lot.id}" style="background: linear-gradient(135deg, #335793 0%, #4a6ba8 100%); border: none; font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(51,87,147,0.3); transition: all 0.3s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(51,87,147,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(51,87,147,0.3)'">
                     <i class="bi bi-eye"></i> Xem chi tiết
                 </a>
             </div>

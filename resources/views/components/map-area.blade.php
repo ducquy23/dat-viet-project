@@ -20,21 +20,21 @@
 
         const map = window.mainMap;
 
-        // Map pins (use from app.js if available)
+        // Map pins (use from app.js if available, otherwise use lot-marker style)
         const iconNormal = window.iconNormal || L.divIcon({
             className: "",
-            html: '<div class="map-pin"></div>',
-            iconSize: [18, 18],
-            iconAnchor: [9, 18],
-            popupAnchor: [0, -18]
+            html: '<div class="lot-marker"><div class="lot-rect"></div><div class="lot-pin"></div></div>',
+            iconSize: [36, 48],
+            iconAnchor: [18, 48],
+            popupAnchor: [0, -48]
         });
 
         const iconVip = window.iconVip || L.divIcon({
             className: "",
-            html: '<div class="map-pin vip"></div>',
-            iconSize: [18, 18],
-            iconAnchor: [9, 18],
-            popupAnchor: [0, -18]
+            html: '<div class="lot-marker vip"><div class="lot-rect"></div><div class="lot-pin"></div></div>',
+            iconSize: [36, 48],
+            iconAnchor: [18, 48],
+            popupAnchor: [0, -48]
         });
 
         // Store markers
@@ -109,26 +109,38 @@
                         }).addTo(map);
                         
                         marker.bindPopup(`
-                            <div style="width:220px; font-family: 'SF Pro Display', sans-serif;">
-                                <img src="${imageUrl}" style="width:100%; height:120px; object-fit:cover; border-radius:8px 8px 0 0; margin-bottom:8px; display:block;" onerror="this.src='{{ asset("images/Image-not-found.png") }}'">
-                                <div style="padding: 0 8px 8px 8px;">
-                                    <div style="font-weight:700; font-size:15px; color:#335793; margin-bottom:6px; line-height:1.3;">
-                                        ${price} triệu • ${listing.area}m²
+                            <div style="width:260px; font-family: 'SF Pro Display', sans-serif; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12);">
+                                <div style="position: relative;">
+                                    ${listing.is_vip ? `<div style="position: absolute; top: 10px; right: 10px; z-index: 10; background: linear-gradient(135deg, #f4b400 0%, #ffd700 100%); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; box-shadow: 0 2px 8px rgba(244,180,0,0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="bi bi-star-fill" style="font-size: 9px;"></i> VIP
+                                    </div>` : ''}
+                                    <img src="${imageUrl}" style="width:100%; height:140px; object-fit:cover; display:block; transition: transform 0.3s;" onerror="this.src='{{ asset("images/Image-not-found.png") }}'" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%); padding: 12px;">
+                                        <div style="color: #fff; font-weight: 800; font-size: 18px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                            ${price} triệu
+                                        </div>
                                     </div>
-                                    ${listing.category ? `<div style="color:#6c757d; font-size:12px; margin-bottom:4px;">
-                                        <i class="bi bi-tag-fill" style="font-size:10px;"></i> ${listing.category}
+                                </div>
+                                <div style="padding: 14px;">
+                                    <div style="font-weight: 700; font-size: 16px; color: #1a202c; margin-bottom: 8px; line-height: 1.3; display: flex; align-items: center; gap: 6px;">
+                                        <span style="color: #335793;">${price}</span>
+                                        <span style="color: #6c757d; font-weight: 500;">•</span>
+                                        <span style="color: #335793;">${listing.area}m²</span>
+                                    </div>
+                                    ${listing.category ? `<div style="display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, rgba(51,87,147,0.1) 0%, rgba(74,107,168,0.08) 100%); color: #335793; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-bottom: 8px;">
+                                        <i class="bi bi-tag-fill" style="font-size: 10px;"></i> ${listing.category}
                                     </div>` : ''}
-                                    ${address ? `<div style="color:#6c757d; font-size:11px; margin-bottom:8px; line-height:1.4; display:flex; align-items:start; gap:4px;">
-                                        <i class="bi bi-geo-alt-fill" style="font-size:11px; margin-top:2px; flex-shrink:0;"></i>
-                                        <span>${address}${cityDistrict ? ', ' + cityDistrict : ''}</span>
+                                    ${address ? `<div style="color: #4a5568; font-size: 12px; margin-bottom: 12px; line-height: 1.5; display: flex; align-items: start; gap: 6px; padding: 8px; background: rgba(51,87,147,0.03); border-radius: 8px;">
+                                        <i class="bi bi-geo-alt-fill" style="font-size: 13px; color: #335793; margin-top: 2px; flex-shrink: 0;"></i>
+                                        <span style="flex: 1;">${address}${cityDistrict ? ', ' + cityDistrict : ''}</span>
                                     </div>` : ''}
-                                    <button class="btn btn-primary btn-sm w-100" onclick="viewListing(${listing.id})" style="border:none; cursor:pointer; font-size:12px; padding:6px 12px; border-radius:6px;">
+                                    <button class="btn btn-primary btn-sm w-100" onclick="viewListing(${listing.id})" style="background: linear-gradient(135deg, #335793 0%, #4a6ba8 100%); border: none; font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(51,87,147,0.3); transition: all 0.3s; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(51,87,147,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(51,87,147,0.3)'">
                                         <i class="bi bi-eye"></i> Xem chi tiết
                                     </button>
                                 </div>
                             </div>
                         `, {
-                            maxWidth: 250,
+                            maxWidth: 280,
                             className: 'custom-popup',
                             closeButton: true,
                             autoPan: true,
