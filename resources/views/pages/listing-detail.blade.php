@@ -13,7 +13,7 @@
 
 @section('content')
 @if(isset($listing) && $listing)
-<div class="container-fluid px-0">
+<div class="container-fluid px-0 detail-shell">
     <!-- Breadcrumb -->
     <div class="bg-light border-bottom py-2">
         <div class="container">
@@ -389,9 +389,24 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <style>
 /* Gallery */
+.detail-shell {
+    min-height: 100vh;
+    background: radial-gradient(circle at 20% 20%, rgba(219, 234, 254, 0.6), transparent 35%),
+                radial-gradient(circle at 80% 0%, rgba(240, 249, 255, 0.5), transparent 30%),
+                linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    padding-bottom: 48px;
+}
+
+.detail-shell .container {
+    max-width: 1200px;
+}
+
 .listing-gallery {
     border-radius: var(--dv-radius-lg);
     overflow: hidden;
+    background: white;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .main-gallery {
@@ -400,7 +415,8 @@
     height: 500px;
     border-radius: var(--dv-radius-lg);
     overflow: hidden;
-    background: #f1f5f9;
+    background: linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
 .main-image {
@@ -448,7 +464,9 @@
     display: flex;
     gap: 12px;
     overflow-x: auto;
-    padding: 8px 0;
+    padding: 12px 8px;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(255, 255, 255, 0.9));
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .thumbnail-item {
@@ -460,7 +478,9 @@
     cursor: pointer;
     border: 3px solid transparent;
     transition: var(--dv-transition);
-    opacity: 0.6;
+    opacity: 0.75;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
 }
 
 .thumbnail-item:hover,
@@ -492,10 +512,18 @@
 
 /* Listing Header */
 .listing-header {
-    background: white;
+    background: rgba(255, 255, 255, 0.9);
     padding: 24px;
-    border-radius: var(--dv-radius-lg);
-    box-shadow: var(--dv-shadow-md);
+    border-radius: 28px;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    backdrop-filter: blur(8px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.listing-header:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.14);
 }
 
 .listing-title {
@@ -567,10 +595,18 @@
 
 /* Info Cards */
 .info-card {
-    background: white;
-    border-radius: var(--dv-radius-lg);
-    box-shadow: var(--dv-shadow-md);
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 24px;
+    box-shadow: 0 16px 50px rgba(15, 23, 42, 0.08);
     overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
 }
 
 .info-card-header {
@@ -631,10 +667,18 @@
 
 /* Contact Card */
 .contact-card {
-    background: white;
-    border-radius: var(--dv-radius-lg);
-    box-shadow: var(--dv-shadow-lg);
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 24px;
+    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.12);
     overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    backdrop-filter: blur(12px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 70px rgba(15, 23, 42, 0.16);
 }
 
 @media (min-width: 992px) {
@@ -713,6 +757,31 @@
     text-decoration: underline;
 }
 
+.detail-shell .btn {
+    border-radius: 14px;
+    font-weight: 700;
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.detail-shell .btn:active {
+    transform: translateY(1px);
+}
+
+.detail-shell .btn.btn-outline-secondary {
+    border-width: 2px;
+}
+
+.detail-shell .btn.btn-outline-primary {
+    border-width: 2px;
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.08);
+}
+
+.detail-shell .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 40px rgba(37, 99, 235, 0.22);
+}
+
 /* Detail Map */
 .detail-map {
     width: 100%;
@@ -722,10 +791,12 @@
 
 /* Related Listings */
 .related-listings-card {
-    background: white;
-    border-radius: var(--dv-radius-lg);
-    box-shadow: var(--dv-shadow-md);
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 22px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
     overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    backdrop-filter: blur(10px);
 }
 
 .card-header-custom {
