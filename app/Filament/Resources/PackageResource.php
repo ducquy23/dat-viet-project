@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Notifications\Notification;
 
 class PackageResource extends Resource
 {
@@ -82,11 +83,12 @@ class PackageResource extends Resource
                             ->numeric()
                             ->default(0)
                             ->helperText('Số càng cao, tin đăng càng được ưu tiên hiển thị'),
-                        Forms\Components\Textarea::make('features')
+                        Forms\Components\KeyValue::make('features')
                             ->label('Tính năng')
-                            ->rows(4)
+                            ->keyLabel('Khóa')
+                            ->valueLabel('Giá trị')
                             ->columnSpanFull()
-                            ->helperText('Danh sách các tính năng của gói (mỗi tính năng một dòng)'),
+                            ->helperText('Thêm các cặp khóa/giá trị (ví dụ: pin_color=yellow, show_in_carousel=true)'),
                     ])
                     ->columns(2),
 
@@ -134,10 +136,65 @@ class PackageResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('safeDelete')
+                    ->label('Xóa')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (Package $record) {
+                        if ($record->listings()->exists()) {
+                            Notification::make()
+                                ->title('Không thể xóa gói')
+                                ->body('Gói đang được sử dụng bởi tin đăng. Hãy chuyển tin sang gói khác trước.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        $record->delete();
+
+                        Notification::make()
+                            ->title('Đã xóa gói')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('safeBulkDelete')
+                        ->label('Xóa các gói đã chọn')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->action(function ($records) {
+                            $blocked = 0;
+                            $deleted = 0;
+
+                            foreach ($records as $record) {
+                                /** @var Package $record */
+                                if ($record->listings()->exists()) {
+                                    $blocked++;
+                                    continue;
+                                }
+                                $record->delete();
+                                $deleted++;
+                            }
+
+                            if ($deleted > 0) {
+                                Notification::make()
+                                    ->title("Đã xóa {$deleted} gói")
+                                    ->success()
+                                    ->send();
+                            }
+
+                            if ($blocked > 0) {
+                                Notification::make()
+                                    ->title("Có {$blocked} gói không xóa được")
+                                    ->body('Một số gói đang được sử dụng bởi tin đăng. Hãy chuyển tin sang gói khác trước.')
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
                 ]),
             ]);
     }

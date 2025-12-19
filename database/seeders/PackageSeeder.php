@@ -18,11 +18,11 @@ class PackageSeeder extends Seeder
         $packages = [
             [
                 'name' => 'Gói Thường',
-                'code' => 'normal',
+                'code' => 'basic',
                 'description' => 'Gói đăng tin miễn phí, hiển thị cơ bản',
                 'price' => 0,
                 'duration_days' => 30,
-                'priority' => 0,
+                'priority' => 1,
                 'features' => [
                     'pin_color' => 'blue',
                     'show_in_carousel' => false,
@@ -36,7 +36,7 @@ class PackageSeeder extends Seeder
                 'description' => 'Gói đăng tin VIP, hiển thị nổi bật với pin màu vàng',
                 'price' => 50000,
                 'duration_days' => 30,
-                'priority' => 10,
+                'priority' => 5,
                 'features' => [
                     'pin_color' => 'yellow',
                     'show_in_carousel' => true,
@@ -45,17 +45,31 @@ class PackageSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'Gói Premium',
-                'code' => 'premium',
+                'name' => 'Gói VIP+',
+                'code' => 'vip_plus',
                 'description' => 'Gói đăng tin cao cấp, hiển thị ưu tiên tối đa',
-                'price' => 100000,
+                'price' => 120000,
                 'duration_days' => 60,
-                'priority' => 20,
+                'priority' => 8,
                 'features' => [
                     'pin_color' => 'red',
                     'show_in_carousel' => true,
                     'priority_display' => true,
                     'top_position' => true,
+                ],
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Gói Ngày (Test)',
+                'code' => 'day',
+                'description' => 'Gói 1 ngày dùng test thanh toán 2.000đ',
+                'price' => 2000,
+                'duration_days' => 1,
+                'priority' => 3,
+                'features' => [
+                    'pin_color' => 'yellow',
+                    'show_in_carousel' => false,
+                    'priority_display' => true,
                 ],
                 'is_active' => true,
             ],

@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Filters\SelectFilter;
+use App\Models\User;
 
 class ContactResource extends Resource
 {
@@ -33,17 +35,29 @@ class ContactResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('listing_id')
+                Forms\Components\Select::make('listing_id')
+                    ->label('Tin đăng')
+                    ->relationship('listing', 'title')
+                    ->searchable()
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('user_id')
-                    ->numeric(),
+                    ->helperText('Tin đăng được liên hệ'),
+                Forms\Components\Select::make('user_id')
+                    ->label('Đối tác')
+                    ->options(fn () => User::query()
+                        ->whereIn('role', ['user', 'moderator'])
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
+                    ->searchable()
+                    ->helperText('Chọn đối tác (nếu người liên hệ là đối tác)'),
                 Forms\Components\TextInput::make('visitor_name')
+                    ->label('Tên khách')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('visitor_phone')
+                    ->label('Số điện thoại')
                     ->tel()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('visitor_email')
+                    ->label('Email')
                     ->email()
                     ->maxLength(255),
                 Forms\Components\Select::make('contact_type')
@@ -77,20 +91,38 @@ class ContactResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('listing_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('listing.title')
+                    ->label('Tin đăng')
+                    ->limit(40)
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Đối tác')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('visitor_name')
+                    ->label('Khách')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('visitor_phone')
+                    ->label('SĐT')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('visitor_email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('contact_type'),
-                Tables\Columns\TextColumn::make('status'),
+                Tables\Columns\BadgeColumn::make('contact_type')
+                    ->label('Loại')
+                    ->colors([
+                        'primary',
+                        'success' => 'call',
+                        'warning' => 'zalo',
+                        'info' => 'message',
+                        'danger' => 'deposit',
+                    ]),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->label('Trạng thái')
+                    ->colors([
+                        'warning' => 'pending',
+                        'success' => 'contacted',
+                        'secondary' => 'closed',
+                    ]),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -101,7 +133,27 @@ class ContactResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('contact_type')
+                    ->label('Loại liên hệ')
+                    ->options([
+                        'call' => 'Gọi điện',
+                        'zalo' => 'Zalo',
+                        'message' => 'Tin nhắn',
+                        'deposit' => 'Đặt cọc',
+                    ]),
+                SelectFilter::make('status')
+                    ->label('Trạng thái')
+                    ->options([
+                        'pending' => 'Chờ xử lý',
+                        'contacted' => 'Đã liên hệ',
+                        'closed' => 'Đã đóng',
+                    ]),
+                SelectFilter::make('user_id')
+                    ->label('Đối tác')
+                    ->options(fn () => User::query()
+                        ->whereIn('role', ['user', 'moderator'])
+                        ->orderBy('name')
+                        ->pluck('name', 'id')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
