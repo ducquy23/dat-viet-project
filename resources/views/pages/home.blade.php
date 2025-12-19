@@ -16,10 +16,91 @@
         @include('components.detail-panel')
     </div>
 </div>
+
+<!-- Contact / Support -->
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <div class="support-card d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 p-3 p-md-4">
+                <div class="support-icon">
+                    <i class="bi bi-headset"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-bold text-primary">Hỗ trợ 24/7 - Công ty vận hành Đất Việt Map</h6>
+                    <p class="mb-0 text-muted small">Nếu cần hỗ trợ đăng tin, thanh toán hoặc xử lý sự cố, vui lòng liên hệ:</p>
+                </div>
+                <div class="support-actions d-flex flex-column flex-sm-row gap-2">
+                    <a class="btn btn-outline-primary" href="tel:0909000888">
+                        <i class="bi bi-telephone-fill me-1"></i> Hotline: 0909 000 888
+                    </a>
+                    <a class="btn btn-outline-success" href="https://zalo.me/0909000888" target="_blank" rel="noopener">
+                        <i class="bi bi-chat-dots-fill me-1"></i> Zalo: 0909 000 888
+                    </a>
+                    <a class="btn btn-outline-secondary" href="mailto:support@datvietmap.vn">
+                        <i class="bi bi-envelope-fill me-1"></i> support@datvietmap.vn
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('styles')
 <style>
+/* Support card */
+.support-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fb 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: var(--dv-shadow-sm, 0 6px 20px rgba(0,0,0,0.06));
+}
+
+.support-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: rgba(51, 87, 147, 0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #335793;
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.support-actions .btn {
+    white-space: nowrap;
+}
+
+.support-actions .btn-outline-success {
+    border: 2px solid #198754 !important;
+    border-width: 2px !important;
+    border-color: #198754 !important;
+    border-style: solid !important;
+    font-weight: 600;
+}
+
+.support-actions .btn-outline-success:hover {
+    border-color: #157347 !important;
+    background-color: #198754;
+    color: white;
+}
+
+.support-actions .btn-outline-secondary {
+    border: 2px solid #6c757d !important;
+    border-width: 2px !important;
+    border-color: #6c757d !important;
+    border-style: solid !important;
+    font-weight: 600;
+}
+
+.support-actions .btn-outline-secondary:hover {
+    border-color: #5c636a !important;
+    background-color: #6c757d;
+    color: white;
+}
+
 /* Active Filter Tags */
 .filter-tag {
     display: inline-flex;
