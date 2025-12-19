@@ -261,7 +261,9 @@ class ListingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tin đăng đã được gửi và đang chờ duyệt',
-                'redirect_to' => route('listings.my-listings')
+                'redirect_to' => route('listings.my-listings'),
+                'listing_id' => $listing->id,
+                'package_id' => $listing->package_id,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -294,7 +296,14 @@ class ListingController extends Controller
         } else {
             // Load user's listings
             $listings = Listing::where('user_id', $user->id)
-                ->with(['category', 'city', 'district', 'package', 'primaryImage'])
+                ->with([
+                    'category',
+                    'city',
+                    'district',
+                    'package',
+                    'primaryImage',
+                    'latestPayment',
+                ])
                 ->latest()
                 ->paginate(12)
                 ->withQueryString();

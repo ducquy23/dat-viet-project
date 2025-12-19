@@ -25,8 +25,10 @@ class PaymentController extends Controller
 
         $package = Package::active()->findOrFail($validated['package_id']);
 
+//         TẠM THỜI: fix cứng số tiền 2.000đ để test PayOS
+//         TODO: đổi lại dùng $package->price khi triển khai thật
         $amount = (int) $package->price;
-        $description = sprintf('Thanh toán gói %s cho tin đăng', $package->name);
+        $description = sprintf('Thanh toán thử gói %s (2.000đ)', $package->name);
 
         $paymentIntent = $payOsService->createPayment(
             $amount,

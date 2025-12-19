@@ -1720,7 +1720,20 @@ document.querySelectorAll('.package-card').forEach(card => {
     card.addEventListener('click', function() {
         document.querySelectorAll('.package-card').forEach(c => c.classList.remove('active'));
         this.classList.add('active');
+
         selectedPackage = this.dataset.package;
+
+        // Đồng bộ radio ẩn để Laravel nhận đúng package_id
+        const normalRadio = document.getElementById('package-normal');
+        const vipRadio = document.getElementById('package-vip');
+
+        if (this.dataset.package === 'vip') {
+            if (vipRadio) vipRadio.checked = true;
+            if (normalRadio) normalRadio.checked = false;
+        } else if (this.dataset.package === 'normal') {
+            if (normalRadio) normalRadio.checked = true;
+            if (vipRadio) vipRadio.checked = false;
+        }
     });
 });
 
@@ -1791,6 +1804,63 @@ async function submitPostForm() {
             return;
         }
 
+        // Lấy package đã chọn (1: Thường, 2: VIP)
+        const checkedPackageInput = form.querySelector('input[name="package_id"]:checked');
+        const packageId = checkedPackageInput ? checkedPackageInput.value : null;
+
+        // Nếu chọn gói VIP thì tạo thanh toán PayOS
+        if (packageId === '2' && result.listing_id) {
+            try {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Đang chuyển đến PayOS',
+                    text: 'Vui lòng đợi trong giây lát...',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                });
+
+                const payResponse = await fetch('/api/payments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        package_id: parseInt(packageId, 10),
+                        listing_id: result.listing_id,
+                        return_url: window.location.origin + '/tin-cua-toi',
+                        cancel_url: window.location.origin + '/tin-cua-toi'
+                    })
+                });
+
+                const payResult = await payResponse.json();
+
+                if (!payResponse.ok || !payResult.checkout_url) {
+                    const msg = payResult.message || 'Không thể tạo thanh toán PayOS. Tin vẫn đã được lưu.';
+                    throw new Error(msg);
+                }
+
+                // Redirect sang trang thanh toán PayOS
+                window.location.href = payResult.checkout_url;
+                return;
+            } catch (error) {
+                console.error('Error creating PayOS payment:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi thanh toán',
+                    text: error.message || 'Không thể tạo thanh toán PayOS. Tin vẫn đã được lưu.',
+                    confirmButtonText: 'Xem tin của tôi'
+                }).then(() => {
+                    const redirectUrl = result.redirect_to || '/tin-cua-toi';
+                    window.location.href = redirectUrl;
+                });
+                return;
+            }
+        }
+
+        // Gói thường (miễn phí) hoặc không tạo được thanh toán thì giữ flow cũ
         Swal.fire({
             icon: 'success',
             title: 'Thành công',

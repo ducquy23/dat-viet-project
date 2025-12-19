@@ -196,6 +196,7 @@
                       <th class="col-price">Giá</th>
                       <th class="col-area">Diện tích</th>
                       <th class="col-status">Trạng thái</th>
+                      <th class="col-package">Gói/Thanh toán</th>
                       <th class="col-date">Ngày đăng</th>
                       <th class="col-actions">Thao tác</th>
                     </tr>
@@ -263,6 +264,35 @@
                         <span class="badge status-badge bg-{{ $statusColors[$listing->status] ?? 'secondary' }}">
                           {{ $statusLabels[$listing->status] ?? $listing->status }}
                         </span>
+                      </td>
+                      <td>
+                        @php
+                          $payment = $listing->latestPayment ?? null;
+                          $payStatusColors = [
+                            'pending' => 'warning',
+                            'completed' => 'success',
+                            'failed' => 'danger',
+                            'expired' => 'secondary',
+                          ];
+                        @endphp
+                        <div class="d-flex flex-column gap-1">
+                          <span class="badge bg-light text-dark">
+                            <i class="bi bi-star{{ $listing->package?->code === 'vip' ? '-fill text-warning' : '' }}"></i>
+                            {{ $listing->package?->name ?? 'Gói thường' }}
+                          </span>
+                          @if($payment)
+                            <span class="badge bg-{{ $payStatusColors[$payment->status] ?? 'secondary' }}">
+                              {{ strtoupper($payment->status) }}
+                            </span>
+                            @if($payment->status === 'pending' && $payment->checkout_url)
+                              <a href="{{ $payment->checkout_url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-cash-coin"></i> Thanh toán lại
+                              </a>
+                            @endif
+                          @else
+                            <small class="text-muted">Chưa có giao dịch</small>
+                          @endif
+                        </div>
                       </td>
                       <td>
                         <div class="date-cell">

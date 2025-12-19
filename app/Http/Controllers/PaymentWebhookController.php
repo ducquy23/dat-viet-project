@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\Listing;
 use App\Services\PayOSService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,9 +52,41 @@ class PaymentWebhookController extends Controller
                 'paid_at' => now(),
                 'meta' => $data,
             ]);
+
+            // Áp gói lên tin đăng khi thanh toán thành công
+            $this->applyPackageToListing($payment);
         }
 
         return response()->json(['message' => 'ok']);
+    }
+
+    /**
+     * Áp gói đã thanh toán cho tin đăng (VIP/khác) + set ngày hết hạn
+     */
+    protected function applyPackageToListing(Payment $payment): void
+    {
+        if (!$payment->listing_id) {
+            return;
+        }
+
+        $listing = Listing::find($payment->listing_id);
+        if (!$listing) {
+            return;
+        }
+
+        $package = $payment->package;
+        if (!$package) {
+            return;
+        }
+
+        $expiresAt = $package->duration_days
+            ? now()->addDays($package->duration_days)
+            : null;
+
+        $listing->update([
+            'package_id' => $package->id,
+            'expires_at' => $expiresAt,
+        ]);
     }
 }
 
