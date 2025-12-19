@@ -613,8 +613,9 @@
         document.querySelectorAll('.quick-filter-chip, .quick-filter-chip-mobile').forEach(chip => {
             chip.addEventListener('click', function(e) {
                 e.preventDefault();
-                const filter = this.dataset.filter;
-                const value = this.dataset.value;
+                const filter = this.dataset?.filter;
+                const value = this.dataset?.value;
+                if (!filter || !value) return;
                 const params = new URLSearchParams(window.location.search);
                 
                 // Special handling for VIP filter (need to check package)
@@ -673,10 +674,12 @@
                 }
             });
             
-            // Check if filter is active
+            // Check if filter is active (guard dataset)
             const params = new URLSearchParams(window.location.search);
-            if (params.get(this.dataset.filter) === this.dataset.value) {
-                this.classList.add('active');
+            const f = chip.dataset?.filter;
+            const v = chip.dataset?.value;
+            if (f && v && params.get(f) === v) {
+                chip.classList.add('active');
             }
         });
     }
