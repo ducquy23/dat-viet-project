@@ -12,6 +12,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Filters\SelectFilter;
+use App\Models\User;
+use App\Models\Listing;
+use App\Models\Package;
 
 class PaymentResource extends Resource
 {
@@ -33,20 +37,32 @@ class PaymentResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('user_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('listing_id')
-                    ->numeric(),
-                Forms\Components\TextInput::make('package_id')
-                    ->required()
-                    ->numeric(),
+                Forms\Components\Select::make('user_id')
+                    ->label('Đối tác')
+                    ->options(fn () => User::query()
+                        ->whereIn('role', ['user', 'moderator'])
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
+                    ->searchable()
+                    ->required(),
+                Forms\Components\Select::make('listing_id')
+                    ->label('Tin đăng')
+                    ->relationship('listing', 'title')
+                    ->searchable()
+                    ->helperText('Tin đăng gắn với thanh toán (nếu có)'),
+                Forms\Components\Select::make('package_id')
+                    ->label('Gói')
+                    ->relationship('package', 'name')
+                    ->searchable()
+                    ->required(),
                 Forms\Components\TextInput::make('transaction_id')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('amount')
+                    ->label('Số tiền (VND)')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->prefix('₫'),
                 Forms\Components\TextInput::make('currency')
                     ->required()
                     ->maxLength(3)
@@ -73,7 +89,11 @@ class PaymentResource extends Resource
                     ->required()
                     ->default('pending'),
                 Forms\Components\Textarea::make('payment_info')
-                    ->columnSpanFull(),
+                    ->label('Thông tin từ cổng thanh toán')
+                    ->columnSpanFull()
+                    ->rows(3)
+                    ->disabled()
+                    ->helperText('Dữ liệu raw trả về từ PayOS / cổng thanh toán (chỉ đọc)'),
                 Forms\Components\Textarea::make('notes')
                     ->columnSpanFull(),
                 Forms\Components\DateTimePicker::make('paid_at'),
@@ -84,24 +104,44 @@ class PaymentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Đối tác')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('listing_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('package_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('listing.title')
+                    ->label('Tin đăng')
+                    ->limit(40)
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('package.name')
+                    ->label('Gói')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('transaction_id')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('amount')
-                    ->numeric()
+                    ->label('Số tiền')
+                    ->money('VND', true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('currency')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('payment_method'),
-                Tables\Columns\TextColumn::make('status'),
+                Tables\Columns\BadgeColumn::make('payment_method')
+                    ->label('Phương thức')
+                    ->colors([
+                        'primary',
+                        'success' => 'bank_transfer',
+                        'warning' => 'momo',
+                        'info' => 'vnpay',
+                        'danger' => 'zalopay',
+                        'secondary' => 'cash',
+                    ]),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->label('Trạng thái')
+                    ->colors([
+                        'warning' => 'pending',
+                        'info' => 'processing',
+                        'success' => 'completed',
+                        'danger' => 'failed',
+                        'secondary' => 'refunded',
+                    ]),
                 Tables\Columns\TextColumn::make('paid_at')
                     ->dateTime()
                     ->sortable(),
@@ -115,7 +155,24 @@ class PaymentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('status')
+                    ->label('Trạng thái')
+                    ->options([
+                        'pending' => 'Chờ xử lý',
+                        'processing' => 'Đang xử lý',
+                        'completed' => 'Hoàn thành',
+                        'failed' => 'Thất bại',
+                        'refunded' => 'Đã hoàn tiền',
+                    ]),
+                SelectFilter::make('payment_method')
+                    ->label('Phương thức')
+                    ->options([
+                        'bank_transfer' => 'Chuyển khoản',
+                        'momo' => 'MoMo',
+                        'vnpay' => 'VNPay',
+                        'zalopay' => 'ZaloPay',
+                        'cash' => 'Tiền mặt',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
