@@ -410,6 +410,12 @@
             filters.push({ type: 'price', label: `Giá ≤ ${new Intl.NumberFormat('vi-VN').format(maxPrice)} triệu`, key: 'max_price' });
             activeCount++;
         }
+
+        const minPrice = params.get('min_price');
+        if (minPrice) {
+            filters.push({ type: 'min_price', label: `Giá ≥ ${new Intl.NumberFormat('vi-VN').format(minPrice)} triệu`, key: 'min_price' });
+            activeCount++;
+        }
         
         // Area
         const maxArea = params.get('max_area');
@@ -417,10 +423,43 @@
             filters.push({ type: 'area', label: `Diện tích ≤ ${new Intl.NumberFormat('vi-VN').format(maxArea)} m²`, key: 'max_area' });
             activeCount++;
         }
+
+        const minArea = params.get('min_area');
+        if (minArea) {
+            filters.push({ type: 'min_area', label: `Diện tích ≥ ${new Intl.NumberFormat('vi-VN').format(minArea)} m²`, key: 'min_area' });
+            activeCount++;
+        }
         
         // Road
         if (params.get('has_road')) {
             filters.push({ type: 'road', label: 'Đường ô tô', key: 'has_road' });
+            activeCount++;
+        }
+
+        // VIP
+        if (params.get('vip')) {
+            filters.push({ type: 'vip', label: 'Ưu tiên VIP', key: 'vip' });
+            activeCount++;
+        }
+
+        // Pháp lý
+        const legalStatus = params.get('legal_status');
+        if (legalStatus) {
+            filters.push({ type: 'legal_status', label: `Pháp lý: ${legalStatus}`, key: 'legal_status' });
+            activeCount++;
+        }
+
+        // Sort
+        const sort = params.get('sort');
+        const sortLabels = {
+            'price_asc': 'Giá ↑',
+            'price_desc': 'Giá ↓',
+            'area_asc': 'Diện tích ↑',
+            'area_desc': 'Diện tích ↓',
+            'vip_first': 'Ưu tiên VIP',
+        };
+        if (sort && sortLabels[sort]) {
+            filters.push({ type: 'sort', label: `Sắp xếp: ${sortLabels[sort]}`, key: 'sort' });
             activeCount++;
         }
         
@@ -490,12 +529,14 @@
         if (!desktopForm || !mobileForm) return;
         
         // Sync from desktop to mobile
-        ['filter-type', 'filter-city', 'filter-district', 'filter-price', 'filter-area', 'filter-road'].forEach(id => {
+        ['filter-type', 'filter-city', 'filter-district', 'filter-price', 'filter-area', 'filter-road', 'filter-sort', 'filter-vip', 'filter-legal-status'].forEach(id => {
             const desktop = document.getElementById(id);
             const mobile = document.getElementById(id + '-mobile');
             if (desktop && mobile) {
                 if (desktop.type === 'checkbox') {
                     mobile.checked = desktop.checked;
+                } else if (desktop.type === 'hidden') {
+                    mobile.value = desktop.value;
                 } else {
                     mobile.value = desktop.value;
                 }
@@ -503,13 +544,15 @@
         });
         
         // Sync from mobile to desktop
-        ['filter-type-mobile', 'filter-city-mobile', 'filter-district-mobile', 'filter-price-mobile', 'filter-area-mobile', 'filter-road-mobile'].forEach(id => {
+        ['filter-type-mobile', 'filter-city-mobile', 'filter-district-mobile', 'filter-price-mobile', 'filter-area-mobile', 'filter-road-mobile', 'filter-sort-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
             const mobile = document.getElementById(id);
             const desktopId = id.replace('-mobile', '');
             const desktop = document.getElementById(desktopId);
             if (mobile && desktop) {
                 if (mobile.type === 'checkbox') {
                     desktop.checked = mobile.checked;
+                } else if (mobile.type === 'hidden') {
+                    desktop.value = mobile.value;
                 } else {
                     desktop.value = mobile.value;
                 }
@@ -584,6 +627,8 @@
                         params.set('vip', value);
                         this.classList.add('active');
                     }
+                    const vipInput = document.getElementById('filter-vip') || document.getElementById('filter-vip-mobile');
+                    if (vipInput) vipInput.value = params.get('vip') || '';
                 } else {
                     // Toggle filter
                     if (params.get(filter) === value) {
@@ -592,6 +637,15 @@
                     } else {
                         params.set(filter, value);
                         this.classList.add('active');
+                    }
+
+                    if (filter === 'legal_status') {
+                        const legalInput = document.getElementById('filter-legal-status') || document.getElementById('filter-legal-status-mobile');
+                        if (legalInput) legalInput.value = params.get('legal_status') || '';
+                    }
+                    if (filter === 'has_road') {
+                        const checkbox = document.getElementById('filter-road') || document.getElementById('filter-road-mobile');
+                        if (checkbox) checkbox.checked = params.get(filter) === value;
                     }
                 }
                 
@@ -603,7 +657,11 @@
                         const checkbox = form.querySelector('#filter-road') || form.querySelector('#filter-road-mobile');
                         if (checkbox) checkbox.checked = params.get(filter) === value;
                     } else if (filter === 'legal_status') {
-                        // This would need a new field or handle differently
+                        const legalInput = form.querySelector('#filter-legal-status') || form.querySelector('#filter-legal-status-mobile');
+                        if (legalInput) legalInput.value = params.get('legal_status') || '';
+                    } else if (filter === 'vip') {
+                        const vipInput = form.querySelector('#filter-vip') || form.querySelector('#filter-vip-mobile');
+                        if (vipInput) vipInput.value = params.get('vip') || '';
                     }
                     
                     // Submit form

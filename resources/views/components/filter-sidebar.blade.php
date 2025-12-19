@@ -42,6 +42,9 @@
         </div>
 
         <form action="{{ route('listings.index') }}" method="GET" id="filter-form">
+            <input type="hidden" name="vip" id="filter-vip" value="{{ request('vip') }}">
+            <input type="hidden" name="legal_status" id="filter-legal-status" value="{{ request('legal_status') }}">
+
             <!-- Loại đất -->
             <div class="mb-3">
                 <label class="form-label fw-semibold small text-uppercase text-muted">Loại đất</label>
@@ -108,6 +111,13 @@
                 </div>
             </div>
 
+            <!-- Giá tối thiểu -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold small text-uppercase text-muted">Giá tối thiểu (triệu đồng)</label>
+                <input type="number" class="form-control shadow-none" name="min_price" min="0" step="10" placeholder="VD: 500"
+                       value="{{ request('min_price') }}">
+            </div>
+
             <!-- Diện tích -->
             <div class="mb-4">
                 <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
@@ -133,6 +143,13 @@
                 </div>
             </div>
 
+            <!-- Diện tích tối thiểu -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold small text-uppercase text-muted">Diện tích tối thiểu (m²)</label>
+                <input type="number" class="form-control shadow-none" name="min_area" min="0" step="10" placeholder="VD: 60"
+                       value="{{ request('min_area') }}">
+            </div>
+
             <!-- Đường ô tô -->
             <div class="form-check mb-4">
                 <input 
@@ -149,6 +166,17 @@
 
             <!-- Buttons -->
             <div class="d-grid gap-2">
+                <div class="mb-2">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Sắp xếp</label>
+                    <select class="form-select shadow-none" name="sort" id="filter-sort">
+                        <option value="">Mới nhất</option>
+                        <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>Giá tăng dần</option>
+                        <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>Giá giảm dần</option>
+                        <option value="area_asc" {{ request('sort') === 'area_asc' ? 'selected' : '' }}>Diện tích tăng dần</option>
+                        <option value="area_desc" {{ request('sort') === 'area_desc' ? 'selected' : '' }}>Diện tích giảm dần</option>
+                        <option value="vip_first" {{ request('sort') === 'vip_first' ? 'selected' : '' }}>Ưu tiên VIP</option>
+                    </select>
+                </div>
                 <button type="submit" class="btn btn-primary" id="btn-apply-filters">
                     <i class="bi bi-funnel"></i> Áp dụng bộ lọc
                 </button>
@@ -200,6 +228,9 @@
 
         <div class="filter-card">
             <form action="{{ route('listings.index') }}" method="GET" id="filter-form-mobile">
+                <input type="hidden" name="vip" id="filter-vip-mobile" value="{{ request('vip') }}">
+                <input type="hidden" name="legal_status" id="filter-legal-status-mobile" value="{{ request('legal_status') }}">
+
                 <!-- Loại đất -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Loại đất</label>
@@ -266,6 +297,13 @@
                     </div>
                 </div>
 
+                <!-- Giá tối thiểu -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Giá tối thiểu (triệu đồng)</label>
+                    <input type="number" class="form-control shadow-none" name="min_price" min="0" step="10" placeholder="VD: 500"
+                           value="{{ request('min_price') }}">
+                </div>
+
                 <!-- Diện tích -->
                 <div class="mb-4">
                     <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
@@ -291,6 +329,13 @@
                     </div>
                 </div>
 
+                <!-- Diện tích tối thiểu -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Diện tích tối thiểu (m²)</label>
+                    <input type="number" class="form-control shadow-none" name="min_area" min="0" step="10" placeholder="VD: 60"
+                           value="{{ request('min_area') }}">
+                </div>
+
                 <!-- Đường ô tô -->
                 <div class="form-check mb-4">
                     <input 
@@ -307,6 +352,17 @@
 
                 <!-- Buttons -->
                 <div class="d-grid gap-2">
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Sắp xếp</label>
+                        <select class="form-select shadow-none" name="sort" id="filter-sort-mobile">
+                            <option value="">Mới nhất</option>
+                            <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>Giá tăng dần</option>
+                            <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>Giá giảm dần</option>
+                            <option value="area_asc" {{ request('sort') === 'area_asc' ? 'selected' : '' }}>Diện tích tăng dần</option>
+                            <option value="area_desc" {{ request('sort') === 'area_desc' ? 'selected' : '' }}>Diện tích giảm dần</option>
+                            <option value="vip_first" {{ request('sort') === 'vip_first' ? 'selected' : '' }}>Ưu tiên VIP</option>
+                        </select>
+                    </div>
                     <button type="submit" class="btn btn-primary" id="btn-apply-filters-mobile">
                         <i class="bi bi-funnel"></i> Áp dụng bộ lọc
                     </button>

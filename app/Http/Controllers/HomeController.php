@@ -28,6 +28,11 @@ class HomeController extends Controller
         $query = Listing::active()
             ->with(['city', 'district', 'category', 'primaryImage', 'package']);
 
+        // Lọc VIP
+        if ($request->boolean('vip')) {
+            $query->whereHas('package', fn ($q) => $q->where('code', 'vip'));
+        }
+
         // Filter theo category
         if ($request->has('category') && $request->category) {
             $query->where('category_id', $request->category);
@@ -51,9 +56,21 @@ class HomeController extends Controller
             $query->where('price', '<=', $priceFilter);
         }
 
+        // Filter theo giá tối thiểu
+        if ($request->has('min_price') && $request->min_price) {
+            $minPrice = $request->min_price;
+            $priceFilter = $minPrice < 10000 ? $minPrice * 1000000 : $minPrice;
+            $query->where('price', '>=', $priceFilter);
+        }
+
         // Filter theo diện tích
         if ($request->has('max_area') && $request->max_area) {
             $query->where('area', '<=', $request->max_area);
+        }
+
+        // Filter theo diện tích tối thiểu
+        if ($request->has('min_area') && $request->min_area) {
+            $query->where('area', '>=', $request->min_area);
         }
 
         // Filter đường ô tô
@@ -61,8 +78,24 @@ class HomeController extends Controller
             $query->where('has_road_access', true);
         }
 
+        // Filter theo tình trạng pháp lý
+        if ($request->has('legal_status') && $request->legal_status) {
+            $query->where('legal_status', $request->legal_status);
+        }
+
+        // Sort
+        $sort = $request->get('sort');
+        $query = match ($sort) {
+            'price_asc' => $query->orderBy('price', 'asc'),
+            'price_desc' => $query->orderBy('price', 'desc'),
+            'area_asc' => $query->orderBy('area', 'asc'),
+            'area_desc' => $query->orderBy('area', 'desc'),
+            'vip_first' => $query->orderByRaw("CASE WHEN package_id IS NOT NULL THEN 0 ELSE 1 END")->orderBy('created_at', 'desc'),
+            default => $query->latest(),
+        };
+
         // Lấy 50 tin đầu tiên để hiển thị trên map
-        $listings = $query->latest()->take(50)->get();
+        $listings = $query->take(50)->get();
 
         // Load VIP listings cho bottom bar
         $vipListings = Listing::active()

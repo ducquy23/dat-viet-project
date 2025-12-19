@@ -90,6 +90,9 @@ class ApiController extends Controller
         $maxPrice = $request->get('max_price');
         $minArea = $request->get('min_area');
         $maxArea = $request->get('max_area');
+        $vip = $request->boolean('vip');
+        $legalStatus = $request->get('legal_status');
+        $sort = $request->get('sort');
 
         // Query listings trong bounds và filter
         $query = Listing::active()
@@ -119,15 +122,41 @@ class ApiController extends Controller
             $query->where('price', '<=', $priceFilter);
         }
 
+        if ($minPrice) {
+            $priceFilter = $minPrice < 10000 ? $minPrice * 1000000 : $minPrice;
+            $query->where('price', '>=', $priceFilter);
+        }
+
         if ($maxArea) {
             $query->where('area', '<=', $maxArea);
+        }
+
+        if ($minArea) {
+            $query->where('area', '>=', $minArea);
         }
 
         if ($request->has('has_road') && $request->has_road) {
             $query->where('has_road_access', true);
         }
 
-        $listings = $query->latest()->take(100)->get()->map(function ($listing) {
+        if ($vip) {
+            $query->whereHas('package', fn ($q) => $q->where('code', 'vip'));
+        }
+
+        if ($legalStatus) {
+            $query->where('legal_status', $legalStatus);
+        }
+
+        $query = match ($sort) {
+            'price_asc' => $query->orderBy('price', 'asc'),
+            'price_desc' => $query->orderBy('price', 'desc'),
+            'area_asc' => $query->orderBy('area', 'asc'),
+            'area_desc' => $query->orderBy('area', 'desc'),
+            'vip_first' => $query->orderByRaw("CASE WHEN package_id IS NOT NULL THEN 0 ELSE 1 END")->orderBy('created_at', 'desc'),
+            default => $query->latest(),
+        };
+
+        $listings = $query->take(100)->get()->map(function ($listing) {
             return [
                 'id' => $listing->id,
                 'title' => $listing->title,
