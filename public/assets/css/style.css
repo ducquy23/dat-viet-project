@@ -108,6 +108,24 @@ small {
     transition: var(--dv-transition);
 }
 
+.sidebar-left {
+    min-width: 260px;
+    max-width: 320px;
+}
+
+@media (max-width: 1400px) {
+    .sidebar-left {
+        min-width: 240px;
+        max-width: 280px;
+    }
+    .sidebar-left .filter-card {
+        padding: 12px;
+    }
+    .sidebar-left .btn {
+        padding: 10px 16px;
+    }
+}
+
 .btn {
     border-radius: var(--dv-radius-md);
     font-weight: 600;
