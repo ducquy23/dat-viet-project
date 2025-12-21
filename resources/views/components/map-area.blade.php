@@ -222,35 +222,7 @@
                             duration: 0.8
                         });
                         
-                        // Highlight all markers briefly (pulse effect)
-                        markers.forEach((marker, index) => {
-                            setTimeout(() => {
-                                const icon = marker.options.icon;
-                                if (icon && icon.options && icon.options.html) {
-                                    let html = icon.options.html;
-                                    if (!html.includes('lot-marker-active')) {
-                                        html = html.replace('lot-marker', 'lot-marker lot-marker-active');
-                                        marker.setIcon(L.divIcon({
-                                            ...icon.options,
-                                            html: html
-                                        }));
-                                        
-                                        // Remove active state after 2 seconds
-                                        setTimeout(() => {
-                                            const currentIcon = marker.options.icon;
-                                            if (currentIcon && currentIcon.options && currentIcon.options.html) {
-                                                let currentHtml = currentIcon.options.html;
-                                                currentHtml = currentHtml.replace(/lot-marker-active/g, '').trim();
-                                                marker.setIcon(L.divIcon({
-                                                    ...currentIcon.options,
-                                                    html: currentHtml
-                                                }));
-                                            }
-                                        }, 2000);
-                                    }
-                                }
-                            }, index * 50); // Stagger the animation
-                        });
+                        // KHÔNG highlight tất cả markers khi load - chỉ highlight khi user click
                     }
                 })
                 .catch(error => {
@@ -276,8 +248,8 @@
         // Expose loadListingsForMap globally so it can be called from filter handlers
         window.loadListingsForMap = loadListingsForMap;
 
-        // Load listings on page load
-        loadListingsForMap();
+        // KHÔNG load listings ở đây - để app.js xử lý để tránh duplicate
+        // loadListingsForMap();
 
         // Reload listings when map bounds change (debounced)
         let reloadTimer;

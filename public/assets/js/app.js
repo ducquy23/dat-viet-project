@@ -187,7 +187,8 @@ function renderMarkers(data) {
         return;
     }
 
-    // Clear existing markers from markerLayers
+    // Clear ALL existing markers from map (comprehensive cleanup)
+    // Clear markerLayers
     markerLayers.forEach(m => {
         if (currentMap.hasLayer(m)) {
             currentMap.removeLayer(m);
@@ -195,10 +196,7 @@ function renderMarkers(data) {
     });
     markerLayers = [];
     
-    // Clear active marker reference
-    activeMarker = null;
-
-    // Also clear markers from map-area.blade.php if they exist
+    // Clear mapAreaMarkers
     if (window.mapAreaMarkers && Array.isArray(window.mapAreaMarkers)) {
         window.mapAreaMarkers.forEach(m => {
             if (currentMap.hasLayer(m)) {
@@ -207,6 +205,16 @@ function renderMarkers(data) {
         });
         window.mapAreaMarkers = [];
     }
+    
+    // Clear any other markers that might exist on the map
+    currentMap.eachLayer(function(layer) {
+        if (layer instanceof L.Marker && layer.lotId) {
+            currentMap.removeLayer(layer);
+        }
+    });
+    
+    // Clear active marker reference
+    activeMarker = null;
 
     // Track IDs to avoid duplicates
     const addedIds = new Set();
@@ -331,35 +339,7 @@ function renderMarkers(data) {
             duration: 0.8
         });
         
-        // Highlight all markers briefly (pulse effect)
-        markerLayers.forEach((marker, index) => {
-            setTimeout(() => {
-                const icon = marker.options.icon;
-                if (icon && icon.options && icon.options.html) {
-                    let html = icon.options.html;
-                    if (!html.includes('lot-marker-active')) {
-                        html = html.replace('lot-marker', 'lot-marker lot-marker-active');
-                        marker.setIcon(L.divIcon({
-                            ...icon.options,
-                            html: html
-                        }));
-                        
-                        // Remove active state after 2 seconds
-                        setTimeout(() => {
-                            const currentIcon = marker.options.icon;
-                            if (currentIcon && currentIcon.options && currentIcon.options.html) {
-                                let currentHtml = currentIcon.options.html;
-                                currentHtml = currentHtml.replace(/lot-marker-active/g, '').trim();
-                                marker.setIcon(L.divIcon({
-                                    ...currentIcon.options,
-                                    html: currentHtml
-                                }));
-                            }
-                        }, 2000);
-                    }
-                }
-            }, index * 50); // Stagger the animation
-        });
+        // KHÔNG highlight tất cả markers khi load - chỉ highlight khi user click
     }
 }
 
