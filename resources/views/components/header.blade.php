@@ -12,7 +12,7 @@
 
     <form class="d-none d-md-flex col-5 position-relative" action="{{ route('search') }}" method="GET" id="header-search-form">
         <div class="input-group search-box position-relative">
-            <span class="input-group-text bg-white border-end-0 search-icon-wrapper" style="padding: 12px 16px;">
+            <span class="input-group-text bg-white border-end-0 search-icon-wrapper" style="padding: 12px 16px; cursor: pointer;" onclick="document.getElementById('header-search-form').submit();">
                 <i class="bi bi-search search-icon-animated" style="color: #335793;"></i>
             </span>
             <input
@@ -32,6 +32,9 @@
                 <i class="bi bi-x-circle"></i>
             </button>
             @endif
+            <button type="submit" class="btn btn-primary" style="border-radius: 0 8px 8px 0; padding: 12px 20px;">
+                <i class="bi bi-search"></i>
+            </button>
         </div>
         <!-- Search suggestions dropdown -->
         <div id="search-suggestions" class="search-suggestions" style="display: none;">
@@ -482,9 +485,17 @@
                         // Handle item click
                         item.addEventListener('click', (e) => {
                             if (e.target.closest('.search-recent-item-remove')) return;
+                            e.preventDefault();
+                            e.stopPropagation();
                             searchInput.value = term;
                             suggestionsDiv.style.display = 'none';
-                            document.getElementById('header-search-form').submit();
+                            // Submit form after a small delay to ensure value is set
+                            setTimeout(() => {
+                                const form = document.getElementById('header-search-form');
+                                if (form) {
+                                    form.submit();
+                                }
+                            }, 100);
                         });
                         
                         recentList.appendChild(item);
@@ -609,11 +620,19 @@
                     `;
                     
                     // Handle click
-                    item.addEventListener('click', () => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         searchInput.value = title;
                         saveRecentSearch(title);
                         suggestionsDiv.style.display = 'none';
-                        document.getElementById('header-search-form').submit();
+                        // Submit form after a small delay to ensure value is set
+                        setTimeout(() => {
+                            const form = document.getElementById('header-search-form');
+                            if (form) {
+                                form.submit();
+                            }
+                        }, 100);
                     });
                     
                     suggestionsList.appendChild(item);
@@ -683,9 +702,15 @@
             if (searchForm) {
                 searchForm.addEventListener('submit', function(e) {
                     const query = searchInput.value.trim();
-                    if (query.length >= 2) {
-                        saveRecentSearch(query);
+                    if (query.length < 2) {
+                        e.preventDefault();
+                        if (window.showToast) {
+                            window.showToast('Vui lòng nhập ít nhất 2 ký tự để tìm kiếm', 'warning', 3000);
+                        }
+                        return false;
                     }
+                    saveRecentSearch(query);
+                    // Allow form to submit normally
                 });
             }
 
@@ -694,6 +719,17 @@
                 if (e.key === 'Escape') {
                     suggestionsDiv.style.display = 'none';
                     searchInput.blur();
+                } else if (e.key === 'Enter') {
+                    // Prevent default to handle in form submit
+                    e.preventDefault();
+                    const query = this.value.trim();
+                    if (query.length >= 2) {
+                        searchForm.submit();
+                    } else {
+                        if (window.showToast) {
+                            window.showToast('Vui lòng nhập ít nhất 2 ký tự để tìm kiếm', 'warning', 3000);
+                        }
+                    }
                 }
             });
         }
