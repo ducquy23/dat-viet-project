@@ -767,10 +767,22 @@
             // Only handle if clicking on the track area, not on the inputs directly
             if (e.target === minInput || e.target === maxInput) {
                 activeInput = e.target;
+                isDragging = true;
+                if (activeInput === minInput) {
+                    maxInput.style.pointerEvents = 'none';
+                    minInput.style.zIndex = '10';
+                    maxInput.style.zIndex = '5';
+                } else {
+                    minInput.style.pointerEvents = 'none';
+                    maxInput.style.zIndex = '10';
+                    minInput.style.zIndex = '5';
+                }
                 return;
             }
             
+            // If clicking on wrapper, determine which input to activate
             activeInput = getActiveInput(e.clientX);
+            isDragging = true;
             
             // Disable the other input temporarily
             if (activeInput === minInput) {
@@ -783,15 +795,25 @@
                 minInput.style.zIndex = '5';
             }
             
-            // Simulate click on the active input
+            // Update value based on click position
             const rect = wrapper.getBoundingClientRect();
             const x = e.clientX - rect.left;
-                const percent = (x / rect.width) * 100;
-                const minVal = parseInt(activeInput.min);
-                const maxVal = parseInt(activeInput.max);
-                let value = minVal + (percent / 100) * (maxVal - minVal);
-                value = Math.round(value / 50) * 50; // Round to step (50 triệu)
-                activeInput.value = value;
+            const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+            const minVal = parseInt(activeInput.min);
+            const maxVal = parseInt(activeInput.max);
+            let value = minVal + (percent / 100) * (maxVal - minVal);
+            value = Math.round(value / 50) * 50; // Round to step (50 triệu)
+            
+            // Apply constraints
+            if (activeInput === minInput) {
+                const currentMax = parseInt(maxInput.value);
+                value = Math.min(value, currentMax);
+            } else {
+                const currentMin = parseInt(minInput.value);
+                value = Math.max(value, currentMin);
+            }
+            
+            activeInput.value = value;
             
             // Trigger input event
             activeInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -801,13 +823,17 @@
         });
         
         // Re-enable both inputs on mouseup
-        document.addEventListener('mouseup', function() {
+        const handleMouseUp = function() {
             minInput.style.pointerEvents = 'auto';
             maxInput.style.pointerEvents = 'auto';
             minInput.style.zIndex = '5';
             maxInput.style.zIndex = '6';
             activeInput = null;
-        });
+            isDragging = false;
+        };
+        document.addEventListener('mouseup', handleMouseUp);
+        wrapper.addEventListener('mouseup', handleMouseUp);
+        wrapper.addEventListener('mouseleave', handleMouseUp);
         
         // Handle direct input on min slider
         minInput.addEventListener('mousedown', function() {
@@ -827,30 +853,48 @@
         
         // Add event listeners with proper min/max constraints
         minInput.addEventListener('input', function() {
-            const currentMin = parseInt(this.value);
+            let currentMin = parseInt(this.value);
             const currentMax = parseInt(maxInput.value);
+            const minVal = parseInt(this.min);
+            const maxVal = parseInt(this.max);
+            
+            // Ensure within bounds
+            currentMin = Math.max(minVal, Math.min(maxVal, currentMin));
+            
             // Prevent min from exceeding max
             if (currentMin > currentMax) {
-                this.value = currentMax;
+                currentMin = currentMax;
             }
+            
+            this.value = currentMin;
             updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
             syncFilters();
         });
         
         maxInput.addEventListener('input', function() {
             const currentMin = parseInt(minInput.value);
-            const currentMax = parseInt(this.value);
+            let currentMax = parseInt(this.value);
+            const minVal = parseInt(this.min);
+            const maxVal = parseInt(this.max);
+            
+            // Ensure within bounds
+            currentMax = Math.max(minVal, Math.min(maxVal, currentMax));
+            
             // Prevent max from going below min
             if (currentMax < currentMin) {
-                this.value = currentMin;
+                currentMax = currentMin;
             }
+            
+            this.value = currentMax;
             updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
             syncFilters();
         });
         
         // Handle mouse move to update value while dragging
+        let isDragging = false;
         wrapper.addEventListener('mousemove', function(e) {
-            if (activeInput && e.buttons === 1) { // Only if mouse is down
+            if (activeInput && (e.buttons === 1 || isDragging)) { // Only if mouse is down
+                isDragging = true;
                 const rect = wrapper.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
@@ -858,6 +902,9 @@
                 const maxVal = parseInt(activeInput.max);
                 let value = minVal + (percent / 100) * (maxVal - minVal);
                 value = Math.round(value / 50) * 50; // Round to step (50 triệu)
+                
+                // Ensure value is within bounds
+                value = Math.max(minVal, Math.min(maxVal, value));
                 
                 // Apply constraints
                 if (activeInput === minInput) {
@@ -868,9 +915,17 @@
                     value = Math.max(value, currentMin);
                 }
                 
-                activeInput.value = value;
-                activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                // Only update if value changed
+                if (parseInt(activeInput.value) !== value) {
+                    activeInput.value = value;
+                    activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
             }
+        });
+        
+        // Reset dragging flag on mouseup
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
         });
     }
     
