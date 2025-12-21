@@ -108,6 +108,9 @@
                             zIndexOffset: listing.is_vip ? 1000 : 500
                         }).addTo(map);
                         
+                        // Store listing ID in marker for easy lookup
+                        marker.listingId = listing.id;
+                        
                         marker.bindPopup(`
                             <div style="width:260px; font-family: 'SF Pro Display', sans-serif; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12);">
                                 <div style="position: relative;">
@@ -148,6 +151,35 @@
                         });
 
                         marker.on('click', async () => {
+                            // Remove active state from previous marker
+                            if (window.activeMarker && window.activeMarker !== marker) {
+                                const prevIcon = window.activeMarker.options.icon;
+                                if (prevIcon && prevIcon.options && prevIcon.options.html) {
+                                    const prevHtml = prevIcon.options.html;
+                                    const updatedHtml = prevHtml.replace(/lot-marker-active/g, '').trim();
+                                    if (updatedHtml !== prevHtml) {
+                                        window.activeMarker.setIcon(L.divIcon({
+                                            ...prevIcon.options,
+                                            html: updatedHtml
+                                        }));
+                                    }
+                                }
+                            }
+
+                            // Add active state to current marker
+                            const currentIcon = marker.options.icon;
+                            if (currentIcon && currentIcon.options && currentIcon.options.html) {
+                                let currentHtml = currentIcon.options.html;
+                                if (!currentHtml.includes('lot-marker-active')) {
+                                    currentHtml = currentHtml.replace('lot-marker', 'lot-marker lot-marker-active');
+                                    marker.setIcon(L.divIcon({
+                                        ...currentIcon.options,
+                                        html: currentHtml
+                                    }));
+                                }
+                            }
+                            window.activeMarker = marker;
+                            
                             // Zoom to marker location
                             map.setView([listing.latitude, listing.longitude], Math.max(map.getZoom(), 16), {
                                 animate: true,

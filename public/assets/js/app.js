@@ -20,6 +20,7 @@ if (mapElement && !window.mainMap) {
 let lots = [];
 let currentListing = null;
 let loadingListings = false;
+let activeMarker = null; // Track the currently active/selected marker
 
 // ===== MAP ICONS =====
 // Custom marker style (dashed tím + pin vàng) - Improved design
@@ -93,6 +94,33 @@ function ensureLotMarkerStyle() {
       .lot-marker.vip .lot-pin:after { 
         border-top-color: #f4b400;
       }
+      .lot-marker-active {
+        transform: scale(1.2) !important;
+        z-index: 2000 !important;
+        filter: drop-shadow(0 8px 20px rgba(51,87,147,0.5)) !important;
+      }
+      .lot-marker-active .lot-rect {
+        border-color: #335793 !important;
+        border-width: 3px !important;
+        background: linear-gradient(135deg, rgba(51,87,147,0.3) 0%, rgba(74,107,168,0.2) 100%) !important;
+        box-shadow: 0 0 0 3px rgba(51,87,147,0.3) !important;
+        animation: pulse-active 1.5s ease-in-out infinite !important;
+      }
+      .lot-marker-active .lot-pin {
+        background: linear-gradient(135deg, #335793 0%, #4a6ba8 100%) !important;
+        box-shadow: 0 4px 12px rgba(51,87,147,0.6), 0 0 0 4px rgba(51,87,147,0.3) !important;
+        transform: scale(1.15) !important;
+      }
+      .lot-marker-active.vip .lot-rect {
+        border-color: #f4b400 !important;
+        background: linear-gradient(135deg, rgba(244,180,0,0.4) 0%, rgba(255,215,0,0.3) 100%) !important;
+        box-shadow: 0 0 0 3px rgba(244,180,0,0.4) !important;
+        animation: pulse-active-vip 1.5s ease-in-out infinite !important;
+      }
+      .lot-marker-active.vip .lot-pin {
+        background: linear-gradient(135deg, #f4b400 0%, #ffd700 100%) !important;
+        box-shadow: 0 4px 14px rgba(244,180,0,0.7), 0 0 0 4px rgba(244,180,0,0.4) !important;
+      }
       @keyframes pulse-border {
         0%, 100% { border-color: #7c3aed; opacity: 1; }
         50% { border-color: #a855f7; opacity: 0.8; }
@@ -100,6 +128,26 @@ function ensureLotMarkerStyle() {
       @keyframes pulse-border-vip {
         0%, 100% { border-color: #f97316; opacity: 1; }
         50% { border-color: #fb923c; opacity: 0.8; }
+      }
+      @keyframes pulse-active {
+        0%, 100% { 
+          box-shadow: 0 0 0 3px rgba(51,87,147,0.3);
+          transform: scale(1);
+        }
+        50% { 
+          box-shadow: 0 0 0 6px rgba(51,87,147,0.15);
+          transform: scale(1.05);
+        }
+      }
+      @keyframes pulse-active-vip {
+        0%, 100% { 
+          box-shadow: 0 0 0 3px rgba(244,180,0,0.4);
+          transform: scale(1);
+        }
+        50% { 
+          box-shadow: 0 0 0 6px rgba(244,180,0,0.2);
+          transform: scale(1.05);
+        }
       }
     `;
     document.head.appendChild(style);
@@ -146,6 +194,9 @@ function renderMarkers(data) {
         }
     });
     markerLayers = [];
+    
+    // Clear active marker reference
+    activeMarker = null;
 
     // Also clear markers from map-area.blade.php if they exist
     if (window.mapAreaMarkers && Array.isArray(window.mapAreaMarkers)) {
@@ -189,6 +240,9 @@ function renderMarkers(data) {
             riseOnHover: true,
             zIndexOffset: lot.isVip ? 1000 : 500
         }).addTo(currentMap);
+        
+        // Store lot ID in marker for easy lookup
+        marker.lotId = lot.id;
 
         marker.bindPopup(popupTemplate(lot), {
             maxWidth: 250,
@@ -199,6 +253,36 @@ function renderMarkers(data) {
         });
 
         marker.on("click", async () => {
+            // Remove active state from previous marker
+            if (activeMarker && activeMarker !== marker) {
+                const prevIcon = activeMarker.options.icon;
+                if (prevIcon && prevIcon.options && prevIcon.options.html) {
+                    const prevHtml = prevIcon.options.html;
+                    // Remove active class if exists
+                    const updatedHtml = prevHtml.replace(/lot-marker-active/g, '').trim();
+                    if (updatedHtml !== prevHtml) {
+                        activeMarker.setIcon(L.divIcon({
+                            ...prevIcon.options,
+                            html: updatedHtml
+                        }));
+                    }
+                }
+            }
+
+            // Add active state to current marker
+            const currentIcon = marker.options.icon;
+            if (currentIcon && currentIcon.options && currentIcon.options.html) {
+                let currentHtml = currentIcon.options.html;
+                if (!currentHtml.includes('lot-marker-active')) {
+                    currentHtml = currentHtml.replace('lot-marker', 'lot-marker lot-marker-active');
+                    marker.setIcon(L.divIcon({
+                        ...currentIcon.options,
+                        html: currentHtml
+                    }));
+                }
+            }
+            activeMarker = marker;
+
             // Zoom to marker location
             currentMap.setView([lot.lat, lot.lng], Math.max(currentMap.getZoom(), 16), {
                 animate: true,
@@ -1006,6 +1090,12 @@ if (filterForm) {
 if (btnNearby) {
     btnNearby.addEventListener("click", locateUserAndPickNearest);
 }
+
+// Add event listener for mobile nearby button
+const btnNearbyMobile = document.getElementById("btn-nearby-mobile");
+if (btnNearbyMobile) {
+    btnNearbyMobile.addEventListener("click", locateUserAndPickNearest);
+}
 if (filterPriceEl) {
     filterPriceEl.addEventListener("input", function() {
         updateRangeLabels();
@@ -1187,31 +1277,184 @@ function markUserLocation(lat, lng) {
     }).addTo(map);
 }
 
-function locateUserAndPickNearest() {
-    if (!navigator.geolocation) return;
+async function locateUserAndPickNearest() {
+    if (!navigator.geolocation) {
+        if (window.showToast) {
+            window.showToast('Trình duyệt của bạn không hỗ trợ định vị', 'warning', 3000);
+        }
+        return;
+    }
 
     const currentMap = map || window.mainMap;
     if (!currentMap) return;
 
+    // Show loading state
+    if (window.showToast) {
+        window.showToast('Đang tìm vị trí của bạn...', 'info', 2000);
+    }
+
     navigator.geolocation.getCurrentPosition(
-        pos => {
+        async (pos) => {
             const { latitude, longitude } = pos.coords;
+            
+            // Mark user location on map
             markUserLocation(latitude, longitude);
-            const nearest = findNearestLots(latitude, longitude)[0];
-            if (nearest) {
-                updateDetail(nearest);
-                currentMap.setView([nearest.lat, nearest.lng], 17);
-            } else {
-                currentMap.setView([latitude, longitude], 15);
+            
+            // Calculate bounds for nearby search (approximately 5km radius)
+            // 1 degree latitude ≈ 111 km, so 5km ≈ 0.045 degrees
+            const radiusKm = 5;
+            const latOffset = radiusKm / 111;
+            const lngOffset = radiusKm / (111 * Math.cos(latitude * Math.PI / 180));
+            
+            const bounds = {
+                north: latitude + latOffset,
+                south: latitude - latOffset,
+                east: longitude + lngOffset,
+                west: longitude - lngOffset
+            };
+
+            // Fetch nearby listings from API
+            try {
+                const params = new URLSearchParams();
+                params.append('bounds[north]', bounds.north);
+                params.append('bounds[south]', bounds.south);
+                params.append('bounds[east]', bounds.east);
+                params.append('bounds[west]', bounds.west);
+                
+                // Include existing filters from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                ['city', 'category', 'min_price', 'max_price', 'vip', 'legal_status'].forEach(key => {
+                    if (urlParams.has(key)) {
+                        params.append(key, urlParams.get(key));
+                    }
+                });
+
+                const response = await fetch(`/api/listings/map?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.listings && data.listings.length > 0) {
+                    // Convert API data to app format
+                    const nearbyLots = data.listings
+                        .filter(listing => {
+                            if (!listing.latitude || !listing.longitude) return false;
+                            const lat = parseFloat(listing.latitude);
+                            const lng = parseFloat(listing.longitude);
+                            return !isNaN(lat) && !isNaN(lng) && 
+                                   lat >= 8.5 && lat <= 23.5 && 
+                                   lng >= 102.0 && lng <= 110.0;
+                        })
+                        .map(listing => ({
+                            id: listing.id,
+                            name: listing.title,
+                            title: listing.title,
+                            price: formatPrice(listing.price),
+                            size: `${listing.area}m²`,
+                            priceValue: listing.price,
+                            sizeValue: listing.area,
+                            lat: parseFloat(listing.latitude),
+                            lng: parseFloat(listing.longitude),
+                            slug: listing.slug,
+                            img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/Image-not-found.png',
+                            type: listing.category || 'Đất',
+                            address: listing.address || '',
+                            city: listing.city || '',
+                            district: listing.district || '',
+                            tags: [],
+                            seller: { name: '', phone: '' },
+                            isVip: listing.is_vip || false,
+                            legal: '',
+                            front: '',
+                            road: '',
+                            depth: '',
+                            roadWidth: '',
+                            direction: '',
+                            roadAccess: false,
+                            pricePer: '',
+                            planning: '',
+                            depositOnline: '',
+                            desc: '',
+                            images: [],
+                            polygon: []
+                        }));
+
+                    // Update lots array with nearby listings
+                    lots = nearbyLots;
+                    
+                    // Render markers on map
+                    renderMarkers(nearbyLots);
+                    
+                    // Find nearest and update detail
+                    const nearest = findNearestLots(latitude, longitude)[0];
+                    if (nearest) {
+                        await loadListingDetail(nearest.id);
+                        const fullLot = lots.find(l => l.id === nearest.id) || nearest;
+                        await updateDetail(fullLot);
+                        
+                        // Set active marker
+                        const nearestMarker = markerLayers.find(m => m.lotId === nearest.id);
+                        if (nearestMarker) {
+                            nearestMarker.fire('click');
+                        }
+                        
+                        // Center map on nearest listing
+                        currentMap.setView([nearest.lat, nearest.lng], 16, {
+                            animate: true,
+                            duration: 0.5
+                        });
+                    } else {
+                        // Center map on user location if no listings found
+                        currentMap.setView([latitude, longitude], 15, {
+                            animate: true,
+                            duration: 0.5
+                        });
+                        if (window.showToast) {
+                            window.showToast('Không tìm thấy tin đăng nào gần bạn', 'info', 3000);
+                        }
+                    }
+                    
+                    if (window.showToast) {
+                        window.showToast(`Tìm thấy ${nearbyLots.length} tin đăng gần bạn`, 'success', 2000);
+                    }
+                } else {
+                    // No listings found
+                    currentMap.setView([latitude, longitude], 15, {
+                        animate: true,
+                        duration: 0.5
+                    });
+                    if (window.showToast) {
+                        window.showToast('Không tìm thấy tin đăng nào gần bạn', 'info', 3000);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading nearby listings:', error);
+                if (window.showToast) {
+                    window.showToast('Có lỗi xảy ra khi tải tin đăng', 'error', 3000);
+                }
+                // Fallback: center on user location
+                currentMap.setView([latitude, longitude], 15, {
+                    animate: true,
+                    duration: 0.5
+                });
             }
         },
-        () => {},
+        (error) => {
+            console.error('Geolocation error:', error);
+            if (window.showToast) {
+                let message = 'Không thể lấy vị trí của bạn';
+                if (error.code === error.PERMISSION_DENIED) {
+                    message = 'Vui lòng cho phép truy cập vị trí để sử dụng tính năng này';
+                } else if (error.code === error.TIMEOUT) {
+                    message = 'Hết thời gian chờ lấy vị trí';
+                }
+                window.showToast(message, 'error', 3000);
+            }
+        },
         { enableHighAccuracy: true, timeout: 8000 }
     );
 }
 
-// Try geolocation to show nearest lots on load
-locateUserAndPickNearest();
+// Don't auto-run on load - only when user clicks button
+// locateUserAndPickNearest();
 
 // ===== POST MODAL - 3 BƯỚC =====
 let currentStep = 1;
