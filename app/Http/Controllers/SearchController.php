@@ -9,6 +9,7 @@ use App\Models\District;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class SearchController extends Controller
 {
@@ -21,13 +22,36 @@ class SearchController extends Controller
     {
         // Lấy các tham số tìm kiếm
         $keyword = $request->get('q', '');
-        $cityId = $request->get('city_id');
-        $districtId = $request->get('district_id');
-        $categoryId = $request->get('category_id');
-        $minPrice = $request->get('min_price');
-        $maxPrice = $request->get('max_price');
+        // Support both 'city' and 'city_id' parameter names
+        $cityId = $request->get('city') ?: $request->get('city_id');
+        // Support both 'district' and 'district_id' parameter names
+        $districtId = $request->get('district') ?: $request->get('district_id');
+        // Support both 'category' and 'category_id' parameter names
+        $categoryId = $request->get('category') ?: $request->get('category_id');
+        // Get price filters - handle both direct values and empty strings
+        $minPrice = $request->input('min_price');
+        $maxPrice = $request->input('max_price');
+        
+        // Normalize max_price: empty string, null, or falsy values mean "unlimited"
+        // Use input() instead of get() to get exact value including empty strings
+        // Also check if it's the string "0" or numeric 0
+        if ($maxPrice === '' || $maxPrice === null || $maxPrice === false || $maxPrice === '0' || $maxPrice === 0) {
+            $maxPrice = null;
+        }
+        
+        // Debug: Log price filter values (remove in production)
+        \Log::info('Price filters debug', [
+            'min_raw' => $request->input('min_price'),
+            'max_raw' => $request->input('max_price'),
+            'min' => $minPrice,
+            'max' => $maxPrice,
+            'max_type' => gettype($maxPrice),
+            'all_params' => $request->all()
+        ]);
         $minArea = $request->get('min_area');
         $maxArea = $request->get('max_area');
+        $vip = $request->boolean('vip');
+        $legalStatus = $request->get('legal_status');
         $sort = $request->get('sort', 'latest'); // latest, price_asc, price_desc, area_asc, area_desc
 
         // Load cities và categories cho filter
@@ -42,25 +66,37 @@ class SearchController extends Controller
         $query = Listing::active()
             ->with(['city', 'district', 'category', 'primaryImage', 'package']);
 
+        // Keyword search - only search in text fields, not in relationships if filters are set
         if ($keyword) {
-            $query->where(function ($q) use ($keyword) {
+            $query->where(function ($q) use ($keyword, $cityId, $districtId, $categoryId) {
                 $q->where('title', 'like', "%{$keyword}%")
                     ->orWhere('description', 'like', "%{$keyword}%")
                     ->orWhere('address', 'like', "%{$keyword}%")
                     ->orWhere('contact_name', 'like', "%{$keyword}%")
-                    ->orWhere('legal_status', 'like', "%{$keyword}%")
-                    ->orWhereHas('city', function ($cityQuery) use ($keyword) {
+                    ->orWhere('legal_status', 'like', "%{$keyword}%");
+                
+                // Only search in relationships if not already filtered by them
+                if (!$cityId) {
+                    $q->orWhereHas('city', function ($cityQuery) use ($keyword) {
                         $cityQuery->where('name', 'like', "%{$keyword}%");
-                    })
-                    ->orWhereHas('district', function ($districtQuery) use ($keyword) {
+                    });
+                }
+                
+                if (!$districtId) {
+                    $q->orWhereHas('district', function ($districtQuery) use ($keyword) {
                         $districtQuery->where('name', 'like', "%{$keyword}%");
-                    })
-                    ->orWhereHas('category', function ($categoryQuery) use ($keyword) {
+                    });
+                }
+                
+                if (!$categoryId) {
+                    $q->orWhereHas('category', function ($categoryQuery) use ($keyword) {
                         $categoryQuery->where('name', 'like', "%{$keyword}%");
                     });
+                }
             });
         }
 
+        // Apply filters - these are AND conditions with keyword search
         if ($cityId) {
             $query->where('city_id', $cityId);
         }
@@ -73,17 +109,35 @@ class SearchController extends Controller
             $query->where('category_id', $categoryId);
         }
 
-        if ($minPrice) {
-            // Convert triệu to VND if needed
-            $minPriceFilter = $minPrice < 10000 ? $minPrice * 1000000 : $minPrice;
+        // Handle price filters - values are already in VND (đồng) from hidden inputs
+        // Handle min_price filter
+        if ($minPrice && $minPrice !== '' && $minPrice !== null) {
+            // minPrice is already in VND from hidden input (min_price_million * 1000000)
+            // But check if it's accidentally in millions (less than 1000000)
+            $minPriceFilter = (int)$minPrice;
+            if ($minPriceFilter < 1000000) {
+                // If less than 1 million, assume it's in millions and convert
+                $minPriceFilter = $minPriceFilter * 1000000;
+            }
             $query->where('price', '>=', $minPriceFilter);
         }
 
-        if ($maxPrice) {
-            // Convert triệu to VND if needed
-            $maxPriceFilter = $maxPrice < 10000 ? $maxPrice * 1000000 : $maxPrice;
-            $query->where('price', '<=', $maxPriceFilter);
+        // Handle max_price filter - only apply if value exists and is not empty/null
+        // Empty string or null means "unlimited" - don't apply max price filter
+        // After normalization above, $maxPrice is null if it was empty string/null/false
+        if ($maxPrice !== null) {
+            // maxPrice is already in VND from hidden input (max_price_million * 1000000)
+            // But check if it's accidentally in millions (less than 1000000)
+            $maxPriceFilter = (int)$maxPrice;
+            if ($maxPriceFilter > 0) {
+                if ($maxPriceFilter < 1000000) {
+                    // If less than 1 million, assume it's in millions and convert
+                    $maxPriceFilter = $maxPriceFilter * 1000000;
+                }
+                $query->where('price', '<=', $maxPriceFilter);
+            }
         }
+        // If maxPrice is null (was empty string/null/false), don't apply max price filter (unlimited)
 
         if ($minArea) {
             $query->where('area', '>=', $minArea);
@@ -91,6 +145,14 @@ class SearchController extends Controller
 
         if ($maxArea) {
             $query->where('area', '<=', $maxArea);
+        }
+
+        if ($vip) {
+            $query->whereHas('package', fn ($q) => $q->where('code', 'vip'));
+        }
+
+        if ($legalStatus) {
+            $query->where('legal_status', $legalStatus);
         }
 
         // Sắp xếp
@@ -120,13 +182,18 @@ class SearchController extends Controller
             'districts' => $districts,
             'keyword' => $keyword,
             'filters' => [
-                'city_id' => $cityId,
-                'district_id' => $districtId,
-                'category_id' => $categoryId,
+                'city' => $cityId,
+                'city_id' => $cityId, // Keep for backward compatibility
+                'district' => $districtId,
+                'district_id' => $districtId, // Keep for backward compatibility
+                'category' => $categoryId,
+                'category_id' => $categoryId, // Keep for backward compatibility
                 'min_price' => $minPrice,
                 'max_price' => $maxPrice,
                 'min_area' => $minArea,
                 'max_area' => $maxArea,
+                'vip' => $vip,
+                'legal_status' => $legalStatus,
                 'sort' => $sort,
             ],
         ]);

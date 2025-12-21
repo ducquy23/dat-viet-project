@@ -256,6 +256,25 @@ class Listing extends Model
     {
         return $this->expires_at && $this->expires_at->isPast();
     }
+
+    /**
+     * Get price_per_m2 attribute - calculate if not set
+     * @return float|null
+     */
+    public function getPricePerM2Attribute($value)
+    {
+        // If price_per_m2 is already set and not null, return it
+        if ($value !== null && $value > 0) {
+            return $value;
+        }
+        
+        // Otherwise, calculate it from price and area
+        if ($this->price && $this->area && $this->area > 0) {
+            return $this->price / $this->area;
+        }
+        
+        return null;
+    }
 }
 
 

@@ -71,15 +71,45 @@
                             <h1 class="listing-title mb-3">{{ $listing->title }}</h1>
                             <div class="listing-price-section mb-3">
                                 <div class="d-flex align-items-baseline gap-3 flex-wrap">
-                                    <span class="price-main">{{ number_format($listing->price / 1000000) }} triệu đồng</span>
-                                    @if($listing->price_per_m2)
-                                        <span class="price-per-m2">({{ number_format($listing->price_per_m2 / 1000000, 1) }} triệu/m²)</span>
+                                    @if($listing->price && $listing->price > 0)
+                                        @php
+                                            // Handle both cases: price in VND (đồng) or millions (triệu)
+                                            // If price >= 1,000,000, it's in đồng, convert to triệu
+                                            // If price < 1,000,000, it's already in triệu
+                                            $priceInMillion = $listing->price >= 1000000 
+                                                ? $listing->price / 1000000 
+                                                : $listing->price;
+                                            
+                                            // Calculate price_per_m2 if not set
+                                            $pricePerM2 = $listing->price_per_m2;
+                                            if (!$pricePerM2 && $listing->area > 0) {
+                                                $pricePerM2 = $listing->price / $listing->area;
+                                            }
+                                            
+                                            // Convert price_per_m2 to triệu/m² if needed
+                                            $pricePerM2InMillion = $pricePerM2 
+                                                ? ($pricePerM2 >= 1000000 ? $pricePerM2 / 1000000 : $pricePerM2)
+                                                : null;
+                                        @endphp
+                                        <span class="price-main">{{ number_format($priceInMillion, 0) }} triệu đồng</span>
+                                        @if($pricePerM2InMillion)
+                                            <span class="price-per-m2">({{ number_format($pricePerM2InMillion, 1) }} triệu/m²)</span>
+                                        @endif
+                                    @else
+                                        <span class="price-main text-muted">Liên hệ</span>
                                     @endif
                                 </div>
                                 <div class="price-breakdown mt-2">
                                     <span class="badge bg-primary-subtle text-primary me-2">{{ number_format($listing->area, 1) }} m²</span>
-                                    @if($listing->price_per_m2)
-                                        <span class="text-muted small">Đơn giá: {{ number_format($listing->price_per_m2 / 1000000, 1) }} triệu/m²</span>
+                                    @if($listing->price && $listing->price > 0 && $listing->area > 0)
+                                        @php
+                                            $pricePerM2 = $listing->price_per_m2;
+                                            if (!$pricePerM2) {
+                                                $pricePerM2 = $listing->price / $listing->area;
+                                            }
+                                            $pricePerM2InMillion = $pricePerM2 >= 1000000 ? $pricePerM2 / 1000000 : $pricePerM2;
+                                        @endphp
+                                        <span class="text-muted small">Đơn giá: {{ number_format($pricePerM2InMillion, 1) }} triệu/m²</span>
                                     @endif
                                 </div>
                             </div>
@@ -224,14 +254,23 @@
                                     </div>
                                 </div>
                             </div>
-                            @if($listing->price_per_m2)
+                            @if($listing->price && $listing->price > 0 && $listing->area > 0)
                             <div class="col-md-6">
                                 <div class="info-item">
                                     <div class="info-label">
                                         <i class="bi bi-calculator"></i>
                                         <span>Đơn giá /m²</span>
                                     </div>
-                                    <div class="info-value">{{ number_format($listing->price_per_m2 / 1000000, 1) }} triệu/m²</div>
+                                    <div class="info-value">
+                                        @php
+                                            $pricePerM2 = $listing->price_per_m2;
+                                            if (!$pricePerM2) {
+                                                $pricePerM2 = $listing->price / $listing->area;
+                                            }
+                                            $pricePerM2InMillion = $pricePerM2 >= 1000000 ? $pricePerM2 / 1000000 : $pricePerM2;
+                                        @endphp
+                                        {{ number_format($pricePerM2InMillion, 1) }} triệu/m²
+                                    </div>
                                 </div>
                             </div>
                             @endif
@@ -355,7 +394,18 @@
                             </div>
                             <div class="related-content">
                                 <h6 class="related-title">{{ Str::limit($related->title, 60) }}</h6>
-                                <div class="related-price">{{ number_format($related->price / 1000000) }} triệu</div>
+                                <div class="related-price">
+                                    @if($related->price && $related->price > 0)
+                                        @php
+                                            $relatedPriceInMillion = $related->price >= 1000000 
+                                                ? $related->price / 1000000 
+                                                : $related->price;
+                                        @endphp
+                                        {{ number_format($relatedPriceInMillion, 0) }} triệu
+                                    @else
+                                        <span class="text-muted">Liên hệ</span>
+                                    @endif
+                                </div>
                                 <div class="related-meta">
                                     <span>{{ number_format($related->area, 1) }} m²</span>
                                     <span>•</span>

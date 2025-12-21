@@ -30,11 +30,24 @@
                     <!-- Sort -->
                     <form method="GET" action="{{ route('search') }}" id="sort-form">
                         <input type="hidden" name="q" value="{{ $keyword }}">
-                        @foreach($filters as $key => $value)
-                            @if($value && $key !== 'sort')
-                                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-                            @endif
-                        @endforeach
+                        @if($filters['city'])
+                            <input type="hidden" name="city" value="{{ $filters['city'] }}">
+                        @endif
+                        @if($filters['category'])
+                            <input type="hidden" name="category" value="{{ $filters['category'] }}">
+                        @endif
+                        @if($filters['min_price'])
+                            <input type="hidden" name="min_price" value="{{ $filters['min_price'] }}">
+                        @endif
+                        @if($filters['max_price'])
+                            <input type="hidden" name="max_price" value="{{ $filters['max_price'] }}">
+                        @endif
+                        @if($filters['vip'])
+                            <input type="hidden" name="vip" value="{{ $filters['vip'] }}">
+                        @endif
+                        @if($filters['legal_status'])
+                            <input type="hidden" name="legal_status" value="{{ $filters['legal_status'] }}">
+                        @endif
                         <select name="sort" class="form-select" onchange="document.getElementById('sort-form').submit();">
                             <option value="latest" {{ $filters['sort'] == 'latest' ? 'selected' : '' }}>Mới nhất</option>
                             <option value="price_asc" {{ $filters['sort'] == 'price_asc' ? 'selected' : '' }}>Giá: Thấp → Cao</option>
@@ -58,18 +71,39 @@
                             <i class="bi bi-funnel-fill text-primary"></i>
                             <span>Bộ lọc</span>
                         </h5>
+                        <span class="badge bg-primary-subtle text-primary" id="search-filter-count">0 tiêu chí</span>
+                    </div>
+
+                    <!-- Active Filter Tags -->
+                    <div id="search-active-filters" class="mb-3 d-flex flex-wrap gap-2" style="display: none !important;">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Quick Filter Chips -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-uppercase text-muted mb-2">Lọc nhanh</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary quick-filter-chip-search" data-filter="legal_status" data-value="Sổ đỏ">
+                                <i class="bi bi-file-earmark-check"></i> Sổ đỏ
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary quick-filter-chip-search" data-filter="vip" data-value="1">
+                                <i class="bi bi-star-fill"></i> VIP
+                            </button>
+                        </div>
                     </div>
 
                     <form action="{{ route('search') }}" method="GET" id="search-filter-form">
                         <input type="hidden" name="q" value="{{ $keyword }}">
+                        <input type="hidden" name="vip" id="search-filter-vip" value="{{ request('vip') }}">
+                        <input type="hidden" name="legal_status" id="search-filter-legal-status" value="{{ request('legal_status') }}">
                         
                         <!-- Loại đất -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold small text-uppercase text-muted">Loại đất</label>
-                            <select class="form-select shadow-none" name="category_id" id="search-filter-type">
-                                <option value="">Tất cả</option>
+                            <select class="form-select shadow-none" name="category" id="search-filter-type">
+                                <option value="">Chọn loại đất</option>
                                 @foreach($categories ?? [] as $category)
-                                    <option value="{{ $category->id }}" {{ $filters['category_id'] == $category->id ? 'selected' : '' }}>
+                                    <option value="{{ $category->id }}" {{ ($filters['category'] ?? $filters['category_id']) == $category->id ? 'selected' : '' }}>
                                         {{ $category->name }}
                                     </option>
                                 @endforeach
@@ -79,78 +113,68 @@
                         <!-- Tỉnh/Thành phố -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold small text-uppercase text-muted">Tỉnh/Thành phố</label>
-                            <select class="form-select shadow-none" name="city_id" id="search-filter-city">
-                                <option value="">Tất cả</option>
+                            <select class="form-select shadow-none" name="city" id="search-filter-city">
+                                <option value="">Chọn Tỉnh/Thành phố</option>
                                 @foreach($cities ?? [] as $city)
-                                    <option value="{{ $city->id }}" {{ $filters['city_id'] == $city->id ? 'selected' : '' }}>
+                                    <option value="{{ $city->id }}" {{ ($filters['city'] ?? $filters['city_id']) == $city->id ? 'selected' : '' }}>
                                         {{ $city->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <!-- Quận/Huyện -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold small text-uppercase text-muted">Quận/Huyện</label>
-                            <select class="form-select shadow-none" name="district_id" id="search-filter-district">
-                                <option value="">Tất cả</option>
-                                @foreach($districts ?? [] as $district)
-                                    <option value="{{ $district->id }}" {{ $filters['district_id'] == $district->id ? 'selected' : '' }}>
-                                        {{ $district->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
                         <!-- Khoảng giá -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
-                                <span>Giá tối đa</span>
-                                <span class="badge bg-primary-subtle text-primary" id="search-price-label">{{ number_format($filters['max_price'] ?? 5000) }} triệu</span>
-                            </label>
-                            <input 
-                                type="range" 
-                                class="form-range" 
-                                min="300" 
-                                max="5000" 
-                                step="50" 
-                                id="search-filter-price" 
-                                name="max_price"
-                                value="{{ $filters['max_price'] ?? 5000 }}">
-                            <div class="d-flex justify-content-between small text-muted mt-1">
-                                <span>300 triệu</span>
-                                <span>5000 triệu</span>
+                        <div class="mb-3 price-filter-section">
+                            <div class="price-filter-header d-flex align-items-center justify-content-between mb-2" style="cursor: pointer;" onclick="toggleSearchPriceFilter(this)">
+                                <label class="form-label fw-semibold mb-0" style="color: #335793;">Lọc theo giá</label>
+                                <i class="bi bi-chevron-down price-filter-icon" style="color: #000;"></i>
                             </div>
-                        </div>
-
-                        <!-- Diện tích -->
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
-                                <span>Diện tích tối đa</span>
-                                <span class="badge bg-primary-subtle text-primary" id="search-area-label">{{ number_format($filters['max_area'] ?? 1000) }} m²</span>
-                            </label>
-                            <input 
-                                type="range" 
-                                class="form-range" 
-                                min="50" 
-                                max="1000" 
-                                step="10" 
-                                id="search-filter-area" 
-                                name="max_area"
-                                value="{{ $filters['max_area'] ?? 1000 }}">
-                            <div class="d-flex justify-content-between small text-muted mt-1">
-                                <span>50 m²</span>
-                                <span>1000 m²</span>
+                            <div class="price-filter-content" style="display: block;">
+                                <div class="price-range-slider-wrapper position-relative mb-3" style="height: 30px; padding: 12px 0;">
+                                    <div class="price-range-track" style="height: 6px; background: #e9ecef; border-radius: 3px; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);">
+                                        <div class="price-range-fill" style="height: 100%; background: #335793; border-radius: 3px; position: absolute; left: 0%; right: 0%;"></div>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        class="form-range price-range-input price-range-min" 
+                                        min="50" 
+                                        max="50000" 
+                                        step="50" 
+                                        id="search-filter-price-min" 
+                                        data-price-type="min"
+                                        value="{{ request('min_price') ? round(request('min_price') / 1000000) : 50 }}"
+                                        style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
+                                    <input type="hidden" name="min_price" id="search_min_price_hidden" value="{{ request('min_price', '') }}">
+                                    <input 
+                                        type="range" 
+                                        class="form-range price-range-input price-range-max" 
+                                        min="50" 
+                                        max="50000" 
+                                        step="50" 
+                                        id="search-filter-price-max" 
+                                        data-price-type="max"
+                                        value="{{ request('max_price') ? round(request('max_price') / 1000000) : 50000 }}"
+                                        style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 6;">
+                                    <input type="hidden" name="max_price" id="search_max_price_hidden" value="{{ request('max_price', '') }}">
+                                    <div class="price-range-handles" style="position: absolute; top: 50%; left: 0; right: 0; height: 30px; transform: translateY(-50%); pointer-events: none; z-index: 1;">
+                                        <div class="price-handle price-handle-min" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #335793; border-radius: 50%; top: 50%; left: 0%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                        <div class="price-handle price-handle-max" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #335793; border-radius: 50%; top: 50%; left: 100%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                    </div>
+                                </div>
+                                <div class="price-range-display">
+                                    <span class="text-dark fw-semibold">Giá: </span>
+                                    <span class="text-dark" id="search-price-range-display">đ50 triệu - Không giới hạn</span>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Buttons -->
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="search-btn-apply-filters">
                                 <i class="bi bi-funnel"></i> Áp dụng bộ lọc
                             </button>
-                            <a href="{{ route('search', ['q' => $keyword]) }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-counterclockwise"></i> Xóa bộ lọc
+                            <a href="{{ route('search', ['q' => $keyword]) }}" class="btn btn-outline-secondary" id="search-btn-clear-filters">
+                                <i class="bi bi-x-circle"></i> Xóa tất cả
                             </a>
                         </div>
                     </form>
@@ -184,11 +208,34 @@
                                                 </a>
                                             </h5>
                                             <div class="listing-price mb-2">
-                                                <span class="text-primary fw-bold fs-5">{{ number_format($listing->price / 1000000) }} triệu</span>
-                                                <span class="text-muted"> • </span>
-                                                <span class="text-dark fw-semibold">{{ number_format($listing->area, 1) }} m²</span>
-                                                @if($listing->price_per_m2)
-                                                    <span class="text-muted small">({{ number_format($listing->price_per_m2 / 1000000, 1) }} tr/m²)</span>
+                                                @if($listing->price && $listing->price > 0)
+                                                    @php
+                                                        // Handle both cases: price in VND (đồng) or millions (triệu)
+                                                        $priceInMillion = $listing->price >= 1000000 
+                                                            ? $listing->price / 1000000 
+                                                            : $listing->price;
+                                                        
+                                                        // Calculate price_per_m2 if not set
+                                                        $pricePerM2 = $listing->price_per_m2;
+                                                        if (!$pricePerM2 && $listing->area > 0) {
+                                                            $pricePerM2 = $listing->price / $listing->area;
+                                                        }
+                                                        
+                                                        // Convert price_per_m2 to triệu/m² if needed
+                                                        $pricePerM2InMillion = $pricePerM2 
+                                                            ? ($pricePerM2 >= 1000000 ? $pricePerM2 / 1000000 : $pricePerM2)
+                                                            : null;
+                                                    @endphp
+                                                    <span class="text-primary fw-bold fs-5">{{ number_format($priceInMillion, 0) }} triệu</span>
+                                                    <span class="text-muted"> • </span>
+                                                    <span class="text-dark fw-semibold">{{ number_format($listing->area, 1) }} m²</span>
+                                                    @if($pricePerM2InMillion)
+                                                        <span class="text-muted small">({{ number_format($pricePerM2InMillion, 1) }} tr/m²)</span>
+                                                    @endif
+                                                @else
+                                                    <span class="text-primary fw-bold fs-5 text-muted">Liên hệ</span>
+                                                    <span class="text-muted"> • </span>
+                                                    <span class="text-dark fw-semibold">{{ number_format($listing->area, 1) }} m²</span>
                                                 @endif
                                             </div>
                                             <div class="listing-location text-muted small mb-2">
@@ -335,6 +382,91 @@
     padding: 80px 20px;
 }
 
+/* Filter Tags */
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(51, 87, 147, 0.1) 0%, rgba(74, 107, 168, 0.08) 100%);
+    color: #335793;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid rgba(51, 87, 147, 0.2);
+}
+
+.filter-tag .btn-close {
+    font-size: 10px;
+    opacity: 0.6;
+    padding: 0;
+    margin-left: 4px;
+}
+
+.filter-tag .btn-close:hover {
+    opacity: 1;
+}
+
+/* Quick Filter Chips */
+.quick-filter-chip-search {
+    transition: all 0.2s ease;
+    border: 1px solid rgba(51, 87, 147, 0.3);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.quick-filter-chip-search:hover {
+    background: rgba(51, 87, 147, 0.1);
+    border-color: #335793;
+    transform: translateY(-1px);
+}
+
+.quick-filter-chip-search.active {
+    background: linear-gradient(135deg, #335793 0%, #4a6ba8 100%);
+    color: white;
+    border-color: #335793;
+}
+
+/* Price Range Slider */
+.price-range-slider-wrapper {
+    position: relative;
+    height: 30px;
+    padding: 12px 0;
+}
+
+.price-range-track {
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+}
+
+.price-range-fill {
+    height: 100%;
+    background: #335793;
+    border-radius: 3px;
+    position: absolute;
+    left: 0%;
+    right: 0%;
+}
+
+.price-handle {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border: 2px solid #335793;
+    border-radius: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    pointer-events: none;
+}
+
 @media (max-width: 768px) {
     .listing-image-wrapper {
         min-height: 180px;
@@ -349,30 +481,386 @@
 
 @push('scripts')
 <script>
-    // Update range labels
-    const searchPriceEl = document.getElementById('search-filter-price');
-    const searchAreaEl = document.getElementById('search-filter-area');
-    const searchPriceLabel = document.getElementById('search-price-label');
-    const searchAreaLabel = document.getElementById('search-area-label');
-
-    if (searchPriceEl && searchPriceLabel) {
-        searchPriceEl.addEventListener('input', function() {
-            searchPriceLabel.textContent = new Intl.NumberFormat('vi-VN').format(this.value) + ' triệu';
-            const progress = ((this.value - this.min) / (this.max - this.min)) * 100;
-            this.style.setProperty('--range-progress', progress + '%');
-        });
-        const priceProgress = ((searchPriceEl.value - searchPriceEl.min) / (searchPriceEl.max - searchPriceEl.min)) * 100;
-        searchPriceEl.style.setProperty('--range-progress', priceProgress + '%');
+    // Format price helper
+    function formatPrice(million) {
+        if (million >= 50000) {
+            return 'Không giới hạn';
+        } else if (million >= 1000) {
+            const ty = (million / 1000).toFixed(million % 1000 === 0 ? 0 : 1);
+            return `đ${ty} tỉ`;
+        } else {
+            return `đ${new Intl.NumberFormat('vi-VN').format(million)} triệu`;
+        }
     }
 
-    if (searchAreaEl && searchAreaLabel) {
-        searchAreaEl.addEventListener('input', function() {
-            searchAreaLabel.textContent = new Intl.NumberFormat('vi-VN').format(this.value) + ' m²';
-            const progress = ((this.value - this.min) / (this.max - this.min)) * 100;
-            this.style.setProperty('--range-progress', progress + '%');
+    // Update price range slider UI
+    function updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle) {
+        const min = parseInt(minInput.value);
+        const max = parseInt(maxInput.value);
+        const minVal = parseInt(minInput.min);
+        const maxVal = parseInt(maxInput.max);
+
+        const minPercent = ((min - minVal) / (maxVal - minVal)) * 100;
+        const maxPercent = ((max - minVal) / (maxVal - minVal)) * 100;
+
+        if (fillEl) {
+            fillEl.style.left = minPercent + '%';
+            fillEl.style.right = (100 - maxPercent) + '%';
+        }
+
+        if (minHandle) minHandle.style.left = minPercent + '%';
+        if (maxHandle) maxHandle.style.left = maxPercent + '%';
+
+        if (displayEl) {
+            const maxLabel = max >= 50000 ? 'Không giới hạn' : formatPrice(max);
+            displayEl.textContent = `${formatPrice(min)} - ${maxLabel}`;
+        }
+
+        const minHidden = document.getElementById('search_min_price_hidden');
+        const maxHidden = document.getElementById('search_max_price_hidden');
+        if (minHidden) minHidden.value = min * 1_000_000;
+        if (maxHidden) {
+            if (max >= 50000) {
+                maxHidden.value = '';
+            } else {
+                maxHidden.value = max * 1_000_000;
+            }
+        }
+    }
+
+    // Setup price range slider for search page
+    function setupSearchPriceRangeSlider() {
+        const minInput = document.getElementById('search-filter-price-min');
+        const maxInput = document.getElementById('search-filter-price-max');
+        const displayEl = document.getElementById('search-price-range-display');
+        const wrapper = minInput?.closest('.price-range-slider-wrapper');
+        const fillEl = wrapper?.querySelector('.price-range-fill');
+        const minHandle = wrapper?.querySelector('.price-handle-min');
+        const maxHandle = wrapper?.querySelector('.price-handle-max');
+
+        if (!minInput || !maxInput) return;
+
+        let activeInput = null;
+        let isPriceDragging = false;
+
+        // Initial update
+        updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
+
+        function getActiveInput(x) {
+            const rect = wrapper.getBoundingClientRect();
+            const percent = ((x - rect.left) / rect.width) * 100;
+
+            const min = parseInt(minInput.value);
+            const max = parseInt(maxInput.value);
+            const minVal = parseInt(minInput.min);
+            const maxVal = parseInt(minInput.max);
+            const minPercent = ((min - minVal) / (maxVal - minVal)) * 100;
+            const maxPercent = ((max - minVal) / (maxVal - minVal)) * 100;
+
+            const distanceToMin = Math.abs(percent - minPercent);
+            const distanceToMax = Math.abs(percent - maxPercent);
+
+            return distanceToMin <= distanceToMax ? minInput : maxInput;
+        }
+
+        wrapper.addEventListener('mousedown', function (e) {
+            if (e.target === minInput || e.target === maxInput) {
+                activeInput = e.target;
+                isPriceDragging = true;
+                return;
+            }
+            
+            const rect = wrapper.getBoundingClientRect();
+            const percent = ((e.clientX - rect.left) / rect.width) * 100;
+
+            activeInput = getActiveInput(e.clientX);
+            isPriceDragging = true;
+
+            const minVal = parseInt(activeInput.min);
+            const maxVal = parseInt(activeInput.max);
+
+            let value = minVal + (percent / 100) * (maxVal - minVal);
+            value = Math.round(value / 50) * 50;
+
+            if (activeInput === minInput) {
+                value = Math.min(value, parseInt(maxInput.value));
+            } else {
+                value = Math.max(value, parseInt(minInput.value));
+            }
+
+            activeInput.value = value;
+            activeInput.dispatchEvent(new Event('input', { bubbles: true }));
         });
-        const areaProgress = ((searchAreaEl.value - searchAreaEl.min) / (searchAreaEl.max - searchAreaEl.min)) * 100;
-        searchAreaEl.style.setProperty('--range-progress', areaProgress + '%');
+
+        const handleMouseUp = function() {
+            minInput.style.zIndex = '5';
+            maxInput.style.zIndex = '6';
+            activeInput = null;
+            isPriceDragging = false;
+        };
+        document.addEventListener('mouseup', handleMouseUp);
+        wrapper.addEventListener('mouseup', handleMouseUp);
+        wrapper.addEventListener('mouseleave', handleMouseUp);
+
+        minInput.addEventListener('input', function() {
+            let currentMin = parseInt(this.value);
+            const currentMax = parseInt(maxInput.value);
+            const minVal = parseInt(this.min);
+            const maxVal = parseInt(this.max);
+
+            currentMin = Math.max(minVal, Math.min(maxVal, currentMin));
+            if (currentMin > currentMax) {
+                currentMin = currentMax;
+            }
+
+            this.value = currentMin;
+            updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
+        });
+
+        maxInput.addEventListener('input', function() {
+            const currentMin = parseInt(minInput.value);
+            let currentMax = parseInt(this.value);
+            const minVal = parseInt(this.min);
+            const maxVal = parseInt(this.max);
+
+            currentMax = Math.max(minVal, Math.min(maxVal, currentMax));
+            if (currentMax < currentMin) {
+                currentMax = currentMin;
+            }
+
+            this.value = currentMax;
+            updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
+        });
+
+        let isDragging = false;
+        wrapper.addEventListener('mousemove', function(e) {
+            if (activeInput && (e.buttons === 1 || isDragging)) {
+                isDragging = true;
+                isPriceDragging = true;
+                const rect = wrapper.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                const minVal = parseInt(activeInput.min);
+                const maxVal = parseInt(activeInput.max);
+                let value = minVal + (percent / 100) * (maxVal - minVal);
+                value = Math.round(value / 50) * 50;
+
+                value = Math.max(minVal, Math.min(maxVal, value));
+
+                if (activeInput === minInput) {
+                    const currentMax = parseInt(maxInput.value);
+                    value = Math.min(value, currentMax);
+                } else {
+                    const currentMin = parseInt(minInput.value);
+                    value = Math.max(value, currentMin);
+                }
+
+                if (parseInt(activeInput.value) !== value) {
+                    activeInput.value = value;
+                    activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            isPriceDragging = false;
+        });
+    }
+
+    // Toggle price filter collapse/expand
+    window.toggleSearchPriceFilter = function(header) {
+        const content = header.nextElementSibling;
+        const icon = header.querySelector('.price-filter-icon');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.classList.remove('bi-chevron-up');
+            icon.classList.add('bi-chevron-down');
+        } else {
+            content.style.display = 'none';
+            icon.classList.remove('bi-chevron-down');
+            icon.classList.add('bi-chevron-up');
+        }
+    };
+
+    // Update active filters
+    function updateSearchActiveFilters() {
+        const params = new URLSearchParams(window.location.search);
+        const activeFiltersContainer = document.getElementById('search-active-filters');
+        const filterCount = document.getElementById('search-filter-count');
+
+        let activeCount = 0;
+        const filters = [];
+
+        // Category
+        const categoryId = params.get('category');
+        if (categoryId) {
+            const categorySelect = document.getElementById('search-filter-type');
+            if (categorySelect) {
+                const option = categorySelect.querySelector(`option[value="${categoryId}"]`);
+                if (option) {
+                    filters.push({ type: 'category', id: categoryId, label: option.textContent, key: 'category' });
+                    activeCount++;
+                }
+            }
+        }
+
+        // City
+        const cityId = params.get('city');
+        if (cityId) {
+            const citySelect = document.getElementById('search-filter-city');
+            if (citySelect) {
+                const option = citySelect.querySelector(`option[value="${cityId}"]`);
+                if (option) {
+                    filters.push({ type: 'city', id: cityId, label: option.textContent, key: 'city' });
+                    activeCount++;
+                }
+            }
+        }
+
+        // Price Range
+        const minPrice = params.get('min_price');
+        const maxPrice = params.get('max_price');
+        if (minPrice || maxPrice) {
+            const minMillion = minPrice ? Math.round(parseInt(minPrice) / 1000000) : 50;
+            const maxMillion = maxPrice ? Math.round(parseInt(maxPrice) / 1000000) : 50000;
+            const maxLabel = maxMillion >= 50000 ? 'Không giới hạn' : formatPrice(maxMillion);
+            filters.push({ type: 'price', label: `Giá: ${formatPrice(minMillion)} - ${maxLabel}`, key: 'price_range' });
+            activeCount++;
+        }
+
+        // VIP
+        if (params.get('vip')) {
+            filters.push({ type: 'vip', label: 'Ưu tiên VIP', key: 'vip' });
+            activeCount++;
+        }
+
+        // Pháp lý
+        const legalStatus = params.get('legal_status');
+        if (legalStatus) {
+            filters.push({ type: 'legal_status', label: `Pháp lý: ${legalStatus}`, key: 'legal_status' });
+            activeCount++;
+        }
+
+        // Render tags
+        if (activeFiltersContainer) {
+            activeFiltersContainer.innerHTML = '';
+            if (filters.length > 0) {
+                activeFiltersContainer.style.display = 'flex';
+                filters.forEach(filter => {
+                    const tag = document.createElement('div');
+                    tag.className = 'filter-tag';
+                    tag.innerHTML = `
+                        <span>${filter.label}</span>
+                        <button type="button" class="btn-close" onclick="removeSearchFilter('${filter.key}', '${filter.id || ''}')" aria-label="Xóa"></button>
+                    `;
+                    activeFiltersContainer.appendChild(tag);
+                });
+            } else {
+                activeFiltersContainer.style.display = 'none';
+            }
+        }
+
+        // Update count
+        if (filterCount) filterCount.textContent = activeCount > 0 ? `${activeCount} tiêu chí` : '0 tiêu chí';
+    }
+
+    // Remove filter function
+    window.removeSearchFilter = function(key, id) {
+        const params = new URLSearchParams(window.location.search);
+        const keyword = params.get('q') || '';
+        
+        if (key === 'price_range') {
+            params.delete('min_price');
+            params.delete('max_price');
+        } else {
+            params.delete(key);
+        }
+
+        // Redirect with new params
+        const newUrl = '/tim-kiem?q=' + encodeURIComponent(keyword) + (params.toString() ? '&' + params.toString() : '');
+        window.location.href = newUrl;
+    };
+
+    // Quick Filter Chips
+    function setupSearchQuickFilterChips() {
+        document.querySelectorAll('.quick-filter-chip-search').forEach(chip => {
+            chip.addEventListener('click', function(e) {
+                e.preventDefault();
+                const filter = this.dataset?.filter;
+                const value = this.dataset?.value;
+                if (!filter || !value) return;
+                
+                const params = new URLSearchParams(window.location.search);
+                const keyword = params.get('q') || '';
+
+                if (filter === 'vip') {
+                    if (params.get('vip') === value) {
+                        params.delete('vip');
+                        this.classList.remove('active');
+                    } else {
+                        params.set('vip', value);
+                        this.classList.add('active');
+                    }
+                    const vipInput = document.getElementById('search-filter-vip');
+                    if (vipInput) vipInput.value = params.get('vip') || '';
+                } else if (filter === 'legal_status') {
+                    if (params.get('legal_status') === value) {
+                        params.delete('legal_status');
+                        this.classList.remove('active');
+                    } else {
+                        params.set('legal_status', value);
+                        this.classList.add('active');
+                    }
+                    const legalInput = document.getElementById('search-filter-legal-status');
+                    if (legalInput) legalInput.value = params.get('legal_status') || '';
+                }
+
+                // Submit form
+                const form = document.getElementById('search-filter-form');
+                if (form) {
+                    form.submit();
+                }
+            });
+
+            // Check if filter is active
+            const params = new URLSearchParams(window.location.search);
+            const f = chip.dataset?.filter;
+            const v = chip.dataset?.value;
+            if (f && v && params.get(f) === v) {
+                chip.classList.add('active');
+            }
+        });
+    }
+
+    // Initialize price range from URL params
+    function initializeSearchPriceRangeFromParams() {
+        const params = new URLSearchParams(window.location.search);
+        let minPrice = params.get('min_price') ? parseInt(params.get('min_price')) : null;
+        let maxPrice = params.get('max_price') ? parseInt(params.get('max_price')) : null;
+
+        // If max_price is empty string or null, it means unlimited
+        let minPriceMillion = minPrice ? Math.round(minPrice / 1000000) : 50;
+        let maxPriceMillion = maxPrice && maxPrice !== '' ? Math.round(maxPrice / 1000000) : 50000;
+
+        // Ensure min <= max
+        if (minPriceMillion > maxPriceMillion && maxPrice) {
+            const temp = minPriceMillion;
+            minPriceMillion = maxPriceMillion;
+            maxPriceMillion = temp;
+        }
+
+        const minInput = document.getElementById('search-filter-price-min');
+        const maxInput = document.getElementById('search-filter-price-max');
+        if (minInput && maxInput) {
+            minInput.value = minPriceMillion;
+            maxInput.value = maxPriceMillion;
+            const displayEl = document.getElementById('search-price-range-display');
+            const wrapper = minInput.closest('.price-range-slider-wrapper');
+            const fillEl = wrapper?.querySelector('.price-range-fill');
+            const minHandle = wrapper?.querySelector('.price-handle-min');
+            const maxHandle = wrapper?.querySelector('.price-handle-max');
+            updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
+        }
     }
 
     // Load districts when city changes
@@ -414,5 +902,45 @@
             }
         });
     }
+
+    // Update hidden inputs before form submit
+    const searchFilterForm = document.getElementById('search-filter-form');
+    if (searchFilterForm) {
+        searchFilterForm.addEventListener('submit', function(e) {
+            // Update price hidden inputs before submit
+            const minInput = document.getElementById('search-filter-price-min');
+            const maxInput = document.getElementById('search-filter-price-max');
+            const minHidden = document.getElementById('search_min_price_hidden');
+            const maxHidden = document.getElementById('search_max_price_hidden');
+            
+            if (minInput && minHidden) {
+                const minMillion = parseInt(minInput.value) || 50;
+                minHidden.value = minMillion * 1_000_000;
+            }
+            
+            if (maxInput && maxHidden) {
+                const maxMillion = parseInt(maxInput.value) || 50000;
+                if (maxMillion >= 50000) {
+                    maxHidden.value = ''; // Unlimited
+                } else {
+                    maxHidden.value = maxMillion * 1_000_000;
+                }
+            }
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        setupSearchPriceRangeSlider();
+        updateSearchActiveFilters();
+        setupSearchQuickFilterChips();
+        initializeSearchPriceRangeFromParams();
+    });
+
+    // Update filters when URL changes
+    window.addEventListener('popstate', function() {
+        updateSearchActiveFilters();
+        initializeSearchPriceRangeFromParams();
+    });
 </script>
 @endpush
