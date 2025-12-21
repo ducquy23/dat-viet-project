@@ -12,8 +12,8 @@
 
     <form class="d-none d-md-flex col-5 position-relative" action="{{ route('search') }}" method="GET" id="header-search-form">
         <div class="input-group search-box position-relative">
-            <span class="input-group-text bg-white border-end-0" style="padding: 12px 16px;">
-                <i class="bi bi-search" style="color: #64748b;"></i>
+            <span class="input-group-text bg-white border-end-0 search-icon-wrapper" style="padding: 12px 16px;">
+                <i class="bi bi-search search-icon-animated" style="color: #335793;"></i>
             </span>
             <input
                 class="form-control border-start-0"
@@ -48,6 +48,51 @@
 
     @push('styles')
     <style>
+    /* Search Icon Animation */
+    .search-icon-wrapper {
+        position: relative;
+    }
+    
+    .search-icon-animated {
+        font-size: 18px;
+        color: #335793 !important;
+        animation: searchPulse 2s ease-in-out infinite;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    
+    .search-icon-wrapper:hover .search-icon-animated {
+        color: #1e3a5f !important;
+        transform: scale(1.15);
+        animation: searchBounce 0.6s ease-in-out;
+    }
+    
+    @keyframes searchPulse {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+    }
+    
+    @keyframes searchBounce {
+        0%, 100% {
+            transform: scale(1.15);
+        }
+        50% {
+            transform: scale(1.3);
+        }
+    }
+    
+    /* Search box focus effect */
+    .search-box:focus-within .search-icon-animated {
+        color: #1e3a5f !important;
+        animation: searchBounce 0.6s ease-in-out;
+    }
+    
     /* Main dropdown container */
     .search-suggestions {
         position: absolute;
