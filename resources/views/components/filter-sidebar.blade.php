@@ -71,21 +71,6 @@
                 </select>
             </div>
 
-            <!-- Quận/Huyện -->
-            <div class="mb-3">
-                <label class="form-label fw-semibold small text-uppercase text-muted">Quận/Huyện</label>
-                <select class="form-select shadow-none" name="district" id="filter-district">
-                    <option value="">Chọn Quận/Huyện</option>
-                    @if(request('city'))
-                        @foreach($districts ?? [] as $district)
-                            <option value="{{ $district->id }}" {{ request('district') == $district->id ? 'selected' : '' }}>
-                                {{ $district->name }}
-                            </option>
-                        @endforeach
-                    @endif
-                </select>
-            </div>
-
             <!-- Khoảng giá -->
             <div class="mb-3">
                 <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
@@ -254,21 +239,6 @@
                                 {{ $city->name }}
                             </option>
                         @endforeach
-                    </select>
-                </div>
-
-                <!-- Quận/Huyện -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold small text-uppercase text-muted">Quận/Huyện</label>
-                    <select class="form-select shadow-none" name="district" id="filter-district-mobile">
-                        <option value="">Chọn Quận/Huyện</option>
-                        @if(request('city'))
-                            @foreach($districts ?? [] as $district)
-                                <option value="{{ $district->id }}" {{ request('district') == $district->id ? 'selected' : '' }}>
-                                    {{ $district->name }}
-                                </option>
-                            @endforeach
-                        @endif
                     </select>
                 </div>
 

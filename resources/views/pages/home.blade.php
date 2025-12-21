@@ -391,19 +391,6 @@
             }
         }
         
-        // District
-        const districtId = params.get('district');
-        if (districtId) {
-            const districtSelect = document.getElementById('filter-district') || document.getElementById('filter-district-mobile');
-            if (districtSelect) {
-                const option = districtSelect.querySelector(`option[value="${districtId}"]`);
-                if (option) {
-                    filters.push({ type: 'district', id: districtId, label: option.textContent, key: 'district' });
-                    activeCount++;
-                }
-            }
-        }
-        
         // Price
         const maxPrice = params.get('max_price');
         if (maxPrice && maxPrice < 5000) {
@@ -506,11 +493,6 @@
         const params = new URLSearchParams(window.location.search);
         params.delete(key);
         
-        // If removing city, also remove district
-        if (key === 'city') {
-            params.delete('district');
-        }
-        
         // Redirect with new params
         const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
         window.location.href = newUrl;
@@ -529,7 +511,7 @@
         if (!desktopForm || !mobileForm) return;
         
         // Sync from desktop to mobile
-        ['filter-type', 'filter-city', 'filter-district', 'filter-price', 'filter-area', 'filter-road', 'filter-sort', 'filter-vip', 'filter-legal-status'].forEach(id => {
+        ['filter-type', 'filter-city', 'filter-price', 'filter-area', 'filter-road', 'filter-sort', 'filter-vip', 'filter-legal-status'].forEach(id => {
             const desktop = document.getElementById(id);
             const mobile = document.getElementById(id + '-mobile');
             if (desktop && mobile) {
@@ -544,7 +526,7 @@
         });
         
         // Sync from mobile to desktop
-        ['filter-type-mobile', 'filter-city-mobile', 'filter-district-mobile', 'filter-price-mobile', 'filter-area-mobile', 'filter-road-mobile', 'filter-sort-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
+        ['filter-type-mobile', 'filter-city-mobile', 'filter-price-mobile', 'filter-area-mobile', 'filter-road-mobile', 'filter-sort-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
             const mobile = document.getElementById(id);
             const desktopId = id.replace('-mobile', '');
             const desktop = document.getElementById(desktopId);
@@ -593,14 +575,14 @@
         document.getElementById('btn-clear-filters-mobile')?.addEventListener('click', clearAllFilters);
         
         // Sync on change
-        ['filter-type', 'filter-city', 'filter-district', 'filter-road'].forEach(id => {
+        ['filter-type', 'filter-city', 'filter-road'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('change', syncFilters);
             }
         });
         
-        ['filter-type-mobile', 'filter-city-mobile', 'filter-district-mobile', 'filter-road-mobile'].forEach(id => {
+        ['filter-type-mobile', 'filter-city-mobile', 'filter-road-mobile'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('change', syncFilters);

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Listing;
 use App\Models\City;
 use App\Models\Category;
-use App\Models\District;
 use Illuminate\Http\Request;
 
 
@@ -15,14 +14,6 @@ class HomeController extends Controller
     {
         $cities = City::active()->ordered()->get();
         $categories = Category::active()->ordered()->get();
-
-        $districts = collect();
-        if ($request->has('city')) {
-            $districts = District::where('city_id', $request->city)
-                ->active()
-                ->ordered()
-                ->get();
-        }
 
         // Load tin đăng với filter
         $query = Listing::active()
@@ -41,11 +32,6 @@ class HomeController extends Controller
         // Filter theo city
         if ($request->has('city') && $request->city) {
             $query->where('city_id', $request->city);
-        }
-
-        // Filter theo district
-        if ($request->has('district') && $request->district) {
-            $query->where('district_id', $request->district);
         }
 
         // Filter theo giá (convert từ triệu đồng sang VND nếu cần)
@@ -112,7 +98,6 @@ class HomeController extends Controller
             'vipListings' => $vipListings,
             'cities' => $cities,
             'categories' => $categories,
-            'districts' => $districts,
         ]);
     }
 }
