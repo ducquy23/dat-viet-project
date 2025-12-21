@@ -999,6 +999,19 @@
     <div style="font-size: 12px; color: #64748b;">{{ $listing->address }}</div>
   `).openPopup();
 
+  // Image zoom on click
+  document.getElementById('mainImage')?.addEventListener('click', function() {
+    Swal.fire({
+      imageUrl: this.src,
+      imageAlt: '{{ $listing->title }}',
+      showCloseButton: true,
+      showConfirmButton: false,
+      width: '90%',
+      padding: 0
+    });
+  });
+  @endif
+
   // Toggle favorite
   function toggleFavorite(listingId) {
     @auth('partner')
@@ -1088,18 +1101,5 @@
       }
     });
   }
-
-  // Image zoom on click
-  document.getElementById('mainImage')?.addEventListener('click', function() {
-    Swal.fire({
-      imageUrl: this.src,
-      imageAlt: '{{ $listing->title }}',
-      showCloseButton: true,
-      showConfirmButton: false,
-      width: '90%',
-      padding: 0
-    });
-  });
-  @endif
 </script>
 @endpush
