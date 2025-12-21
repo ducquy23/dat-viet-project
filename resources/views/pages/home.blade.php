@@ -348,6 +348,109 @@
     border-width: 0.3em;
     color: #335793;
 }
+
+/* Price Range Slider */
+.price-filter-section {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+}
+
+.price-filter-header {
+    user-select: none;
+}
+
+.price-filter-header:hover {
+    opacity: 0.8;
+}
+
+.price-range-slider-wrapper {
+    height: 30px;
+    margin: 20px 0;
+    padding: 12px 0;
+}
+
+.price-range-track {
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+}
+
+.price-range-fill {
+    height: 100%;
+    background: #dc3545;
+    border-radius: 3px;
+    position: absolute;
+    transition: all 0.1s ease;
+}
+
+.price-handle {
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border: 2px solid #dc3545;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    pointer-events: none;
+}
+
+.price-range-input {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    transform: translateY(-50%);
+    opacity: 0;
+    cursor: pointer;
+    z-index: 5;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.price-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    background: transparent;
+}
+
+.price-range-input::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+}
+
+.price-range-input::-webkit-slider-runnable-track {
+    height: 30px;
+    cursor: pointer;
+}
+
+.price-range-input::-moz-range-track {
+    height: 30px;
+    cursor: pointer;
+}
+
+.price-range-display {
+    margin-top: 12px;
+    font-size: 14px;
+}
 </style>
 @endpush
 
@@ -391,10 +494,13 @@
             }
         }
         
-        // Price
+        // Price Range
+        const minPrice = params.get('min_price');
         const maxPrice = params.get('max_price');
-        if (maxPrice && maxPrice < 5000) {
-            filters.push({ type: 'price', label: `Giá ≤ ${new Intl.NumberFormat('vi-VN').format(maxPrice)} triệu`, key: 'max_price' });
+        if (minPrice || maxPrice) {
+            const min = minPrice ? new Intl.NumberFormat('vi-VN').format(minPrice) : '300.000';
+            const max = maxPrice ? new Intl.NumberFormat('vi-VN').format(maxPrice) : '5.000.000';
+            filters.push({ type: 'price', label: `Giá: đ${min} - đ${max}`, key: 'price_range' });
             activeCount++;
         }
 
@@ -452,11 +558,31 @@
     // Remove filter function
     window.removeFilter = function(key, id) {
         const params = new URLSearchParams(window.location.search);
-        params.delete(key);
+        if (key === 'price_range') {
+            params.delete('min_price');
+            params.delete('max_price');
+        } else {
+            params.delete(key);
+        }
         
         // Redirect with new params
         const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
         window.location.href = newUrl;
+    };
+    
+    // Toggle price filter collapse/expand
+    window.togglePriceFilter = function(header) {
+        const content = header.nextElementSibling;
+        const icon = header.querySelector('.price-filter-icon');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.classList.remove('bi-chevron-up');
+            icon.classList.add('bi-chevron-down');
+        } else {
+            content.style.display = 'none';
+            icon.classList.remove('bi-chevron-down');
+            icon.classList.add('bi-chevron-up');
+        }
     };
     
     // Clear all filters
@@ -472,7 +598,7 @@
         if (!desktopForm || !mobileForm) return;
         
         // Sync from desktop to mobile
-        ['filter-type', 'filter-city', 'filter-price', 'filter-vip', 'filter-legal-status'].forEach(id => {
+        ['filter-type', 'filter-city', 'filter-vip', 'filter-legal-status'].forEach(id => {
             const desktop = document.getElementById(id);
             const mobile = document.getElementById(id + '-mobile');
             if (desktop && mobile) {
@@ -486,8 +612,16 @@
             }
         });
         
+        // Sync price range
+        const minPriceDesktop = document.getElementById('filter-price-min');
+        const maxPriceDesktop = document.getElementById('filter-price-max');
+        const minPriceMobile = document.getElementById('filter-price-min-mobile');
+        const maxPriceMobile = document.getElementById('filter-price-max-mobile');
+        if (minPriceDesktop && minPriceMobile) minPriceMobile.value = minPriceDesktop.value;
+        if (maxPriceDesktop && maxPriceMobile) maxPriceMobile.value = maxPriceDesktop.value;
+        
         // Sync from mobile to desktop
-        ['filter-type-mobile', 'filter-city-mobile', 'filter-price-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
+        ['filter-type-mobile', 'filter-city-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
             const mobile = document.getElementById(id);
             const desktopId = id.replace('-mobile', '');
             const desktop = document.getElementById(desktopId);
@@ -501,23 +635,83 @@
                 }
             }
         });
+        
+        // Sync price range from mobile to desktop
+        if (minPriceMobile && minPriceDesktop) minPriceDesktop.value = minPriceMobile.value;
+        if (maxPriceMobile && maxPriceDesktop) maxPriceDesktop.value = maxPriceMobile.value;
+    }
+    
+    // Update price range slider UI
+    function updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle) {
+        if (!minInput || !maxInput) return;
+        
+        const min = parseInt(minInput.value);
+        const max = parseInt(maxInput.value);
+        const minVal = parseInt(minInput.min);
+        const maxVal = parseInt(minInput.max);
+        
+        // Ensure min <= max
+        if (min > max) {
+            if (minInput === document.activeElement) {
+                maxInput.value = min;
+            } else {
+                minInput.value = max;
+            }
+            return updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
+        }
+        
+        // Calculate percentages
+        const minPercent = ((min - minVal) / (maxVal - minVal)) * 100;
+        const maxPercent = ((max - minVal) / (maxVal - minVal)) * 100;
+        
+        // Update fill
+        if (fillEl) {
+            fillEl.style.left = minPercent + '%';
+            fillEl.style.right = (100 - maxPercent) + '%';
+        }
+        
+        // Update handles
+        if (minHandle) minHandle.style.left = minPercent + '%';
+        if (maxHandle) maxHandle.style.left = maxPercent + '%';
+        
+        // Update display
+        if (displayEl) {
+            displayEl.textContent = `đ${new Intl.NumberFormat('vi-VN').format(min)} - đ${new Intl.NumberFormat('vi-VN').format(max)}`;
+        }
+    }
+    
+    // Setup price range slider
+    function setupPriceRangeSlider(prefix = '') {
+        const minInput = document.getElementById(`filter-price-min${prefix}`);
+        const maxInput = document.getElementById(`filter-price-max${prefix}`);
+        const displayEl = document.getElementById(`price-range-display${prefix}`);
+        const wrapper = minInput?.closest('.price-range-slider-wrapper');
+        const fillEl = wrapper?.querySelector('.price-range-fill');
+        const minHandle = wrapper?.querySelector('.price-handle-min');
+        const maxHandle = wrapper?.querySelector('.price-handle-max');
+        
+        if (!minInput || !maxInput) return;
+        
+        // Initial update
+        updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
+        
+        // Add event listeners
+        minInput.addEventListener('input', function() {
+            updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
+            syncFilters();
+        });
+        
+        maxInput.addEventListener('input', function() {
+            updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
+            syncFilters();
+        });
     }
     
     // Filter form handlers
     function setupFilterHandlers() {
-        // Desktop handlers
-        document.getElementById('filter-price')?.addEventListener('input', function() {
-            document.getElementById('price-label').textContent =
-                new Intl.NumberFormat('vi-VN').format(this.value) + ' triệu';
-            syncFilters();
-        });
-        
-        // Mobile handlers
-        document.getElementById('filter-price-mobile')?.addEventListener('input', function() {
-            document.getElementById('price-label-mobile').textContent =
-                new Intl.NumberFormat('vi-VN').format(this.value) + ' triệu';
-            syncFilters();
-        });
+        // Setup price range sliders
+        setupPriceRangeSlider('');
+        setupPriceRangeSlider('-mobile');
         
         // Clear filters buttons
         document.getElementById('btn-clear-filters')?.addEventListener('click', clearAllFilters);
@@ -624,15 +818,54 @@
         if (content) content.style.display = 'block';
     };
     
+    // Initialize price range from URL params
+    function initializePriceRangeFromParams() {
+        const params = new URLSearchParams(window.location.search);
+        const minPrice = params.get('min_price');
+        const maxPrice = params.get('max_price');
+        
+        // Desktop
+        const minInputDesktop = document.getElementById('filter-price-min');
+        const maxInputDesktop = document.getElementById('filter-price-max');
+        if (minPrice && minInputDesktop) minInputDesktop.value = minPrice;
+        if (maxPrice && maxInputDesktop) maxInputDesktop.value = maxPrice;
+        if (minInputDesktop && maxInputDesktop) {
+            const displayEl = document.getElementById('price-range-display');
+            const wrapper = minInputDesktop.closest('.price-range-slider-wrapper');
+            const fillEl = wrapper?.querySelector('.price-range-fill');
+            const minHandle = wrapper?.querySelector('.price-handle-min');
+            const maxHandle = wrapper?.querySelector('.price-handle-max');
+            updatePriceRange(minInputDesktop, maxInputDesktop, displayEl, fillEl, minHandle, maxHandle);
+        }
+        
+        // Mobile
+        const minInputMobile = document.getElementById('filter-price-min-mobile');
+        const maxInputMobile = document.getElementById('filter-price-max-mobile');
+        if (minPrice && minInputMobile) minInputMobile.value = minPrice;
+        if (maxPrice && maxInputMobile) maxInputMobile.value = maxPrice;
+        if (minInputMobile && maxInputMobile) {
+            const displayEl = document.getElementById('price-range-display-mobile');
+            const wrapper = minInputMobile.closest('.price-range-slider-wrapper');
+            const fillEl = wrapper?.querySelector('.price-range-fill');
+            const minHandle = wrapper?.querySelector('.price-handle-min');
+            const maxHandle = wrapper?.querySelector('.price-handle-max');
+            updatePriceRange(minInputMobile, maxInputMobile, displayEl, fillEl, minHandle, maxHandle);
+        }
+    }
+    
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         updateActiveFilters();
         setupFilterHandlers();
         setupQuickFilterChips();
+        initializePriceRangeFromParams();
     });
     
     // Update filters when URL changes
-    window.addEventListener('popstate', updateActiveFilters);
+    window.addEventListener('popstate', function() {
+        updateActiveFilters();
+        initializePriceRangeFromParams();
+    });
 
     function trackAdClick(adId) {
         fetch(`/api/ads/${adId}/click`, {

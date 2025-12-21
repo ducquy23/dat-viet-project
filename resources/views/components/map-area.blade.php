@@ -60,7 +60,7 @@
             const params = new URLSearchParams(window.location.search);
             const apiUrl = new URL('{{ route("api.listings.map") }}', window.location.origin);
             params.forEach((value, key) => {
-                if (['city', 'category', 'max_price'].includes(key)) {
+                if (['city', 'category', 'min_price', 'max_price'].includes(key)) {
                     apiUrl.searchParams.append(key, value);
                 }
             });

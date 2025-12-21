@@ -69,27 +69,45 @@
             </div>
 
             <!-- Khoảng giá -->
-            <div class="mb-3">
-                <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
-                    <span>Giá tối đa</span>
-                    <span class="badge bg-primary-subtle text-primary" id="price-label">{{ number_format(request('max_price', 5000)) }} triệu</span>
-                </label>
-                <div class="small text-muted mb-2">
-                    <i class="bi bi-info-circle"></i> Tìm các lô đất có giá ≤ giá tối đa (đơn vị: triệu đồng)
+            <div class="mb-3 price-filter-section">
+                <div class="price-filter-header d-flex align-items-center justify-content-between mb-2" style="cursor: pointer;" onclick="togglePriceFilter(this)">
+                    <label class="form-label fw-semibold mb-0" style="color: #dc3545;">Lọc theo giá</label>
+                    <i class="bi bi-chevron-down price-filter-icon" style="color: #000;"></i>
                 </div>
-                <input 
-                    type="range" 
-                    class="form-range" 
-                    min="300" 
-                    max="5000" 
-                    step="50" 
-                    id="filter-price" 
-                    name="max_price"
-                    value="{{ request('max_price', 5000) }}"
-                    aria-label="Giá tối đa">
-                <div class="d-flex justify-content-between small text-muted mt-1">
-                    <span>300 triệu</span>
-                    <span>5000 triệu</span>
+                <div class="price-filter-content" style="display: block;">
+                    <div class="price-range-slider-wrapper position-relative mb-3" style="height: 30px; padding: 12px 0;">
+                        <div class="price-range-track" style="height: 6px; background: #e9ecef; border-radius: 3px; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);">
+                            <div class="price-range-fill" style="height: 100%; background: #dc3545; border-radius: 3px; position: absolute; left: 0%; right: 0%;"></div>
+                        </div>
+                        <input 
+                            type="range" 
+                            class="form-range price-range-input price-range-min" 
+                            min="300000" 
+                            max="5000000" 
+                            step="10000" 
+                            id="filter-price-min" 
+                            name="min_price"
+                            value="{{ request('min_price', 620000) }}"
+                            style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
+                        <input 
+                            type="range" 
+                            class="form-range price-range-input price-range-max" 
+                            min="300000" 
+                            max="5000000" 
+                            step="10000" 
+                            id="filter-price-max" 
+                            name="max_price"
+                            value="{{ request('max_price', 4320000) }}"
+                            style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 6;">
+                        <div class="price-range-handles" style="position: absolute; top: 50%; left: 0; right: 0; height: 30px; transform: translateY(-50%); pointer-events: none; z-index: 1;">
+                            <div class="price-handle price-handle-min" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #dc3545; border-radius: 50%; top: 50%; left: 0%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                            <div class="price-handle price-handle-max" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #dc3545; border-radius: 50%; top: 50%; left: 100%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                        </div>
+                    </div>
+                    <div class="price-range-display">
+                        <span class="text-dark fw-semibold">Giá: </span>
+                        <span class="text-dark" id="price-range-display">đ{{ number_format(request('min_price', 620000), 0, ',', '.') }} - đ{{ number_format(request('max_price', 4320000), 0, ',', '.') }}</span>
+                    </div>
                 </div>
             </div>
 
@@ -173,27 +191,45 @@
                 </div>
 
                 <!-- Khoảng giá -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
-                        <span>Giá tối đa</span>
-                        <span class="badge bg-primary-subtle text-primary" id="price-label-mobile">{{ number_format(request('max_price', 5000)) }} triệu</span>
-                    </label>
-                    <div class="small text-muted mb-2">
-                        <i class="bi bi-info-circle"></i> Tìm các lô đất có giá ≤ giá tối đa (đơn vị: triệu đồng)
+                <div class="mb-3 price-filter-section">
+                    <div class="price-filter-header d-flex align-items-center justify-content-between mb-2" style="cursor: pointer;" onclick="togglePriceFilter(this)">
+                        <label class="form-label fw-semibold mb-0" style="color: #dc3545;">Lọc theo giá</label>
+                        <i class="bi bi-chevron-down price-filter-icon" style="color: #000;"></i>
                     </div>
-                    <input 
-                        type="range" 
-                        class="form-range" 
-                        min="300" 
-                        max="5000" 
-                        step="50" 
-                        id="filter-price-mobile" 
-                        name="max_price"
-                        value="{{ request('max_price', 5000) }}"
-                        aria-label="Giá tối đa">
-                    <div class="d-flex justify-content-between small text-muted mt-1">
-                        <span>300 triệu</span>
-                        <span>5000 triệu</span>
+                    <div class="price-filter-content" style="display: block;">
+                        <div class="price-range-slider-wrapper position-relative mb-3" style="height: 30px; padding: 12px 0;">
+                            <div class="price-range-track" style="height: 6px; background: #e9ecef; border-radius: 3px; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);">
+                                <div class="price-range-fill" style="height: 100%; background: #dc3545; border-radius: 3px; position: absolute; left: 0%; right: 0%;"></div>
+                            </div>
+                            <input 
+                                type="range" 
+                                class="form-range price-range-input price-range-min" 
+                                min="300000" 
+                                max="5000000" 
+                                step="10000" 
+                                id="filter-price-min-mobile" 
+                                name="min_price"
+                                value="{{ request('min_price', 620000) }}"
+                                style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
+                            <input 
+                                type="range" 
+                                class="form-range price-range-input price-range-max" 
+                                min="300000" 
+                                max="5000000" 
+                                step="10000" 
+                                id="filter-price-max-mobile" 
+                                name="max_price"
+                                value="{{ request('max_price', 4320000) }}"
+                                style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 6;">
+                            <div class="price-range-handles" style="position: absolute; top: 50%; left: 0; right: 0; height: 30px; transform: translateY(-50%); pointer-events: none; z-index: 1;">
+                                <div class="price-handle price-handle-min" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #dc3545; border-radius: 50%; top: 50%; left: 0%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                <div class="price-handle price-handle-max" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #dc3545; border-radius: 50%; top: 50%; left: 100%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                            </div>
+                        </div>
+                        <div class="price-range-display">
+                            <span class="text-dark fw-semibold">Giá: </span>
+                            <span class="text-dark" id="price-range-display-mobile">đ{{ number_format(request('min_price', 620000), 0, ',', '.') }} - đ{{ number_format(request('max_price', 4320000), 0, ',', '.') }}</span>
+                        </div>
                     </div>
                 </div>
 
