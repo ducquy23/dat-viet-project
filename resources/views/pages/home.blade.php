@@ -456,18 +456,22 @@
 
 @push('scripts')
 <script>
+    // Global flag to prevent sync during drag
+    let isPriceDragging = false;
+    
     // Active Filter Tags Management
     function updateActiveFilters() {
         const params = new URLSearchParams(window.location.search);
         const activeFiltersContainer = document.getElementById('active-filters');
         const activeFiltersMobile = document.getElementById('active-filters-mobile');
+        let isPriceDragging = false;
         const filterCount = document.getElementById('filter-count');
         const filterCountMobile = document.getElementById('filter-count-mobile');
         const mobileBadge = document.getElementById('mobile-filter-badge');
-        
+
         let activeCount = 0;
         const filters = [];
-        
+
         // Category
         const categoryId = params.get('category');
         if (categoryId) {
@@ -480,7 +484,7 @@
                 }
             }
         }
-        
+
         // City
         const cityId = params.get('city');
         if (cityId) {
@@ -493,7 +497,7 @@
                 }
             }
         }
-        
+
         // Price Range
         const minPrice = params.get('min_price');
         const maxPrice = params.get('max_price');
@@ -516,7 +520,7 @@
             filters.push({ type: 'legal_status', label: `Pháp lý: ${legalStatus}`, key: 'legal_status' });
             activeCount++;
         }
-        
+
         // Render tags
         function renderTags(container) {
             if (!container) return;
@@ -536,14 +540,14 @@
                 container.style.display = 'none';
             }
         }
-        
+
         renderTags(activeFiltersContainer);
         renderTags(activeFiltersMobile);
-        
+
         // Update count
         if (filterCount) filterCount.textContent = activeCount > 0 ? `${activeCount} tiêu chí` : '0 tiêu chí';
         if (filterCountMobile) filterCountMobile.textContent = activeCount > 0 ? `${activeCount} tiêu chí` : '0 tiêu chí';
-        
+
         // Update mobile badge
         if (mobileBadge) {
             if (activeCount > 0) {
@@ -554,7 +558,7 @@
             }
         }
     }
-    
+
     // Remove filter function
     window.removeFilter = function(key, id) {
         const params = new URLSearchParams(window.location.search);
@@ -564,12 +568,12 @@
         } else {
             params.delete(key);
         }
-        
+
         // Redirect with new params
         const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
         window.location.href = newUrl;
     };
-    
+
     // Toggle price filter collapse/expand
     window.togglePriceFilter = function(header) {
         const content = header.nextElementSibling;
@@ -584,19 +588,20 @@
             icon.classList.add('bi-chevron-up');
         }
     };
-    
+
     // Clear all filters
     function clearAllFilters() {
         window.location.href = window.location.pathname;
     }
-    
+
     // Sync desktop and mobile filters
     function syncFilters() {
+        if (isPriceDragging) return;
         const desktopForm = document.getElementById('filter-form');
         const mobileForm = document.getElementById('filter-form-mobile');
-        
+
         if (!desktopForm || !mobileForm) return;
-        
+
         // Sync from desktop to mobile
         ['filter-type', 'filter-city', 'filter-vip', 'filter-legal-status'].forEach(id => {
             const desktop = document.getElementById(id);
@@ -611,7 +616,7 @@
                 }
             }
         });
-        
+
         // Sync price range
         const minPriceDesktop = document.getElementById('filter-price-min');
         const maxPriceDesktop = document.getElementById('filter-price-max');
@@ -619,7 +624,7 @@
         const maxPriceMobile = document.getElementById('filter-price-max-mobile');
         if (minPriceDesktop && minPriceMobile) minPriceMobile.value = minPriceDesktop.value;
         if (maxPriceDesktop && maxPriceMobile) maxPriceMobile.value = maxPriceDesktop.value;
-        
+
         // Sync from mobile to desktop
         ['filter-type-mobile', 'filter-city-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
             const mobile = document.getElementById(id);
@@ -635,12 +640,12 @@
                 }
             }
         });
-        
+
         // Sync price range from mobile to desktop
         if (minPriceMobile && minPriceDesktop) minPriceDesktop.value = minPriceMobile.value;
         if (maxPriceMobile && maxPriceDesktop) maxPriceDesktop.value = maxPriceMobile.value;
     }
-    
+
     // Format price: convert million to display format (triệu/tỉ)
     function formatPrice(million) {
         if (million >= 1000) {
@@ -650,75 +655,36 @@
             return `đ${new Intl.NumberFormat('vi-VN').format(million)} triệu`;
         }
     }
-    
+
     // Update price range slider UI
     function updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle) {
-        if (!minInput || !maxInput) return;
-        
-        let min = parseInt(minInput.value);
-        let max = parseInt(maxInput.value);
+        const min = parseInt(minInput.value);
+        const max = parseInt(maxInput.value);
         const minVal = parseInt(minInput.min);
         const maxVal = parseInt(maxInput.max);
-        
-        // Ensure min <= max - fix position
-        if (min > max) {
-            if (minInput === document.activeElement) {
-                // If min slider is being dragged and exceeds max, set min to max
-                min = max;
-                minInput.value = min;
-            } else if (maxInput === document.activeElement) {
-                // If max slider is being dragged and goes below min, set max to min
-                max = min;
-                maxInput.value = max;
-            } else {
-                // If neither is active, ensure min <= max
-                if (min > max) {
-                    min = max;
-                    minInput.value = min;
-                }
-            }
-        }
-        
-        // Ensure min >= minVal and max <= maxVal
-        if (min < minVal) {
-            min = minVal;
-            minInput.value = min;
-        }
-        if (max > maxVal) {
-            max = maxVal;
-            maxInput.value = max;
-        }
-        
-        // Calculate percentages
+
         const minPercent = ((min - minVal) / (maxVal - minVal)) * 100;
         const maxPercent = ((max - minVal) / (maxVal - minVal)) * 100;
-        
-        // Update fill
+
         if (fillEl) {
             fillEl.style.left = minPercent + '%';
             fillEl.style.right = (100 - maxPercent) + '%';
         }
-        
-        // Update handles - ensure min handle is always on the left
-        if (minHandle) {
-            minHandle.style.left = minPercent + '%';
-        }
-        if (maxHandle) {
-            maxHandle.style.left = maxPercent + '%';
-        }
-        
-        // Update display with triệu/tỉ format
+
+        if (minHandle) minHandle.style.left = minPercent + '%';
+        if (maxHandle) maxHandle.style.left = maxPercent + '%';
+
         if (displayEl) {
             displayEl.textContent = `${formatPrice(min)} - ${formatPrice(max)}`;
         }
-        
-        // Update hidden inputs with actual price in đồng
-        const minPriceHidden = document.getElementById('min_price_hidden') || document.getElementById('min_price_hidden_mobile');
-        const maxPriceHidden = document.getElementById('max_price_hidden') || document.getElementById('max_price_hidden_mobile');
-        if (minPriceHidden) minPriceHidden.value = min * 1000000; // Convert triệu to đồng
-        if (maxPriceHidden) maxPriceHidden.value = max * 1000000; // Convert triệu to đồng
+
+        const minHidden = document.getElementById('min_price_hidden') || document.getElementById('min_price_hidden_mobile');
+        const maxHidden = document.getElementById('max_price_hidden') || document.getElementById('max_price_hidden_mobile');
+        if (minHidden) minHidden.value = min * 1_000_000;
+        if (maxHidden) maxHidden.value = max * 1_000_000;
     }
-    
+
+
     // Setup price range slider
     function setupPriceRangeSlider(prefix = '') {
         const minInput = document.getElementById(`filter-price-min${prefix}`);
@@ -728,173 +694,127 @@
         const fillEl = wrapper?.querySelector('.price-range-fill');
         const minHandle = wrapper?.querySelector('.price-handle-min');
         const maxHandle = wrapper?.querySelector('.price-handle-max');
-        
+
         if (!minInput || !maxInput) return;
-        
+
         // Track which input is currently being dragged
         let activeInput = null;
-        
+
         // Initial update
         updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
-        
+
         // Function to determine which input should be active based on click position
         function getActiveInput(x) {
             const rect = wrapper.getBoundingClientRect();
             const percent = ((x - rect.left) / rect.width) * 100;
-            
+
             const min = parseInt(minInput.value);
             const max = parseInt(maxInput.value);
             const minVal = parseInt(minInput.min);
             const maxVal = parseInt(minInput.max);
             const minPercent = ((min - minVal) / (maxVal - minVal)) * 100;
             const maxPercent = ((max - minVal) / (maxVal - minVal)) * 100;
-            
+
             // Calculate distance to each handle
             const distanceToMin = Math.abs(percent - minPercent);
             const distanceToMax = Math.abs(percent - maxPercent);
-            
+
             // If click is closer to min handle, activate min
             // Otherwise activate max
-            if (distanceToMin < distanceToMax) {
-                return minInput;
-            } else {
-                return maxInput;
-            }
+            return distanceToMin <= distanceToMax ? minInput : maxInput;
         }
-        
+
         // Handle mousedown to determine which slider to activate
-        wrapper.addEventListener('mousedown', function(e) {
+        wrapper.addEventListener('mousedown', function (e) {
             // Only handle if clicking on the track area, not on the inputs directly
             if (e.target === minInput || e.target === maxInput) {
                 activeInput = e.target;
                 isDragging = true;
-                if (activeInput === minInput) {
-                    maxInput.style.pointerEvents = 'none';
-                    minInput.style.zIndex = '10';
-                    maxInput.style.zIndex = '5';
-                } else {
-                    minInput.style.pointerEvents = 'none';
-                    maxInput.style.zIndex = '10';
-                    minInput.style.zIndex = '5';
-                }
+                isPriceDragging = true; // ⬅️ BƯỚC 1: Set flag
                 return;
             }
             
-            // If clicking on wrapper, determine which input to activate
+            const rect = wrapper.getBoundingClientRect();
+            const percent = ((e.clientX - rect.left) / rect.width) * 100;
+
             activeInput = getActiveInput(e.clientX);
             isDragging = true;
-            
-            // Disable the other input temporarily
-            if (activeInput === minInput) {
-                maxInput.style.pointerEvents = 'none';
-                minInput.style.zIndex = '10';
-                maxInput.style.zIndex = '5';
-            } else {
-                minInput.style.pointerEvents = 'none';
-                maxInput.style.zIndex = '10';
-                minInput.style.zIndex = '5';
-            }
-            
-            // Update value based on click position
-            const rect = wrapper.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+            isPriceDragging = true; // ⬅️ BƯỚC 1: Set flag
+
             const minVal = parseInt(activeInput.min);
             const maxVal = parseInt(activeInput.max);
+
             let value = minVal + (percent / 100) * (maxVal - minVal);
-            value = Math.round(value / 50) * 50; // Round to step (50 triệu)
-            
-            // Apply constraints
+            value = Math.round(value / 50) * 50;
+
             if (activeInput === minInput) {
-                const currentMax = parseInt(maxInput.value);
-                value = Math.min(value, currentMax);
+                value = Math.min(value, parseInt(maxInput.value));
             } else {
-                const currentMin = parseInt(minInput.value);
-                value = Math.max(value, currentMin);
+                value = Math.max(value, parseInt(minInput.value));
             }
-            
+
             activeInput.value = value;
-            
-            // Trigger input event
             activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-            
-            // Prevent default
-            e.preventDefault();
         });
-        
+
+
         // Re-enable both inputs on mouseup
         const handleMouseUp = function() {
-            minInput.style.pointerEvents = 'auto';
-            maxInput.style.pointerEvents = 'auto';
             minInput.style.zIndex = '5';
             maxInput.style.zIndex = '6';
             activeInput = null;
             isDragging = false;
+            isPriceDragging = false; // ⬅️ BƯỚC 1: Reset flag
         };
         document.addEventListener('mouseup', handleMouseUp);
         wrapper.addEventListener('mouseup', handleMouseUp);
         wrapper.addEventListener('mouseleave', handleMouseUp);
-        
-        // Handle direct input on min slider
-        minInput.addEventListener('mousedown', function() {
-            activeInput = minInput;
-            maxInput.style.pointerEvents = 'none';
-            this.style.zIndex = '10';
-            maxInput.style.zIndex = '5';
-        });
-        
-        // Handle direct input on max slider
-        maxInput.addEventListener('mousedown', function() {
-            activeInput = maxInput;
-            minInput.style.pointerEvents = 'none';
-            this.style.zIndex = '10';
-            minInput.style.zIndex = '5';
-        });
-        
+
         // Add event listeners with proper min/max constraints
         minInput.addEventListener('input', function() {
             let currentMin = parseInt(this.value);
             const currentMax = parseInt(maxInput.value);
             const minVal = parseInt(this.min);
             const maxVal = parseInt(this.max);
-            
+
             // Ensure within bounds
             currentMin = Math.max(minVal, Math.min(maxVal, currentMin));
-            
+
             // Prevent min from exceeding max
             if (currentMin > currentMax) {
                 currentMin = currentMax;
             }
-            
+
             this.value = currentMin;
             updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
             syncFilters();
         });
-        
+
         maxInput.addEventListener('input', function() {
             const currentMin = parseInt(minInput.value);
             let currentMax = parseInt(this.value);
             const minVal = parseInt(this.min);
             const maxVal = parseInt(this.max);
-            
+
             // Ensure within bounds
             currentMax = Math.max(minVal, Math.min(maxVal, currentMax));
-            
+
             // Prevent max from going below min
             if (currentMax < currentMin) {
                 currentMax = currentMin;
             }
-            
+
             this.value = currentMax;
             updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
             syncFilters();
         });
-        
+
         // Handle mouse move to update value while dragging
         let isDragging = false;
         wrapper.addEventListener('mousemove', function(e) {
             if (activeInput && (e.buttons === 1 || isDragging)) { // Only if mouse is down
                 isDragging = true;
+                isPriceDragging = true; // ⬅️ BƯỚC 1: Set flag khi đang drag
                 const rect = wrapper.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
@@ -902,10 +822,10 @@
                 const maxVal = parseInt(activeInput.max);
                 let value = minVal + (percent / 100) * (maxVal - minVal);
                 value = Math.round(value / 50) * 50; // Round to step (50 triệu)
-                
+
                 // Ensure value is within bounds
                 value = Math.max(minVal, Math.min(maxVal, value));
-                
+
                 // Apply constraints
                 if (activeInput === minInput) {
                     const currentMax = parseInt(maxInput.value);
@@ -914,7 +834,7 @@
                     const currentMin = parseInt(minInput.value);
                     value = Math.max(value, currentMin);
                 }
-                
+
                 // Only update if value changed
                 if (parseInt(activeInput.value) !== value) {
                     activeInput.value = value;
@@ -922,23 +842,23 @@
                 }
             }
         });
-        
+
         // Reset dragging flag on mouseup
         document.addEventListener('mouseup', function() {
-            isDragging = false;
+            isPriceDragging = false;
         });
     }
-    
+
     // Filter form handlers
     function setupFilterHandlers() {
         // Setup price range sliders
         setupPriceRangeSlider('');
         setupPriceRangeSlider('-mobile');
-        
+
         // Clear filters buttons
         document.getElementById('btn-clear-filters')?.addEventListener('click', clearAllFilters);
         document.getElementById('btn-clear-filters-mobile')?.addEventListener('click', clearAllFilters);
-        
+
         // Sync on change
         ['filter-type', 'filter-city'].forEach(id => {
             const el = document.getElementById(id);
@@ -946,7 +866,7 @@
                 el.addEventListener('change', syncFilters);
             }
         });
-        
+
         ['filter-type-mobile', 'filter-city-mobile'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
@@ -954,7 +874,7 @@
             }
         });
     }
-    
+
     // Quick Filter Chips
     function setupQuickFilterChips() {
         document.querySelectorAll('.quick-filter-chip, .quick-filter-chip-mobile').forEach(chip => {
@@ -964,7 +884,7 @@
                 const value = this.dataset?.value;
                 if (!filter || !value) return;
                 const params = new URLSearchParams(window.location.search);
-                
+
                 // Special handling for VIP filter (need to check package)
                 if (filter === 'vip') {
                     // VIP filter would need special handling - for now just toggle
@@ -992,7 +912,7 @@
                         if (legalInput) legalInput.value = params.get('legal_status') || '';
                     }
                 }
-                
+
                 // Apply filter via form submission
                 const form = document.getElementById('filter-form') || document.getElementById('filter-form-mobile');
                 if (form) {
@@ -1004,7 +924,7 @@
                         const vipInput = form.querySelector('#filter-vip') || form.querySelector('#filter-vip-mobile');
                         if (vipInput) vipInput.value = params.get('vip') || '';
                     }
-                    
+
                     // Submit form
                     form.submit();
                 } else {
@@ -1013,7 +933,7 @@
                     window.location.href = newUrl;
                 }
             });
-            
+
             // Check if filter is active (guard dataset)
             const params = new URLSearchParams(window.location.search);
             const f = chip.dataset?.filter;
@@ -1023,7 +943,7 @@
             }
         });
     }
-    
+
     // Show skeleton loader
     window.showSkeletonLoader = function(elementId) {
         const skeleton = document.getElementById(elementId + '-skeleton');
@@ -1031,7 +951,7 @@
         if (skeleton) skeleton.style.display = 'block';
         if (content) content.style.display = 'none';
     };
-    
+
     // Hide skeleton loader
     window.hideSkeletonLoader = function(elementId) {
         const skeleton = document.getElementById(elementId + '-skeleton');
@@ -1039,17 +959,17 @@
         if (skeleton) skeleton.style.display = 'none';
         if (content) content.style.display = 'block';
     };
-    
+
     // Initialize price range from URL params
     function initializePriceRangeFromParams() {
         const params = new URLSearchParams(window.location.search);
         let minPrice = params.get('min_price') ? parseInt(params.get('min_price')) : null;
         let maxPrice = params.get('max_price') ? parseInt(params.get('max_price')) : null;
-        
+
         // Convert from đồng to triệu
         let minPriceMillion = minPrice ? Math.round(minPrice / 1000000) : 300;
         let maxPriceMillion = maxPrice ? Math.round(maxPrice / 1000000) : 2000;
-        
+
         // Validate and fix min/max order
         if (minPriceMillion > maxPriceMillion) {
             // Swap if reversed
@@ -1057,7 +977,7 @@
             minPriceMillion = maxPriceMillion;
             maxPriceMillion = temp;
         }
-        
+
         // Desktop
         const minInputDesktop = document.getElementById('filter-price-min');
         const maxInputDesktop = document.getElementById('filter-price-max');
@@ -1071,7 +991,7 @@
             const maxHandle = wrapper?.querySelector('.price-handle-max');
             updatePriceRange(minInputDesktop, maxInputDesktop, displayEl, fillEl, minHandle, maxHandle);
         }
-        
+
         // Mobile
         const minInputMobile = document.getElementById('filter-price-min-mobile');
         const maxInputMobile = document.getElementById('filter-price-max-mobile');
@@ -1086,7 +1006,7 @@
             updatePriceRange(minInputMobile, maxInputMobile, displayEl, fillEl, minHandle, maxHandle);
         }
     }
-    
+
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         updateActiveFilters();
@@ -1094,7 +1014,7 @@
         setupQuickFilterChips();
         initializePriceRangeFromParams();
     });
-    
+
     // Update filters when URL changes
     window.addEventListener('popstate', function() {
         updateActiveFilters();
