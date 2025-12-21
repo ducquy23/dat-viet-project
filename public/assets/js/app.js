@@ -1300,35 +1300,18 @@ async function locateUserAndPickNearest() {
             // Mark user location on map
             markUserLocation(latitude, longitude);
             
-            // Calculate bounds for nearby search (approximately 5km radius)
-            // 1 degree latitude ≈ 111 km, so 5km ≈ 0.045 degrees
-            const radiusKm = 5;
-            const latOffset = radiusKm / 111;
-            const lngOffset = radiusKm / (111 * Math.cos(latitude * Math.PI / 180));
-            
-            const bounds = {
-                north: latitude + latOffset,
-                south: latitude - latOffset,
-                east: longitude + lngOffset,
-                west: longitude - lngOffset
-            };
+            // Use current map bounds or no bounds limit (get all listings)
+            // Include existing filters from URL
+            const params = new URLSearchParams();
+            const urlParams = new URLSearchParams(window.location.search);
+            ['city', 'category', 'min_price', 'max_price', 'vip', 'legal_status'].forEach(key => {
+                if (urlParams.has(key)) {
+                    params.append(key, urlParams.get(key));
+                }
+            });
 
-            // Fetch nearby listings from API
+            // Fetch listings from API (no bounds limit - get all)
             try {
-                const params = new URLSearchParams();
-                params.append('bounds[north]', bounds.north);
-                params.append('bounds[south]', bounds.south);
-                params.append('bounds[east]', bounds.east);
-                params.append('bounds[west]', bounds.west);
-                
-                // Include existing filters from URL
-                const urlParams = new URLSearchParams(window.location.search);
-                ['city', 'category', 'min_price', 'max_price', 'vip', 'legal_status'].forEach(key => {
-                    if (urlParams.has(key)) {
-                        params.append(key, urlParams.get(key));
-                    }
-                });
-
                 const response = await fetch(`/api/listings/map?${params.toString()}`);
                 const data = await response.json();
                 
@@ -1377,43 +1360,20 @@ async function locateUserAndPickNearest() {
                             polygon: []
                         }));
 
-                    // Update lots array with nearby listings
+                    // Update lots array with listings
                     lots = nearbyLots;
                     
                     // Render markers on map
                     renderMarkers(nearbyLots);
                     
-                    // Find nearest and update detail
-                    const nearest = findNearestLots(latitude, longitude)[0];
-                    if (nearest) {
-                        await loadListingDetail(nearest.id);
-                        const fullLot = lots.find(l => l.id === nearest.id) || nearest;
-                        await updateDetail(fullLot);
-                        
-                        // Set active marker
-                        const nearestMarker = markerLayers.find(m => m.lotId === nearest.id);
-                        if (nearestMarker) {
-                            nearestMarker.fire('click');
-                        }
-                        
-                        // Center map on nearest listing
-                        currentMap.setView([nearest.lat, nearest.lng], 16, {
-                            animate: true,
-                            duration: 0.5
-                        });
-                    } else {
-                        // Center map on user location if no listings found
-                        currentMap.setView([latitude, longitude], 15, {
-                            animate: true,
-                            duration: 0.5
-                        });
-                        if (window.showToast) {
-                            window.showToast('Không tìm thấy tin đăng nào gần bạn', 'info', 3000);
-                        }
-                    }
+                    // Center map on user location
+                    currentMap.setView([latitude, longitude], 15, {
+                        animate: true,
+                        duration: 0.5
+                    });
                     
                     if (window.showToast) {
-                        window.showToast(`Tìm thấy ${nearbyLots.length} tin đăng gần bạn`, 'success', 2000);
+                        window.showToast(`Tìm thấy ${nearbyLots.length} tin đăng`, 'success', 2000);
                     }
                 } else {
                     // No listings found
@@ -1422,11 +1382,11 @@ async function locateUserAndPickNearest() {
                         duration: 0.5
                     });
                     if (window.showToast) {
-                        window.showToast('Không tìm thấy tin đăng nào gần bạn', 'info', 3000);
+                        window.showToast('Không tìm thấy tin đăng nào', 'info', 3000);
                     }
                 }
             } catch (error) {
-                console.error('Error loading nearby listings:', error);
+                console.error('Error loading listings:', error);
                 if (window.showToast) {
                     window.showToast('Có lỗi xảy ra khi tải tin đăng', 'error', 3000);
                 }
