@@ -1015,35 +1015,35 @@
   // Toggle favorite
   function toggleFavorite(listingId) {
     @auth('partner')
-      fetch(`/api/listings/${listingId}/favorite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        const btn = document.getElementById('favorite-btn');
-        const icon = btn.querySelector('i');
-        if (data.favorited) {
-          btn.classList.add('active');
-          icon.className = 'bi bi-heart-fill';
-        } else {
-          btn.classList.remove('active');
-          icon.className = 'bi bi-heart';
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+    fetch(`/api/listings/${listingId}/favorite`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      const btn = document.getElementById('favorite-btn');
+      const icon = btn.querySelector('i');
+      if (data.favorited) {
+        btn.classList.add('active');
+        icon.className = 'bi bi-heart-fill';
+      } else {
+        btn.classList.remove('active');
+        icon.className = 'bi bi-heart';
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
     @else
-      Swal.fire({
-        icon: 'warning',
-        title: 'Yêu cầu đăng nhập',
-        text: 'Vui lòng đăng nhập để sử dụng tính năng này',
-        confirmButtonText: 'Đã hiểu'
-      });
+    Swal.fire({
+      icon: 'warning',
+      title: 'Yêu cầu đăng nhập',
+      text: 'Vui lòng đăng nhập để sử dụng tính năng này',
+      confirmButtonText: 'Đã hiểu'
+    });
     @endauth
   }
 
