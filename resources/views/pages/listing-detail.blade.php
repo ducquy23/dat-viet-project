@@ -1037,14 +1037,15 @@
     .catch(error => {
       console.error('Error:', error);
     });
-    @else
+    @endauth
+    @if(!Auth::guard('partner')->check())
     Swal.fire({
       icon: 'warning',
       title: 'Yêu cầu đăng nhập',
       text: 'Vui lòng đăng nhập để sử dụng tính năng này',
       confirmButtonText: 'Đã hiểu'
     });
-    @endauth
+    @endif
   }
 
   function showContactForm(listingId) {
