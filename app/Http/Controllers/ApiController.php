@@ -9,6 +9,8 @@ use App\Models\Category;
 use App\Models\City;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 class ApiController extends Controller
@@ -82,7 +84,7 @@ class ApiController extends Controller
     public function getListingsForMap(Request $request): JsonResponse
     {
         // Enable query logging để xem SQL
-        \DB::enableQueryLog();
+        DB::enableQueryLog();
         
         // Lấy các tham số filter
         $bounds = $request->get('bounds');
@@ -119,14 +121,18 @@ class ApiController extends Controller
         }
 
         if ($maxPrice) {
-            // maxPrice can be in millions (from form) or VND (from API)
-            // If it's less than 10000, assume it's in millions and convert
-            $priceFilter = $maxPrice < 10000 ? $maxPrice * 1000000 : $maxPrice;
+            // maxPrice should be in VND (đồng) from form hidden inputs
+            // If it's less than 1000000, assume it's in millions and convert
+            // Otherwise, use as-is (already in đồng)
+            $priceFilter = $maxPrice < 1000000 ? $maxPrice * 1000000 : $maxPrice;
             $query->where('price', '<=', $priceFilter);
         }
 
         if ($minPrice) {
-            $priceFilter = $minPrice < 10000 ? $minPrice * 1000000 : $minPrice;
+            // minPrice should be in VND (đồng) from form hidden inputs
+            // If it's less than 1000000, assume it's in millions and convert
+            // Otherwise, use as-is (already in đồng)
+            $priceFilter = $minPrice < 1000000 ? $minPrice * 1000000 : $minPrice;
             $query->where('price', '>=', $priceFilter);
         }
 
@@ -178,8 +184,8 @@ class ApiController extends Controller
         });
 
         // Log SQL queries
-        $queries = \DB::getQueryLog();
-        \Log::info('SQL Queries for /api/listings/map', [
+        $queries = DB::getQueryLog();
+        Log::info('SQL Queries for /api/listings/map', [
             'request_params' => $request->all(),
             'queries' => $queries,
             'query_count' => count($queries),
@@ -187,7 +193,7 @@ class ApiController extends Controller
         
         // Log từng câu SQL ra console/log
         foreach ($queries as $index => $queryLog) {
-            \Log::info("SQL Query #" . ($index + 1), [
+            Log::info("SQL Query #" . ($index + 1), [
                 'query' => $queryLog['query'],
                 'bindings' => $queryLog['bindings'],
                 'time' => $queryLog['time'] . 'ms',

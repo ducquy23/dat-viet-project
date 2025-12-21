@@ -909,11 +909,31 @@
         const formData = new FormData(form);
         const params = new URLSearchParams();
         
-        // Collect all form values
+        // Collect all form values, but prioritize hidden price inputs
         for (const [key, value] of formData.entries()) {
+            // Skip min_price_million and max_price_million - use hidden inputs instead
+            if (key === 'min_price_million' || key === 'max_price_million') {
+                continue;
+            }
+            
             if (value && value.trim() !== '') {
                 params.append(key, value);
             }
+        }
+        
+        // Get price from hidden inputs (already in đồng)
+        const minPriceHidden = form.querySelector('#min_price_hidden') || form.querySelector('#min_price_hidden_mobile');
+        const maxPriceHidden = form.querySelector('#max_price_hidden') || form.querySelector('#max_price_hidden_mobile');
+        
+        if (minPriceHidden && minPriceHidden.value) {
+            params.set('min_price', minPriceHidden.value);
+        }
+        
+        if (maxPriceHidden && maxPriceHidden.value) {
+            params.set('max_price', maxPriceHidden.value);
+        } else if (maxPriceHidden && !maxPriceHidden.value) {
+            // If max is empty, remove it from params (no limit)
+            params.delete('max_price');
         }
         
         // Update URL without reload

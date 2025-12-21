@@ -90,7 +90,7 @@
                             data-price-type="min"
                             value="{{ request('min_price') ? round(request('min_price') / 1000000) : 50 }}"
                             style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
-                        <input type="hidden" name="min_price" id="min_price_hidden" value="{{ request('min_price', 50000000) }}">
+                        <input type="hidden" name="min_price" id="min_price_hidden" value="{{ request('min_price') ? request('min_price') : (50 * 1000000) }}">
                         <input 
                             type="range" 
                             class="form-range price-range-input price-range-max" 
@@ -216,7 +216,7 @@
                                 data-price-type="min"
                                 value="{{ request('min_price') ? round(request('min_price') / 1000000) : 50 }}"
                                 style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
-                            <input type="hidden" name="min_price" id="min_price_hidden_mobile" value="{{ request('min_price', 50000000) }}">
+                            <input type="hidden" name="min_price" id="min_price_hidden_mobile" value="{{ request('min_price') ? request('min_price') : (50 * 1000000) }}">
                             <input 
                                 type="range" 
                                 class="form-range price-range-input price-range-max" 
