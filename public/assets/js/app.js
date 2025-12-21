@@ -1401,15 +1401,21 @@ async function locateUserAndPickNearest() {
             console.error('Geolocation error:', error);
             if (window.showToast) {
                 let message = 'Không thể lấy vị trí của bạn';
-                if (error.code === error.PERMISSION_DENIED) {
-                    message = 'Vui lòng cho phép truy cập vị trí để sử dụng tính năng này';
-                } else if (error.code === error.TIMEOUT) {
-                    message = 'Hết thời gian chờ lấy vị trí';
+                if (error.code === 1 || error.code === error.PERMISSION_DENIED) {
+                    message = 'Vui lòng cho phép truy cập vị trí trong cài đặt trình duyệt để sử dụng tính năng này';
+                } else if (error.code === 2 || error.code === error.POSITION_UNAVAILABLE) {
+                    message = 'Không thể xác định vị trí. Vui lòng kiểm tra kết nối GPS/WiFi';
+                } else if (error.code === 3 || error.code === error.TIMEOUT) {
+                    message = 'Hết thời gian chờ lấy vị trí. Vui lòng thử lại hoặc kiểm tra kết nối';
                 }
-                window.showToast(message, 'error', 3000);
+                window.showToast(message, 'error', 4000);
             }
         },
-        { enableHighAccuracy: true, timeout: 8000 }
+        { 
+            enableHighAccuracy: false, // Set false để nhanh hơn, không cần GPS chính xác
+            timeout: 15000, // Tăng timeout lên 15 giây
+            maximumAge: 60000 // Chấp nhận vị trí đã cache trong 1 phút
+        }
     );
 }
 

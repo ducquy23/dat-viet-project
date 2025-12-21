@@ -502,9 +502,10 @@
         const minPrice = params.get('min_price');
         const maxPrice = params.get('max_price');
         if (minPrice || maxPrice) {
-            const minMillion = minPrice ? Math.round(parseInt(minPrice) / 1000000) : 300;
-            const maxMillion = maxPrice ? Math.round(parseInt(maxPrice) / 1000000) : 2000;
-            filters.push({ type: 'price', label: `Giá: ${formatPrice(minMillion)} - ${formatPrice(maxMillion)}`, key: 'price_range' });
+            const minMillion = minPrice ? Math.round(parseInt(minPrice) / 1000000) : 50;
+            const maxMillion = maxPrice ? Math.round(parseInt(maxPrice) / 1000000) : 50000;
+            const maxLabel = maxMillion >= 50000 ? 'Không giới hạn' : formatPrice(maxMillion);
+            filters.push({ type: 'price', label: `Giá: ${formatPrice(minMillion)} - ${maxLabel}`, key: 'price_range' });
             activeCount++;
         }
 
@@ -648,7 +649,9 @@
 
     // Format price: convert million to display format (triệu/tỉ)
     function formatPrice(million) {
-        if (million >= 1000) {
+        if (million >= 50000) {
+            return 'Không giới hạn';
+        } else if (million >= 1000) {
             const ty = (million / 1000).toFixed(million % 1000 === 0 ? 0 : 1);
             return `đ${ty} tỉ`;
         } else {
@@ -675,13 +678,21 @@
         if (maxHandle) maxHandle.style.left = maxPercent + '%';
 
         if (displayEl) {
-            displayEl.textContent = `${formatPrice(min)} - ${formatPrice(max)}`;
+            const maxLabel = max >= 50000 ? 'Không giới hạn' : formatPrice(max);
+            displayEl.textContent = `${formatPrice(min)} - ${maxLabel}`;
         }
 
         const minHidden = document.getElementById('min_price_hidden') || document.getElementById('min_price_hidden_mobile');
         const maxHidden = document.getElementById('max_price_hidden') || document.getElementById('max_price_hidden_mobile');
         if (minHidden) minHidden.value = min * 1_000_000;
-        if (maxHidden) maxHidden.value = max * 1_000_000;
+        // If max is 50000 (unlimited), set a very high value or empty
+        if (maxHidden) {
+            if (max >= 50000) {
+                maxHidden.value = ''; // Empty means no limit
+            } else {
+                maxHidden.value = max * 1_000_000;
+            }
+        }
     }
 
 
@@ -967,8 +978,8 @@
         let maxPrice = params.get('max_price') ? parseInt(params.get('max_price')) : null;
 
         // Convert from đồng to triệu
-        let minPriceMillion = minPrice ? Math.round(minPrice / 1000000) : 300;
-        let maxPriceMillion = maxPrice ? Math.round(maxPrice / 1000000) : 2000;
+        let minPriceMillion = minPrice ? Math.round(minPrice / 1000000) : 50;
+        let maxPriceMillion = maxPrice ? Math.round(maxPrice / 1000000) : 50000;
 
         // Validate and fix min/max order
         if (minPriceMillion > maxPriceMillion) {

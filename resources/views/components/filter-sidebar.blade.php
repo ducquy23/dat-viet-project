@@ -82,27 +82,27 @@
                         <input 
                             type="range" 
                             class="form-range price-range-input price-range-min" 
-                            min="300" 
+                            min="50" 
                             max="50000" 
                             step="50" 
                             id="filter-price-min" 
                             name="min_price_million"
                             data-price-type="min"
-                            value="{{ request('min_price') ? round(request('min_price') / 1000000) : 300 }}"
+                            value="{{ request('min_price') ? round(request('min_price') / 1000000) : 50 }}"
                             style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
-                        <input type="hidden" name="min_price" id="min_price_hidden" value="{{ request('min_price', 300000000) }}">
+                        <input type="hidden" name="min_price" id="min_price_hidden" value="{{ request('min_price', 50000000) }}">
                         <input 
                             type="range" 
                             class="form-range price-range-input price-range-max" 
-                            min="300" 
+                            min="50" 
                             max="50000" 
                             step="50" 
                             id="filter-price-max" 
                             name="max_price_million"
                             data-price-type="max"
-                            value="{{ request('max_price') ? round(request('max_price') / 1000000) : 2000 }}"
+                            value="{{ request('max_price') ? round(request('max_price') / 1000000) : 50000 }}"
                             style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 6;">
-                        <input type="hidden" name="max_price" id="max_price_hidden" value="{{ request('max_price', 2000000000) }}">
+                        <input type="hidden" name="max_price" id="max_price_hidden" value="{{ request('max_price', '') }}">
                         <div class="price-range-handles" style="position: absolute; top: 50%; left: 0; right: 0; height: 30px; transform: translateY(-50%); pointer-events: none; z-index: 1;">
                             <div class="price-handle price-handle-min" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #335793; border-radius: 50%; top: 50%; left: 0%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
                             <div class="price-handle price-handle-max" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #335793; border-radius: 50%; top: 50%; left: 100%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
@@ -110,7 +110,7 @@
                     </div>
                     <div class="price-range-display">
                         <span class="text-dark fw-semibold">Giá: </span>
-                        <span class="text-dark" id="price-range-display">đ300 triệu - đ2 tỉ</span>
+                        <span class="text-dark" id="price-range-display">đ50 triệu - Không giới hạn</span>
                     </div>
                 </div>
             </div>
@@ -208,27 +208,27 @@
                             <input 
                                 type="range" 
                                 class="form-range price-range-input price-range-min" 
-                                min="300" 
+                                min="50" 
                                 max="50000" 
                                 step="50" 
                                 id="filter-price-min-mobile" 
                                 name="min_price_million"
                                 data-price-type="min"
-                                value="{{ request('min_price') ? round(request('min_price') / 1000000) : 300 }}"
+                                value="{{ request('min_price') ? round(request('min_price') / 1000000) : 50 }}"
                                 style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
-                            <input type="hidden" name="min_price" id="min_price_hidden_mobile" value="{{ request('min_price', 300000000) }}">
+                            <input type="hidden" name="min_price" id="min_price_hidden_mobile" value="{{ request('min_price', 50000000) }}">
                             <input 
                                 type="range" 
                                 class="form-range price-range-input price-range-max" 
-                                min="300" 
+                                min="50" 
                                 max="50000" 
                                 step="50" 
                                 id="filter-price-max-mobile" 
                                 name="max_price_million"
                                 data-price-type="max"
-                                value="{{ request('max_price') ? round(request('max_price') / 1000000) : 2000 }}"
+                                value="{{ request('max_price') ? round(request('max_price') / 1000000) : 50000 }}"
                                 style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 6;">
-                            <input type="hidden" name="max_price" id="max_price_hidden_mobile" value="{{ request('max_price', 2000000000) }}">
+                            <input type="hidden" name="max_price" id="max_price_hidden_mobile" value="{{ request('max_price', '') }}">
                             <div class="price-range-handles" style="position: absolute; top: 50%; left: 0; right: 0; height: 30px; transform: translateY(-50%); pointer-events: none; z-index: 1;">
                                 <div class="price-handle price-handle-min" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #335793; border-radius: 50%; top: 50%; left: 0%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
                                 <div class="price-handle price-handle-max" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #335793; border-radius: 50%; top: 50%; left: 100%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
@@ -236,7 +236,7 @@
                         </div>
                         <div class="price-range-display">
                             <span class="text-dark fw-semibold">Giá: </span>
-                            <span class="text-dark" id="price-range-display-mobile">đ300 triệu - đ2 tỉ</span>
+                            <span class="text-dark" id="price-range-display-mobile">đ50 triệu - Không giới hạn</span>
                         </div>
                     </div>
                 </div>
