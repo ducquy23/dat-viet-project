@@ -35,8 +35,8 @@
                 @if($listing->images && $listing->images->count() > 0)
                 <div class="listing-gallery mb-4">
                     <div id="mainGallery" class="main-gallery mb-3">
-                        <img id="mainImage" 
-                             src="{{ $listing->images->first()->image_url }}" 
+                        <img id="mainImage"
+                             src="{{ $listing->images->first()->image_url }}"
                              alt="{{ $listing->title }}"
                              class="main-image">
                         @if($listing->isVip())
@@ -51,7 +51,7 @@
                             <i class="bi bi-chevron-right"></i>
                         </button>
                     </div>
-                    
+
                     @if($listing->images->count() > 1)
                     <div class="gallery-thumbnails">
                         @foreach($listing->images as $index => $image)
@@ -71,45 +71,15 @@
                             <h1 class="listing-title mb-3">{{ $listing->title }}</h1>
                             <div class="listing-price-section mb-3">
                                 <div class="d-flex align-items-baseline gap-3 flex-wrap">
-                                    @if($listing->price && $listing->price > 0)
-                                        @php
-                                            // Handle both cases: price in VND (đồng) or millions (triệu)
-                                            // If price >= 1,000,000, it's in đồng, convert to triệu
-                                            // If price < 1,000,000, it's already in triệu
-                                            $priceInMillion = $listing->price >= 1000000 
-                                                ? $listing->price / 1000000 
-                                                : $listing->price;
-                                            
-                                            // Calculate price_per_m2 if not set
-                                            $pricePerM2 = $listing->price_per_m2;
-                                            if (!$pricePerM2 && $listing->area > 0) {
-                                                $pricePerM2 = $listing->price / $listing->area;
-                                            }
-                                            
-                                            // Convert price_per_m2 to triệu/m² if needed
-                                            $pricePerM2InMillion = $pricePerM2 
-                                                ? ($pricePerM2 >= 1000000 ? $pricePerM2 / 1000000 : $pricePerM2)
-                                                : null;
-                                        @endphp
-                                        <span class="price-main">{{ number_format($priceInMillion, 0) }} triệu đồng</span>
-                                        @if($pricePerM2InMillion)
-                                            <span class="price-per-m2">({{ number_format($pricePerM2InMillion, 1) }} triệu/m²)</span>
-                                        @endif
-                                    @else
-                                        <span class="price-main text-muted">Liên hệ</span>
+                                    <span class="price-main">{{ formatPrice($listing->price) }}@if($listing->price && $listing->price > 0) đồng@endif</span>
+                                    @if($pricePerM2Formatted = formatPricePerM2($listing->price_per_m2, $listing->price, $listing->area))
+                                        <span class="price-per-m2">({{ str_replace(' tr/m²', ' triệu/m²', $pricePerM2Formatted) }})</span>
                                     @endif
                                 </div>
                                 <div class="price-breakdown mt-2">
                                     <span class="badge bg-primary-subtle text-primary me-2">{{ number_format($listing->area, 1) }} m²</span>
-                                    @if($listing->price && $listing->price > 0 && $listing->area > 0)
-                                        @php
-                                            $pricePerM2 = $listing->price_per_m2;
-                                            if (!$pricePerM2) {
-                                                $pricePerM2 = $listing->price / $listing->area;
-                                            }
-                                            $pricePerM2InMillion = $pricePerM2 >= 1000000 ? $pricePerM2 / 1000000 : $pricePerM2;
-                                        @endphp
-                                        <span class="text-muted small">Đơn giá: {{ number_format($pricePerM2InMillion, 1) }} triệu/m²</span>
+                                    @if($pricePerM2Formatted = formatPricePerM2($listing->price_per_m2, $listing->price, $listing->area))
+                                        <span class="text-muted small">Đơn giá: {{ str_replace(' tr/m²', ' triệu/m²', $pricePerM2Formatted) }}</span>
                                     @endif
                                 </div>
                             </div>
@@ -254,7 +224,7 @@
                                     </div>
                                 </div>
                             </div>
-                            @if($listing->price && $listing->price > 0 && $listing->area > 0)
+                            @if($pricePerM2Formatted = formatPricePerM2($listing->price_per_m2, $listing->price, $listing->area))
                             <div class="col-md-6">
                                 <div class="info-item">
                                     <div class="info-label">
@@ -262,14 +232,7 @@
                                         <span>Đơn giá /m²</span>
                                     </div>
                                     <div class="info-value">
-                                        @php
-                                            $pricePerM2 = $listing->price_per_m2;
-                                            if (!$pricePerM2) {
-                                                $pricePerM2 = $listing->price / $listing->area;
-                                            }
-                                            $pricePerM2InMillion = $pricePerM2 >= 1000000 ? $pricePerM2 / 1000000 : $pricePerM2;
-                                        @endphp
-                                        {{ number_format($pricePerM2InMillion, 1) }} triệu/m²
+                                        {{ str_replace(' tr/m²', ' triệu/m²', $pricePerM2Formatted) }}
                                     </div>
                                 </div>
                             </div>
@@ -395,16 +358,7 @@
                             <div class="related-content">
                                 <h6 class="related-title">{{ Str::limit($related->title, 60) }}</h6>
                                 <div class="related-price">
-                                    @if($related->price && $related->price > 0)
-                                        @php
-                                            $relatedPriceInMillion = $related->price >= 1000000 
-                                                ? $related->price / 1000000 
-                                                : $related->price;
-                                        @endphp
-                                        {{ number_format($relatedPriceInMillion, 0) }} triệu
-                                    @else
-                                        <span class="text-muted">Liên hệ</span>
-                                    @endif
+                                    {{ formatPrice($related->price) }}
                                 </div>
                                 <div class="related-meta">
                                     <span>{{ number_format($related->area, 1) }} m²</span>
@@ -739,20 +693,20 @@
         max-height: calc(100vh - 110px);
         overflow-y: auto;
     }
-    
+
     .contact-card::-webkit-scrollbar {
         width: 6px;
     }
-    
+
     .contact-card::-webkit-scrollbar-track {
         background: transparent;
     }
-    
+
     .contact-card::-webkit-scrollbar-thumb {
         background: rgba(51, 87, 147, 0.3);
         border-radius: 10px;
     }
-    
+
     .contact-card::-webkit-scrollbar-thumb:hover {
         background: rgba(51, 87, 147, 0.5);
     }
@@ -973,20 +927,20 @@
     .main-gallery {
         height: 300px;
     }
-    
+
     .listing-title {
         font-size: 22px;
     }
-    
+
     .price-main {
         font-size: 24px;
     }
-    
+
     .info-card-body,
     .contact-card-body {
         padding: 16px;
     }
-    
+
     .detail-map {
         height: 300px;
     }
@@ -1004,7 +958,7 @@
     if (index < 0 || index >= images.length) return;
     currentImageIndex = index;
     document.getElementById('mainImage').src = images[index];
-    
+
     // Update active thumbnail
     document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
       item.classList.toggle('active', i === index);

@@ -96,7 +96,7 @@
                         <input type="hidden" name="q" value="{{ $keyword }}">
                         <input type="hidden" name="vip" id="search-filter-vip" value="{{ request('vip') }}">
                         <input type="hidden" name="legal_status" id="search-filter-legal-status" value="{{ request('legal_status') }}">
-                        
+
                         <!-- Loại đất -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold small text-uppercase text-muted">Loại đất</label>
@@ -134,24 +134,24 @@
                                     <div class="price-range-track" style="height: 6px; background: #e9ecef; border-radius: 3px; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);">
                                         <div class="price-range-fill" style="height: 100%; background: #335793; border-radius: 3px; position: absolute; left: 0%; right: 0%;"></div>
                                     </div>
-                                    <input 
-                                        type="range" 
-                                        class="form-range price-range-input price-range-min" 
-                                        min="50" 
-                                        max="50000" 
-                                        step="50" 
-                                        id="search-filter-price-min" 
+                                    <input
+                                        type="range"
+                                        class="form-range price-range-input price-range-min"
+                                        min="50"
+                                        max="50000"
+                                        step="50"
+                                        id="search-filter-price-min"
                                         data-price-type="min"
                                         value="{{ request('min_price') ? round(request('min_price') / 1000000) : 50 }}"
                                         style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
                                     <input type="hidden" name="min_price" id="search_min_price_hidden" value="{{ request('min_price', '') }}">
-                                    <input 
-                                        type="range" 
-                                        class="form-range price-range-input price-range-max" 
-                                        min="50" 
-                                        max="50000" 
-                                        step="50" 
-                                        id="search-filter-price-max" 
+                                    <input
+                                        type="range"
+                                        class="form-range price-range-input price-range-max"
+                                        min="50"
+                                        max="50000"
+                                        step="50"
+                                        id="search-filter-price-max"
                                         data-price-type="max"
                                         value="{{ request('max_price') ? round(request('max_price') / 1000000) : 50000 }}"
                                         style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 6;">
@@ -208,34 +208,11 @@
                                                 </a>
                                             </h5>
                                             <div class="listing-price mb-2">
-                                                @if($listing->price && $listing->price > 0)
-                                                    @php
-                                                        // Handle both cases: price in VND (đồng) or millions (triệu)
-                                                        $priceInMillion = $listing->price >= 1000000 
-                                                            ? $listing->price / 1000000 
-                                                            : $listing->price;
-                                                        
-                                                        // Calculate price_per_m2 if not set
-                                                        $pricePerM2 = $listing->price_per_m2;
-                                                        if (!$pricePerM2 && $listing->area > 0) {
-                                                            $pricePerM2 = $listing->price / $listing->area;
-                                                        }
-                                                        
-                                                        // Convert price_per_m2 to triệu/m² if needed
-                                                        $pricePerM2InMillion = $pricePerM2 
-                                                            ? ($pricePerM2 >= 1000000 ? $pricePerM2 / 1000000 : $pricePerM2)
-                                                            : null;
-                                                    @endphp
-                                                    <span class="text-primary fw-bold fs-5">{{ number_format($priceInMillion, 0) }} triệu</span>
-                                                    <span class="text-muted"> • </span>
-                                                    <span class="text-dark fw-semibold">{{ number_format($listing->area, 1) }} m²</span>
-                                                    @if($pricePerM2InMillion)
-                                                        <span class="text-muted small">({{ number_format($pricePerM2InMillion, 1) }} tr/m²)</span>
-                                                    @endif
-                                                @else
-                                                    <span class="text-primary fw-bold fs-5 text-muted">Liên hệ</span>
-                                                    <span class="text-muted"> • </span>
-                                                    <span class="text-dark fw-semibold">{{ number_format($listing->area, 1) }} m²</span>
+                                                <span class="text-primary fw-bold fs-5">{{ formatPrice($listing->price) }}</span>
+                                                <span class="text-muted"> • </span>
+                                                <span class="text-dark fw-semibold">{{ number_format($listing->area, 1) }} m²</span>
+                                                @if($pricePerM2Formatted = formatPricePerM2($listing->price_per_m2, $listing->price, $listing->area))
+                                                    <span class="text-muted small">({{ $pricePerM2Formatted }})</span>
                                                 @endif
                                             </div>
                                             <div class="listing-location text-muted small mb-2">
@@ -471,7 +448,7 @@
     .listing-image-wrapper {
         min-height: 180px;
     }
-    
+
     .listing-content {
         padding: 16px !important;
     }
@@ -569,7 +546,7 @@
                 isPriceDragging = true;
                 return;
             }
-            
+
             const rect = wrapper.getBoundingClientRect();
             const percent = ((e.clientX - rect.left) / rect.width) * 100;
 
@@ -768,7 +745,7 @@
     window.removeSearchFilter = function(key, id) {
         const params = new URLSearchParams(window.location.search);
         const keyword = params.get('q') || '';
-        
+
         if (key === 'price_range') {
             params.delete('min_price');
             params.delete('max_price');
@@ -789,7 +766,7 @@
                 const filter = this.dataset?.filter;
                 const value = this.dataset?.value;
                 if (!filter || !value) return;
-                
+
                 const params = new URLSearchParams(window.location.search);
                 const keyword = params.get('q') || '';
 
@@ -866,21 +843,21 @@
     // Load districts when city changes
     const searchCityEl = document.getElementById('search-filter-city');
     const searchDistrictEl = document.getElementById('search-filter-district');
-    
+
     if (searchCityEl && searchDistrictEl) {
         searchCityEl.addEventListener('change', async function() {
             const cityId = this.value;
-            
+
             if (cityId) {
                 try {
                     searchDistrictEl.disabled = true;
                     searchDistrictEl.innerHTML = '<option value="">Đang tải...</option>';
-                    
+
                     const response = await fetch(`/api/districts?city_id=${cityId}`);
                     const data = await response.json();
-                    
+
                     searchDistrictEl.innerHTML = '<option value="">Tất cả</option>';
-                    
+
                     if (data.districts && Array.isArray(data.districts)) {
                         data.districts.forEach(district => {
                             const option = document.createElement('option');
@@ -889,7 +866,7 @@
                             searchDistrictEl.appendChild(option);
                         });
                     }
-                    
+
                     searchDistrictEl.disabled = false;
                 } catch (error) {
                     console.error('Error loading districts:', error);
@@ -912,12 +889,12 @@
             const maxInput = document.getElementById('search-filter-price-max');
             const minHidden = document.getElementById('search_min_price_hidden');
             const maxHidden = document.getElementById('search_max_price_hidden');
-            
+
             if (minInput && minHidden) {
                 const minMillion = parseInt(minInput.value) || 50;
                 minHidden.value = minMillion * 1_000_000;
             }
-            
+
             if (maxInput && maxHidden) {
                 const maxMillion = parseInt(maxInput.value) || 50000;
                 if (maxMillion >= 50000) {

@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Listing;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Blade;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,8 +32,11 @@ class AppServiceProvider extends ServiceProvider
                 ->latest()
                 ->take(10)
                 ->get();
-            
+
             $view->with('vipListings', $vipListings);
         });
+
+        // Register helper functions for price formatting
+        require_once app_path('Helpers/PriceHelper.php');
     }
 }
