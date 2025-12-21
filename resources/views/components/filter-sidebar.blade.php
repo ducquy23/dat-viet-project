@@ -29,9 +29,6 @@
         <div class="mb-3">
             <label class="form-label fw-semibold small text-uppercase text-muted mb-2">Lọc nhanh</label>
             <div class="d-flex flex-wrap gap-2">
-                <button type="button" class="btn btn-sm btn-outline-primary quick-filter-chip" data-filter="has_road" data-value="1">
-                    <i class="bi bi-car-front"></i> Đường ô tô
-                </button>
                 <button type="button" class="btn btn-sm btn-outline-primary quick-filter-chip" data-filter="legal_status" data-value="Sổ đỏ">
                     <i class="bi bi-file-earmark-check"></i> Sổ đỏ
                 </button>
@@ -96,72 +93,8 @@
                 </div>
             </div>
 
-            <!-- Giá tối thiểu -->
-            <div class="mb-3">
-                <label class="form-label fw-semibold small text-uppercase text-muted">Giá tối thiểu (triệu đồng)</label>
-                <input type="number" class="form-control shadow-none" name="min_price" min="0" step="10" placeholder="VD: 500"
-                       value="{{ request('min_price') }}">
-            </div>
-
-            <!-- Diện tích -->
-            <div class="mb-4">
-                <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
-                    <span>Diện tích tối đa</span>
-                    <span class="badge bg-primary-subtle text-primary" id="area-label">{{ number_format(request('max_area', 1000)) }} m²</span>
-                </label>
-                <div class="small text-muted mb-2">
-                    <i class="bi bi-info-circle"></i> Tìm các lô đất có diện tích ≤ diện tích tối đa (đơn vị: mét vuông)
-                </div>
-                <input 
-                    type="range" 
-                    class="form-range" 
-                    min="50" 
-                    max="1000" 
-                    step="10" 
-                    id="filter-area" 
-                    name="max_area"
-                    value="{{ request('max_area', 1000) }}"
-                    aria-label="Diện tích tối đa">
-                <div class="d-flex justify-content-between small text-muted mt-1">
-                    <span>50 m²</span>
-                    <span>1000 m²</span>
-                </div>
-            </div>
-
-            <!-- Diện tích tối thiểu -->
-            <div class="mb-4">
-                <label class="form-label fw-semibold small text-uppercase text-muted">Diện tích tối thiểu (m²)</label>
-                <input type="number" class="form-control shadow-none" name="min_area" min="0" step="10" placeholder="VD: 60"
-                       value="{{ request('min_area') }}">
-            </div>
-
-            <!-- Đường ô tô -->
-            <div class="form-check mb-4">
-                <input 
-                    class="form-check-input" 
-                    type="checkbox" 
-                    value="1" 
-                    id="filter-road" 
-                    name="has_road"
-                    {{ request('has_road') ? 'checked' : '' }}>
-                <label class="form-check-label text-muted" for="filter-road">
-                    Đường ô tô vào
-                </label>
-            </div>
-
             <!-- Buttons -->
             <div class="d-grid gap-2">
-                <div class="mb-2">
-                    <label class="form-label fw-semibold small text-uppercase text-muted">Sắp xếp</label>
-                    <select class="form-select shadow-none" name="sort" id="filter-sort">
-                        <option value="">Mới nhất</option>
-                        <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>Giá tăng dần</option>
-                        <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>Giá giảm dần</option>
-                        <option value="area_asc" {{ request('sort') === 'area_asc' ? 'selected' : '' }}>Diện tích tăng dần</option>
-                        <option value="area_desc" {{ request('sort') === 'area_desc' ? 'selected' : '' }}>Diện tích giảm dần</option>
-                        <option value="vip_first" {{ request('sort') === 'vip_first' ? 'selected' : '' }}>Ưu tiên VIP</option>
-                    </select>
-                </div>
                 <button type="submit" class="btn btn-primary" id="btn-apply-filters">
                     <i class="bi bi-funnel"></i> Áp dụng bộ lọc
                 </button>
@@ -199,9 +132,6 @@
         <div class="mb-3">
             <label class="form-label fw-semibold small text-uppercase text-muted mb-2">Lọc nhanh</label>
             <div class="d-flex flex-wrap gap-2">
-                <button type="button" class="btn btn-sm btn-outline-primary quick-filter-chip-mobile" data-filter="has_road" data-value="1">
-                    <i class="bi bi-car-front"></i> Đường ô tô
-                </button>
                 <button type="button" class="btn btn-sm btn-outline-primary quick-filter-chip-mobile" data-filter="legal_status" data-value="Sổ đỏ">
                     <i class="bi bi-file-earmark-check"></i> Sổ đỏ
                 </button>
@@ -267,72 +197,8 @@
                     </div>
                 </div>
 
-                <!-- Giá tối thiểu -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold small text-uppercase text-muted">Giá tối thiểu (triệu đồng)</label>
-                    <input type="number" class="form-control shadow-none" name="min_price" min="0" step="10" placeholder="VD: 500"
-                           value="{{ request('min_price') }}">
-                </div>
-
-                <!-- Diện tích -->
-                <div class="mb-4">
-                    <label class="form-label fw-semibold small text-uppercase text-muted d-flex align-items-center justify-content-between mb-2">
-                        <span>Diện tích tối đa</span>
-                        <span class="badge bg-primary-subtle text-primary" id="area-label-mobile">{{ number_format(request('max_area', 1000)) }} m²</span>
-                    </label>
-                    <div class="small text-muted mb-2">
-                        <i class="bi bi-info-circle"></i> Tìm các lô đất có diện tích ≤ diện tích tối đa (đơn vị: mét vuông)
-                    </div>
-                    <input 
-                        type="range" 
-                        class="form-range" 
-                        min="50" 
-                        max="1000" 
-                        step="10" 
-                        id="filter-area-mobile" 
-                        name="max_area"
-                        value="{{ request('max_area', 1000) }}"
-                        aria-label="Diện tích tối đa">
-                    <div class="d-flex justify-content-between small text-muted mt-1">
-                        <span>50 m²</span>
-                        <span>1000 m²</span>
-                    </div>
-                </div>
-
-                <!-- Diện tích tối thiểu -->
-                <div class="mb-4">
-                    <label class="form-label fw-semibold small text-uppercase text-muted">Diện tích tối thiểu (m²)</label>
-                    <input type="number" class="form-control shadow-none" name="min_area" min="0" step="10" placeholder="VD: 60"
-                           value="{{ request('min_area') }}">
-                </div>
-
-                <!-- Đường ô tô -->
-                <div class="form-check mb-4">
-                    <input 
-                        class="form-check-input" 
-                        type="checkbox" 
-                        value="1" 
-                        id="filter-road-mobile" 
-                        name="has_road"
-                        {{ request('has_road') ? 'checked' : '' }}>
-                    <label class="form-check-label text-muted" for="filter-road-mobile">
-                        Đường ô tô vào
-                    </label>
-                </div>
-
                 <!-- Buttons -->
                 <div class="d-grid gap-2">
-                    <div class="mb-2">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">Sắp xếp</label>
-                        <select class="form-select shadow-none" name="sort" id="filter-sort-mobile">
-                            <option value="">Mới nhất</option>
-                            <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>Giá tăng dần</option>
-                            <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>Giá giảm dần</option>
-                            <option value="area_asc" {{ request('sort') === 'area_asc' ? 'selected' : '' }}>Diện tích tăng dần</option>
-                            <option value="area_desc" {{ request('sort') === 'area_desc' ? 'selected' : '' }}>Diện tích giảm dần</option>
-                            <option value="vip_first" {{ request('sort') === 'vip_first' ? 'selected' : '' }}>Ưu tiên VIP</option>
-                        </select>
-                    </div>
                     <button type="submit" class="btn btn-primary" id="btn-apply-filters-mobile">
                         <i class="bi bi-funnel"></i> Áp dụng bộ lọc
                     </button>

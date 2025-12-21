@@ -31,10 +31,10 @@
                 </div>
                 <div class="support-actions d-flex flex-column flex-sm-row gap-2">
                     <a class="btn btn-outline-primary" href="tel:0909000888">
-                        <i class="bi bi-telephone-fill me-1"></i> Hotline: 0909 000 888
+                        <i class="bi bi-telephone-fill me-1"></i> Hotline: 0968425499
                     </a>
                     <a class="btn btn-outline-success" href="https://zalo.me/0909000888" target="_blank" rel="noopener">
-                        <i class="bi bi-chat-dots-fill me-1"></i> Zalo: 0909 000 888
+                        <i class="bi bi-chat-dots-fill me-1"></i> Zalo: 0968425499
                     </a>
                     <a class="btn btn-outline-secondary" href="mailto:support@datvietmap.vn">
                         <i class="bi bi-envelope-fill me-1"></i> support@datvietmap.vn
@@ -398,31 +398,6 @@
             activeCount++;
         }
 
-        const minPrice = params.get('min_price');
-        if (minPrice) {
-            filters.push({ type: 'min_price', label: `Giá ≥ ${new Intl.NumberFormat('vi-VN').format(minPrice)} triệu`, key: 'min_price' });
-            activeCount++;
-        }
-        
-        // Area
-        const maxArea = params.get('max_area');
-        if (maxArea && maxArea < 1000) {
-            filters.push({ type: 'area', label: `Diện tích ≤ ${new Intl.NumberFormat('vi-VN').format(maxArea)} m²`, key: 'max_area' });
-            activeCount++;
-        }
-
-        const minArea = params.get('min_area');
-        if (minArea) {
-            filters.push({ type: 'min_area', label: `Diện tích ≥ ${new Intl.NumberFormat('vi-VN').format(minArea)} m²`, key: 'min_area' });
-            activeCount++;
-        }
-        
-        // Road
-        if (params.get('has_road')) {
-            filters.push({ type: 'road', label: 'Đường ô tô', key: 'has_road' });
-            activeCount++;
-        }
-
         // VIP
         if (params.get('vip')) {
             filters.push({ type: 'vip', label: 'Ưu tiên VIP', key: 'vip' });
@@ -433,20 +408,6 @@
         const legalStatus = params.get('legal_status');
         if (legalStatus) {
             filters.push({ type: 'legal_status', label: `Pháp lý: ${legalStatus}`, key: 'legal_status' });
-            activeCount++;
-        }
-
-        // Sort
-        const sort = params.get('sort');
-        const sortLabels = {
-            'price_asc': 'Giá ↑',
-            'price_desc': 'Giá ↓',
-            'area_asc': 'Diện tích ↑',
-            'area_desc': 'Diện tích ↓',
-            'vip_first': 'Ưu tiên VIP',
-        };
-        if (sort && sortLabels[sort]) {
-            filters.push({ type: 'sort', label: `Sắp xếp: ${sortLabels[sort]}`, key: 'sort' });
             activeCount++;
         }
         
@@ -511,7 +472,7 @@
         if (!desktopForm || !mobileForm) return;
         
         // Sync from desktop to mobile
-        ['filter-type', 'filter-city', 'filter-price', 'filter-area', 'filter-road', 'filter-sort', 'filter-vip', 'filter-legal-status'].forEach(id => {
+        ['filter-type', 'filter-city', 'filter-price', 'filter-vip', 'filter-legal-status'].forEach(id => {
             const desktop = document.getElementById(id);
             const mobile = document.getElementById(id + '-mobile');
             if (desktop && mobile) {
@@ -526,7 +487,7 @@
         });
         
         // Sync from mobile to desktop
-        ['filter-type-mobile', 'filter-city-mobile', 'filter-price-mobile', 'filter-area-mobile', 'filter-road-mobile', 'filter-sort-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
+        ['filter-type-mobile', 'filter-city-mobile', 'filter-price-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
             const mobile = document.getElementById(id);
             const desktopId = id.replace('-mobile', '');
             const desktop = document.getElementById(desktopId);
@@ -550,23 +511,11 @@
                 new Intl.NumberFormat('vi-VN').format(this.value) + ' triệu';
             syncFilters();
         });
-
-        document.getElementById('filter-area')?.addEventListener('input', function() {
-            document.getElementById('area-label').textContent =
-                new Intl.NumberFormat('vi-VN').format(this.value) + ' m²';
-            syncFilters();
-        });
         
         // Mobile handlers
         document.getElementById('filter-price-mobile')?.addEventListener('input', function() {
             document.getElementById('price-label-mobile').textContent =
                 new Intl.NumberFormat('vi-VN').format(this.value) + ' triệu';
-            syncFilters();
-        });
-
-        document.getElementById('filter-area-mobile')?.addEventListener('input', function() {
-            document.getElementById('area-label-mobile').textContent =
-                new Intl.NumberFormat('vi-VN').format(this.value) + ' m²';
             syncFilters();
         });
         
@@ -575,14 +524,14 @@
         document.getElementById('btn-clear-filters-mobile')?.addEventListener('click', clearAllFilters);
         
         // Sync on change
-        ['filter-type', 'filter-city', 'filter-road'].forEach(id => {
+        ['filter-type', 'filter-city'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('change', syncFilters);
             }
         });
         
-        ['filter-type-mobile', 'filter-city-mobile', 'filter-road-mobile'].forEach(id => {
+        ['filter-type-mobile', 'filter-city-mobile'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('change', syncFilters);
@@ -626,20 +575,13 @@
                         const legalInput = document.getElementById('filter-legal-status') || document.getElementById('filter-legal-status-mobile');
                         if (legalInput) legalInput.value = params.get('legal_status') || '';
                     }
-                    if (filter === 'has_road') {
-                        const checkbox = document.getElementById('filter-road') || document.getElementById('filter-road-mobile');
-                        if (checkbox) checkbox.checked = params.get(filter) === value;
-                    }
                 }
                 
                 // Apply filter via form submission
                 const form = document.getElementById('filter-form') || document.getElementById('filter-form-mobile');
                 if (form) {
                     // Update form values
-                    if (filter === 'has_road') {
-                        const checkbox = form.querySelector('#filter-road') || form.querySelector('#filter-road-mobile');
-                        if (checkbox) checkbox.checked = params.get(filter) === value;
-                    } else if (filter === 'legal_status') {
+                    if (filter === 'legal_status') {
                         const legalInput = form.querySelector('#filter-legal-status') || form.querySelector('#filter-legal-status-mobile');
                         if (legalInput) legalInput.value = params.get('legal_status') || '';
                     } else if (filter === 'vip') {
