@@ -56,14 +56,16 @@
                 window.markerLayers = [];
             }
 
-            // Lấy filter params từ URL
+            // Lấy filter params từ URL (KHÔNG bao gồm bounds)
             const params = new URLSearchParams(window.location.search);
             const apiUrl = new URL('{{ route("api.listings.map") }}', window.location.origin);
             params.forEach((value, key) => {
-                if (['city', 'category', 'min_price', 'max_price'].includes(key)) {
+                // Include all filter parameters (KHÔNG gửi bounds khi filter)
+                if (['city', 'category', 'min_price', 'max_price', 'vip', 'legal_status'].includes(key)) {
                     apiUrl.searchParams.append(key, value);
                 }
             });
+            // KHÔNG gửi bounds - lọc theo toàn bộ Việt Nam
 
             // Fetch listings
             fetch(apiUrl)
@@ -225,6 +227,9 @@
                 document.getElementById('detail-panel')?.scrollIntoView({ behavior: 'smooth' });
             }
         };
+
+        // Expose loadListingsForMap globally so it can be called from filter handlers
+        window.loadListingsForMap = loadListingsForMap;
 
         // Load listings on page load
         loadListingsForMap();

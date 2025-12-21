@@ -741,23 +741,37 @@ async function loadListings(filters = {}) {
 
     try {
         const params = new URLSearchParams();
-
-        // Add filter params
-        if (filters.city) params.append('city', filters.city);
-        if (filters.district) params.append('district', filters.district);
-        if (filters.category) params.append('category', filters.category);
-        if (filters.maxPrice) params.append('max_price', filters.maxPrice);
-        if (filters.maxArea) params.append('max_area', filters.maxArea);
-        if (filters.hasRoad) params.append('has_road', '1');
-
-        // Add map bounds if available
-        if (map) {
-            const bounds = map.getBounds();
-            params.append('bounds[north]', bounds.getNorth());
-            params.append('bounds[south]', bounds.getSouth());
-            params.append('bounds[east]', bounds.getEast());
-            params.append('bounds[west]', bounds.getWest());
+        
+        // If filters object is empty, read from URL parameters
+        if (Object.keys(filters).length === 0) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.forEach((value, key) => {
+                if (['city', 'category', 'min_price', 'max_price', 'vip', 'legal_status'].includes(key)) {
+                    params.append(key, value);
+                }
+            });
+        } else {
+            // Add filter params from filters object
+            if (filters.city) params.append('city', filters.city);
+            if (filters.district) params.append('district', filters.district);
+            if (filters.category) params.append('category', filters.category);
+            if (filters.minPrice) params.append('min_price', filters.minPrice);
+            if (filters.maxPrice) params.append('max_price', filters.maxPrice);
+            if (filters.maxArea) params.append('max_area', filters.maxArea);
+            if (filters.hasRoad) params.append('has_road', '1');
+            if (filters.vip) params.append('vip', filters.vip);
+            if (filters.legalStatus) params.append('legal_status', filters.legalStatus);
         }
+
+        // KHÔNG gửi bounds khi filter - chỉ lọc theo toàn bộ Việt Nam
+        // Chỉ gửi bounds khi người dùng di chuyển bản đồ (map moveend)
+        // if (map && filters.useBounds) {
+        //     const bounds = map.getBounds();
+        //     params.append('bounds[north]', bounds.getNorth());
+        //     params.append('bounds[south]', bounds.getSouth());
+        //     params.append('bounds[east]', bounds.getEast());
+        //     params.append('bounds[west]', bounds.getWest());
+        // }
 
         const url = `/api/listings/map${params.toString() ? '?' + params.toString() : ''}`;
         const response = await fetch(url);
@@ -1156,24 +1170,25 @@ loadListings().then(() => {
     }
 });
 
-// Reload listings when map bounds change
-if (map) {
-    map.on('moveend', function() {
-        // Debounce to avoid too many requests
-        clearTimeout(window.mapReloadTimer);
-        window.mapReloadTimer = setTimeout(() => {
-            loadListings();
-        }, 500);
-    });
-} else if (window.mainMap) {
-    // Use global map if available
-    window.mainMap.on('moveend', function() {
-        clearTimeout(window.mapReloadTimer);
-        window.mapReloadTimer = setTimeout(() => {
-            loadListings();
-        }, 500);
-    });
-}
+// KHÔNG reload listings khi map bounds change - chỉ lọc theo toàn bộ Việt Nam
+// Nếu muốn reload khi di chuyển bản đồ, uncomment code bên dưới
+// if (map) {
+//     map.on('moveend', function() {
+//         // Debounce to avoid too many requests
+//         clearTimeout(window.mapReloadTimer);
+//         window.mapReloadTimer = setTimeout(() => {
+//             loadListings();
+//         }, 500);
+//     });
+// } else if (window.mainMap) {
+//     // Use global map if available
+//     window.mainMap.on('moveend', function() {
+//         clearTimeout(window.mapReloadTimer);
+//         window.mapReloadTimer = setTimeout(() => {
+//             loadListings();
+//         }, 500);
+//     });
+// }
 
 // Expose functions globally for use in other scripts
 window.flyToLot = flyToLot;

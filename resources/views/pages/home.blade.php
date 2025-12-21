@@ -870,6 +870,24 @@
         document.getElementById('btn-clear-filters')?.addEventListener('click', clearAllFilters);
         document.getElementById('btn-clear-filters-mobile')?.addEventListener('click', clearAllFilters);
 
+        // Handle filter form submission (prevent default, use AJAX)
+        const filterForm = document.getElementById('filter-form');
+        const filterFormMobile = document.getElementById('filter-form-mobile');
+        
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                applyFiltersFromForm(this);
+            });
+        }
+        
+        if (filterFormMobile) {
+            filterFormMobile.addEventListener('submit', function(e) {
+                e.preventDefault();
+                applyFiltersFromForm(this);
+            });
+        }
+
         // Sync on change
         ['filter-type', 'filter-city'].forEach(id => {
             const el = document.getElementById(id);
@@ -884,6 +902,35 @@
                 el.addEventListener('change', syncFilters);
             }
         });
+    }
+    
+    // Apply filters from form and update map
+    function applyFiltersFromForm(form) {
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+        
+        // Collect all form values
+        for (const [key, value] of formData.entries()) {
+            if (value && value.trim() !== '') {
+                params.append(key, value);
+            }
+        }
+        
+        // Update URL without reload
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.history.pushState({}, '', newUrl);
+        
+        // Update active filters display
+        updateActiveFilters();
+        
+        // Reload listings and update map markers
+        applyFiltersAndUpdateMap();
+        
+        // Close mobile filter offcanvas if open
+        const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('filter-offcanvas'));
+        if (offcanvas) {
+            offcanvas.hide();
+        }
     }
 
     // Quick Filter Chips
@@ -924,7 +971,7 @@
                     }
                 }
 
-                // Apply filter via form submission
+                // Apply filter via AJAX (no page reload)
                 const form = document.getElementById('filter-form') || document.getElementById('filter-form-mobile');
                 if (form) {
                     // Update form values
@@ -936,8 +983,15 @@
                         if (vipInput) vipInput.value = params.get('vip') || '';
                     }
 
-                    // Submit form
-                    form.submit();
+                    // Update URL without reload
+                    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                    window.history.pushState({}, '', newUrl);
+                    
+                    // Update active filters display
+                    updateActiveFilters();
+                    
+                    // Reload listings and update map markers
+                    applyFiltersAndUpdateMap();
                 } else {
                     // Fallback: redirect
                     const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
@@ -1018,6 +1072,76 @@
         }
     }
 
+    // Function to apply filters and update map markers
+    async function applyFiltersAndUpdateMap() {
+        // Call loadListings from app.js if available (it will read URL params automatically)
+        if (window.loadListings) {
+            await window.loadListings(); // Empty filters object means read from URL
+        } else if (window.loadListingsForMap) {
+            // Fallback to map-area function
+            window.loadListingsForMap();
+        } else {
+            // Direct API call as last resort
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const apiUrl = new URL('/api/listings/map', window.location.origin);
+                params.forEach((value, key) => {
+                    if (['city', 'category', 'min_price', 'max_price', 'vip', 'legal_status'].includes(key)) {
+                        apiUrl.searchParams.append(key, value);
+                    }
+                });
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // Update markers using renderMarkers if available
+                if (window.renderMarkers) {
+                    const formatPriceHelper = (price) => {
+                        if (!price) return '0 triệu';
+                        return new Intl.NumberFormat('vi-VN').format(price) + ' triệu';
+                    };
+                    
+                    const formattedListings = data.listings
+                        .filter(listing => {
+                            if (!listing.latitude || !listing.longitude) return false;
+                            const lat = parseFloat(listing.latitude);
+                            const lng = parseFloat(listing.longitude);
+                            return !isNaN(lat) && !isNaN(lng) && 
+                                   lat >= 8.5 && lat <= 23.5 && 
+                                   lng >= 102.0 && lng <= 110.0;
+                        })
+                        .map(listing => ({
+                            id: listing.id,
+                            name: listing.title,
+                            title: listing.title,
+                            price: formatPriceHelper(listing.price),
+                            size: `${listing.area}m²`,
+                            priceValue: listing.price,
+                            sizeValue: listing.area,
+                            lat: parseFloat(listing.latitude),
+                            lng: parseFloat(listing.longitude),
+                            slug: listing.slug,
+                            img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/Image-not-found.png',
+                            type: listing.category || 'Đất',
+                            address: listing.address || '',
+                            city: listing.city || '',
+                            district: listing.district || '',
+                            tags: [],
+                            seller: { name: '', phone: '' },
+                            isVip: listing.is_vip || false
+                        }));
+                    
+                    window.renderMarkers(formattedListings);
+                }
+            } catch (error) {
+                console.error('Error loading filtered listings:', error);
+                if (window.showToast) {
+                    window.showToast('Có lỗi xảy ra khi tải dữ liệu', 'error', 3000);
+                }
+            }
+        }
+    }
+
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         updateActiveFilters();
@@ -1030,6 +1154,7 @@
     window.addEventListener('popstate', function() {
         updateActiveFilters();
         initializePriceRangeFromParams();
+        applyFiltersAndUpdateMap();
     });
 
     function trackAdClick(adId) {

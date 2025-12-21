@@ -81,6 +81,9 @@ class ApiController extends Controller
      */
     public function getListingsForMap(Request $request): JsonResponse
     {
+        // Enable query logging để xem SQL
+        \DB::enableQueryLog();
+        
         // Lấy các tham số filter
         $bounds = $request->get('bounds');
         $cityId = $request->get('city');
@@ -174,8 +177,29 @@ class ApiController extends Controller
             ];
         });
 
+        // Log SQL queries
+        $queries = \DB::getQueryLog();
+        \Log::info('SQL Queries for /api/listings/map', [
+            'request_params' => $request->all(),
+            'queries' => $queries,
+            'query_count' => count($queries),
+        ]);
+        
+        // Log từng câu SQL ra console/log
+        foreach ($queries as $index => $queryLog) {
+            \Log::info("SQL Query #" . ($index + 1), [
+                'query' => $queryLog['query'],
+                'bindings' => $queryLog['bindings'],
+                'time' => $queryLog['time'] . 'ms',
+            ]);
+        }
+
         return response()->json([
             'listings' => $listings,
+            '_debug' => [
+                'sql_queries' => $queries,
+                'query_count' => count($queries),
+            ],
         ]);
     }
 
