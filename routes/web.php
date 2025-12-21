@@ -61,6 +61,9 @@ Route::prefix('api')->withoutMiddleware([VerifyCsrfToken::class])->group(functio
     // Lấy chi tiết tin đăng
     Route::get('/listings/{id}', [ApiController::class, 'getListing'])->name('api.listings.show');
 
+    // Tìm kiếm gợi ý
+    Route::get('/search/suggestions', [ApiController::class, 'getSearchSuggestions'])->name('api.search.suggestions');
+
     // Thanh toán PayOS
     Route::middleware('auth:partner')->group(function () {
         Route::post('/payments', [PaymentController::class, 'create'])->name('api.payments.create');

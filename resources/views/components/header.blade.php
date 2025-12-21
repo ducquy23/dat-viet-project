@@ -547,11 +547,16 @@
         function fetchSuggestions(query) {
             if (!query || query.length < 2) {
                 suggestionsDiv.style.display = 'none';
+                currentSuggestions = [];
                 return;
             }
 
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
+                // Show loading state
+                suggestionsList.innerHTML = '<div class="search-suggestion-item empty-state"><span class="text-muted">Đang tìm kiếm...</span></div>';
+                suggestionsDiv.style.display = 'block';
+
                 fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`, {
                     headers: {
                         'Accept': 'application/json',
@@ -559,7 +564,9 @@
                     }
                 })
                 .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
                     return response.json();
                 })
                 .then(data => {
@@ -623,16 +630,37 @@
                     item.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        
+                        // Set search value
                         searchInput.value = title;
                         saveRecentSearch(title);
                         suggestionsDiv.style.display = 'none';
-                        // Submit form after a small delay to ensure value is set
-                        setTimeout(() => {
-                            const form = document.getElementById('header-search-form');
-                            if (form) {
-                                form.submit();
+                        
+                        // Handle different suggestion types
+                        if (suggestion.type === 'city' || suggestion.type === 'district' || suggestion.type === 'category') {
+                            // For location/category suggestions, redirect to home with filter
+                            const params = new URLSearchParams();
+                            params.set('q', title);
+                            if (suggestion.type === 'city') {
+                                params.set('city', suggestion.id);
+                            } else if (suggestion.type === 'district') {
+                                params.set('district', suggestion.id);
+                            } else if (suggestion.type === 'category') {
+                                params.set('category', suggestion.id);
                             }
-                        }, 100);
+                            window.location.href = `{{ route('search') }}?${params.toString()}`;
+                        } else if (suggestion.type === 'listing' && suggestion.id) {
+                            // For listing suggestions, go to listing detail
+                            window.location.href = `/tin-dang/${suggestion.id}`;
+                        } else {
+                            // Default: submit search form
+                            setTimeout(() => {
+                                const form = document.getElementById('header-search-form');
+                                if (form) {
+                                    form.submit();
+                                }
+                            }, 100);
+                        }
                     });
                     
                     suggestionsList.appendChild(item);
