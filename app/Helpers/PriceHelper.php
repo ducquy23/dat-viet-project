@@ -72,3 +72,4 @@ if (!function_exists('formatPricePerM2')) {
     }
 }
 
+

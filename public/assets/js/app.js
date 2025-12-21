@@ -358,7 +358,7 @@ function popupTemplate(lot) {
                 <img src="${imageUrl}" style="width:100%; height:140px; object-fit:cover; display:block; transition: transform 0.3s;" onerror="this.src='/images/Image-not-found.png'" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%); padding: 12px;">
                     <div style="color: #fff; font-weight: 800; font-size: 18px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-                        ${lot.price} triệu
+                        ${lot.price}
                     </div>
                 </div>
             </div>
@@ -938,8 +938,39 @@ async function loadListingDetail(listingId) {
 }
 
 function formatPrice(price) {
-    if (!price) return '0 triệu';
-    return new Intl.NumberFormat('vi-VN').format(price) + ' triệu';
+    // Format price in a user-friendly way (đồng nhất với PHP helper)
+    if (!price || price <= 0) {
+        return 'Liên hệ';
+    }
+
+    // Convert to triệu if price is in đồng (VND)
+    let priceInMillion = price >= 1000000 ? price / 1000000 : price;
+
+    // Format based on value
+    if (priceInMillion >= 1000) {
+        // >= 1000 triệu → hiển thị theo tỉ
+        const ty = priceInMillion / 1000;
+        if (ty === Math.floor(ty)) {
+            return new Intl.NumberFormat('vi-VN').format(ty) + ' tỉ';
+        } else {
+            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(ty) + ' tỉ';
+        }
+    } else if (priceInMillion >= 100) {
+        // >= 100 triệu → hiển thị theo trăm triệu
+        const tram = priceInMillion / 100;
+        if (tram === Math.floor(tram)) {
+            return new Intl.NumberFormat('vi-VN').format(tram) + ' trăm triệu';
+        } else {
+            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(tram) + ' trăm triệu';
+        }
+    } else {
+        // < 100 triệu → hiển thị theo triệu
+        if (priceInMillion === Math.floor(priceInMillion)) {
+            return new Intl.NumberFormat('vi-VN').format(priceInMillion) + ' triệu';
+        } else {
+            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(priceInMillion) + ' triệu';
+        }
+    }
 }
 
 // ===== FILTERS =====

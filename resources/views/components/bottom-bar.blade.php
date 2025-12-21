@@ -35,7 +35,7 @@
                                     <div class="vip-card-image-wrapper">
                                         <img src="{{ $listing->primaryImage?->image_url ?? asset('images/Image-not-found.png') }}" alt="{{ $listing->title }}">
                                         <div class="vip-card-overlay">
-                                            <span class="vip-price-badge">{{ number_format($listing->price, 0) }} triệu</span>
+                                            <span class="vip-price-badge">{{ formatPrice($listing->price) }}</span>
                                         </div>
                                     </div>
                                     <div class="card-body">

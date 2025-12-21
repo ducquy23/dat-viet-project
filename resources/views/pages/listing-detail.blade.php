@@ -35,8 +35,8 @@
                 @if($listing->images && $listing->images->count() > 0)
                 <div class="listing-gallery mb-4">
                     <div id="mainGallery" class="main-gallery mb-3">
-                        <img id="mainImage"
-                             src="{{ $listing->images->first()->image_url }}"
+                        <img id="mainImage" 
+                             src="{{ $listing->images->first()->image_url }}" 
                              alt="{{ $listing->title }}"
                              class="main-image">
                         @if($listing->isVip())
@@ -51,7 +51,7 @@
                             <i class="bi bi-chevron-right"></i>
                         </button>
                     </div>
-
+                    
                     @if($listing->images->count() > 1)
                     <div class="gallery-thumbnails">
                         @foreach($listing->images as $index => $image)
@@ -693,20 +693,20 @@
         max-height: calc(100vh - 110px);
         overflow-y: auto;
     }
-
+    
     .contact-card::-webkit-scrollbar {
         width: 6px;
     }
-
+    
     .contact-card::-webkit-scrollbar-track {
         background: transparent;
     }
-
+    
     .contact-card::-webkit-scrollbar-thumb {
         background: rgba(51, 87, 147, 0.3);
         border-radius: 10px;
     }
-
+    
     .contact-card::-webkit-scrollbar-thumb:hover {
         background: rgba(51, 87, 147, 0.5);
     }
@@ -927,20 +927,20 @@
     .main-gallery {
         height: 300px;
     }
-
+    
     .listing-title {
         font-size: 22px;
     }
-
+    
     .price-main {
         font-size: 24px;
     }
-
+    
     .info-card-body,
     .contact-card-body {
         padding: 16px;
     }
-
+    
     .detail-map {
         height: 300px;
     }
@@ -951,6 +951,7 @@
 @push('scripts')
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+  @if(isset($listing) && $listing)
   let currentImageIndex = 0;
   const images = @json($listing->images->pluck('image_url')->toArray());
 
@@ -958,7 +959,7 @@
     if (index < 0 || index >= images.length) return;
     currentImageIndex = index;
     document.getElementById('mainImage').src = images[index];
-
+    
     // Update active thumbnail
     document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
       item.classList.toggle('active', i === index);
@@ -977,7 +978,6 @@
   }
 
   // Initialize detail map
-  @if(isset($listing) && $listing)
   const detailMap = L.map('detailMap').setView([{{ $listing->latitude }}, {{ $listing->longitude }}], 16);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -998,7 +998,6 @@
     <div style="font-weight: 600; margin-bottom: 4px;">{{ $listing->title }}</div>
     <div style="font-size: 12px; color: #64748b;">{{ $listing->address }}</div>
   `).openPopup();
-  @endif
 
   // Toggle favorite
   function toggleFavorite(listingId) {
@@ -1101,5 +1100,6 @@
       padding: 0
     });
   });
+  @endif
 </script>
 @endpush
