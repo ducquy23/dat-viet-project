@@ -71,7 +71,7 @@
                             <h1 class="listing-title mb-3">{{ $listing->title }}</h1>
                             <div class="listing-price-section mb-3">
                                 <div class="d-flex align-items-baseline gap-3 flex-wrap">
-                                    <span class="price-main">{{ formatPrice($listing->price) }}@if($listing->price && $listing->price > 0) đồng@endif</span>
+                                    <span class="price-main">{{ formatPrice($listing->price) }}{{ ($listing->price && $listing->price > 0) ? ' đồng' : '' }}</span>
                                     @if($pricePerM2Formatted = formatPricePerM2($listing->price_per_m2, $listing->price, $listing->area))
                                         <span class="price-per-m2">({{ str_replace(' tr/m²', ' triệu/m²', $pricePerM2Formatted) }})</span>
                                     @endif
@@ -1037,15 +1037,14 @@
     .catch(error => {
       console.error('Error:', error);
     });
-    @endauth
-    @if(!Auth::guard('partner')->check())
+    @else
     Swal.fire({
       icon: 'warning',
       title: 'Yêu cầu đăng nhập',
       text: 'Vui lòng đăng nhập để sử dụng tính năng này',
       confirmButtonText: 'Đã hiểu'
     });
-    @endif
+    @endauth
   }
 
   function showContactForm(listingId) {
