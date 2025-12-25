@@ -180,4 +180,9 @@ class ContactResource extends Resource
             'edit' => Pages\EditContact::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
 }
