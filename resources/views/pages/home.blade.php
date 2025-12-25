@@ -613,7 +613,9 @@
                     } else if (desktop.type === 'hidden') {
                         mobile.value = desktop.value;
                     } else {
-                        mobile.value = desktop.value;
+                        // For select elements, ensure value is set as string
+                        const desktopValue = String(desktop.value || '');
+                        mobile.value = desktopValue;
                     }
                 }
             });
@@ -637,7 +639,9 @@
                     } else if (mobile.type === 'hidden') {
                         desktop.value = mobile.value;
                     } else {
-                        desktop.value = mobile.value;
+                        // For select elements, ensure value is set as string
+                        const mobileValue = String(mobile.value || '');
+                        desktop.value = mobileValue;
                     }
                 }
             });
@@ -925,17 +929,36 @@
             const minHidden = form.querySelector('#min_price_hidden') || form.querySelector('#min_price_hidden_mobile');
             const maxHidden = form.querySelector('#max_price_hidden') || form.querySelector('#max_price_hidden_mobile');
 
+            // Get current values from URL to check if user changed from default
+            const currentParams = new URLSearchParams(window.location.search);
+            const currentMinPrice = currentParams.get('min_price');
+            const currentMaxPrice = currentParams.get('max_price');
+
+            // Default values (in triệu)
+            const defaultMin = 50;
+            const defaultMax = 50000;
+
             if (minInput && minHidden) {
-                const minMillion = parseInt(minInput.value) || 50;
-                minHidden.value = minMillion * 1_000_000;
+                const minMillion = parseInt(minInput.value) || defaultMin;
+                // Only set min_price if user changed from default OR if it was already set in URL
+                if (minMillion !== defaultMin || currentMinPrice) {
+                    minHidden.value = minMillion * 1_000_000;
+                } else {
+                    minHidden.value = ''; // Don't send default value
+                }
             }
 
             if (maxInput && maxHidden) {
-                const maxMillion = parseInt(maxInput.value) || 50000;
-                if (maxMillion >= 50000) {
-                    maxHidden.value = ''; // Unlimited
+                const maxMillion = parseInt(maxInput.value) || defaultMax;
+                // Only set max_price if user changed from default (unlimited) OR if it was already set in URL
+                if (maxMillion < defaultMax || currentMaxPrice) {
+                    if (maxMillion >= defaultMax) {
+                        maxHidden.value = ''; // Unlimited
+                    } else {
+                        maxHidden.value = maxMillion * 1_000_000;
+                    }
                 } else {
-                    maxHidden.value = maxMillion * 1_000_000;
+                    maxHidden.value = ''; // Don't send default value (unlimited)
                 }
             }
 
@@ -954,15 +977,16 @@
                 }
             }
 
-            // Get price from hidden inputs (already in đồng)
-            if (minHidden && minHidden.value) {
+            // Get price from hidden inputs (already in đồng) - only add if not empty
+            if (minHidden && minHidden.value && minHidden.value.trim() !== '') {
                 params.set('min_price', minHidden.value);
+            } else {
+                params.delete('min_price');
             }
 
-            if (maxHidden && maxHidden.value) {
+            if (maxHidden && maxHidden.value && maxHidden.value.trim() !== '') {
                 params.set('max_price', maxHidden.value);
-            } else if (maxHidden && !maxHidden.value) {
-                // If max is empty, remove it from params (no limit)
+            } else {
                 params.delete('max_price');
             }
 
@@ -1079,19 +1103,43 @@
         function initializeMobileFiltersFromParams() {
             const params = new URLSearchParams(window.location.search);
 
-            // Initialize select dropdowns
+            // Initialize select dropdowns - ensure value is set correctly
             const categoryMobile = document.getElementById('filter-type-mobile');
             const cityMobile = document.getElementById('filter-city-mobile');
+
             if (categoryMobile) {
                 const categoryId = params.get('category');
                 if (categoryId) {
-                    categoryMobile.value = categoryId;
+                    // Convert to string to match option value
+                    const categoryValue = String(categoryId);
+                    // Check if option exists before setting value
+                    const optionExists = Array.from(categoryMobile.options).some(opt => opt.value === categoryValue);
+                    if (optionExists) {
+                        categoryMobile.value = categoryValue;
+                        // Force UI update by setting selectedIndex
+                        categoryMobile.selectedIndex = Array.from(categoryMobile.options).findIndex(opt => opt.value === categoryValue);
+                    }
+                } else {
+                    categoryMobile.value = '';
+                    categoryMobile.selectedIndex = 0; // Select first option (empty)
                 }
             }
+
             if (cityMobile) {
                 const cityId = params.get('city');
                 if (cityId) {
-                    cityMobile.value = cityId;
+                    // Convert to string to match option value
+                    const cityValue = String(cityId);
+                    // Check if option exists before setting value
+                    const optionExists = Array.from(cityMobile.options).some(opt => opt.value === cityValue);
+                    if (optionExists) {
+                        cityMobile.value = cityValue;
+                        // Force UI update by setting selectedIndex
+                        cityMobile.selectedIndex = Array.from(cityMobile.options).findIndex(opt => opt.value === cityValue);
+                    }
+                } else {
+                    cityMobile.value = '';
+                    cityMobile.selectedIndex = 0; // Select first option (empty)
                 }
             }
 
@@ -1099,10 +1147,12 @@
             const vipMobile = document.getElementById('filter-vip-mobile');
             const legalMobile = document.getElementById('filter-legal-status-mobile');
             if (vipMobile) {
-                vipMobile.value = params.get('vip') || '';
+                const vipValue = params.get('vip') || '';
+                vipMobile.value = vipValue;
             }
             if (legalMobile) {
-                legalMobile.value = params.get('legal_status') || '';
+                const legalValue = params.get('legal_status') || '';
+                legalMobile.value = legalValue;
             }
 
             // Initialize quick filter chips active state
@@ -1110,7 +1160,8 @@
                 const filter = chip.dataset?.filter;
                 const value = chip.dataset?.value;
                 if (filter && value) {
-                    if (params.get(filter) === value) {
+                    const paramValue = params.get(filter);
+                    if (paramValue === value) {
                         chip.classList.add('active');
                     } else {
                         chip.classList.remove('active');
@@ -1248,8 +1299,21 @@
             const filterOffcanvas = document.getElementById('filter-offcanvas');
             if (filterOffcanvas) {
                 filterOffcanvas.addEventListener('shown.bs.offcanvas', function() {
+                    // Initialize from URL params first
                     initializeMobileFiltersFromParams();
-                    syncFilters(); // Sync from desktop to mobile when opening
+                    // Then sync from desktop to ensure consistency
+                    syncFilters();
+                    // Update price range display for mobile
+                    const minInputMobile = document.getElementById('filter-price-min-mobile');
+                    const maxInputMobile = document.getElementById('filter-price-max-mobile');
+                    if (minInputMobile && maxInputMobile) {
+                        const displayEl = document.getElementById('price-range-display-mobile');
+                        const wrapper = minInputMobile.closest('.price-range-slider-wrapper');
+                        const fillEl = wrapper?.querySelector('.price-range-fill');
+                        const minHandle = wrapper?.querySelector('.price-handle-min');
+                        const maxHandle = wrapper?.querySelector('.price-handle-max');
+                        updatePriceRange(minInputMobile, maxInputMobile, displayEl, fillEl, minHandle, maxHandle);
+                    }
                 });
             }
         });
