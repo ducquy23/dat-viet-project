@@ -918,6 +918,27 @@
 
         // Apply filters from form and update map
         function applyFiltersFromForm(form) {
+            // Update price hidden inputs before collecting form data
+            const isMobile = form.id === 'filter-form-mobile';
+            const minInput = isMobile ? document.getElementById('filter-price-min-mobile') : document.getElementById('filter-price-min');
+            const maxInput = isMobile ? document.getElementById('filter-price-max-mobile') : document.getElementById('filter-price-max');
+            const minHidden = form.querySelector('#min_price_hidden') || form.querySelector('#min_price_hidden_mobile');
+            const maxHidden = form.querySelector('#max_price_hidden') || form.querySelector('#max_price_hidden_mobile');
+
+            if (minInput && minHidden) {
+                const minMillion = parseInt(minInput.value) || 50;
+                minHidden.value = minMillion * 1_000_000;
+            }
+
+            if (maxInput && maxHidden) {
+                const maxMillion = parseInt(maxInput.value) || 50000;
+                if (maxMillion >= 50000) {
+                    maxHidden.value = ''; // Unlimited
+                } else {
+                    maxHidden.value = maxMillion * 1_000_000;
+                }
+            }
+
             const formData = new FormData(form);
             const params = new URLSearchParams();
 
@@ -934,16 +955,13 @@
             }
 
             // Get price from hidden inputs (already in đồng)
-            const minPriceHidden = form.querySelector('#min_price_hidden') || form.querySelector('#min_price_hidden_mobile');
-            const maxPriceHidden = form.querySelector('#max_price_hidden') || form.querySelector('#max_price_hidden_mobile');
-
-            if (minPriceHidden && minPriceHidden.value) {
-                params.set('min_price', minPriceHidden.value);
+            if (minHidden && minHidden.value) {
+                params.set('min_price', minHidden.value);
             }
 
-            if (maxPriceHidden && maxPriceHidden.value) {
-                params.set('max_price', maxPriceHidden.value);
-            } else if (maxPriceHidden && !maxPriceHidden.value) {
+            if (maxHidden && maxHidden.value) {
+                params.set('max_price', maxHidden.value);
+            } else if (maxHidden && !maxHidden.value) {
                 // If max is empty, remove it from params (no limit)
                 params.delete('max_price');
             }
@@ -1057,6 +1075,50 @@
             if (content) content.style.display = 'block';
         };
 
+        // Initialize mobile filter values from URL params
+        function initializeMobileFiltersFromParams() {
+            const params = new URLSearchParams(window.location.search);
+
+            // Initialize select dropdowns
+            const categoryMobile = document.getElementById('filter-type-mobile');
+            const cityMobile = document.getElementById('filter-city-mobile');
+            if (categoryMobile) {
+                const categoryId = params.get('category');
+                if (categoryId) {
+                    categoryMobile.value = categoryId;
+                }
+            }
+            if (cityMobile) {
+                const cityId = params.get('city');
+                if (cityId) {
+                    cityMobile.value = cityId;
+                }
+            }
+
+            // Initialize hidden inputs
+            const vipMobile = document.getElementById('filter-vip-mobile');
+            const legalMobile = document.getElementById('filter-legal-status-mobile');
+            if (vipMobile) {
+                vipMobile.value = params.get('vip') || '';
+            }
+            if (legalMobile) {
+                legalMobile.value = params.get('legal_status') || '';
+            }
+
+            // Initialize quick filter chips active state
+            document.querySelectorAll('.quick-filter-chip-mobile').forEach(chip => {
+                const filter = chip.dataset?.filter;
+                const value = chip.dataset?.value;
+                if (filter && value) {
+                    if (params.get(filter) === value) {
+                        chip.classList.add('active');
+                    } else {
+                        chip.classList.remove('active');
+                    }
+                }
+            });
+        }
+
         // Initialize price range from URL params
         function initializePriceRangeFromParams() {
             const params = new URLSearchParams(window.location.search);
@@ -1065,10 +1127,10 @@
 
             // Convert from đồng to triệu
             let minPriceMillion = minPrice ? Math.round(minPrice / 1000000) : 50;
-            let maxPriceMillion = maxPrice ? Math.round(maxPrice / 1000000) : 50000;
+            let maxPriceMillion = maxPrice && maxPrice !== '' ? Math.round(maxPrice / 1000000) : 50000;
 
             // Validate and fix min/max order
-            if (minPriceMillion > maxPriceMillion) {
+            if (minPriceMillion > maxPriceMillion && maxPrice) {
                 // Swap if reversed
                 const temp = minPriceMillion;
                 minPriceMillion = maxPriceMillion;
@@ -1180,12 +1242,23 @@
             setupFilterHandlers();
             setupQuickFilterChips();
             initializePriceRangeFromParams();
+            initializeMobileFiltersFromParams();
+
+            // Initialize mobile filters when offcanvas is shown
+            const filterOffcanvas = document.getElementById('filter-offcanvas');
+            if (filterOffcanvas) {
+                filterOffcanvas.addEventListener('shown.bs.offcanvas', function() {
+                    initializeMobileFiltersFromParams();
+                    syncFilters(); // Sync from desktop to mobile when opening
+                });
+            }
         });
 
         // Update filters when URL changes
         window.addEventListener('popstate', function() {
             updateActiveFilters();
             initializePriceRangeFromParams();
+            initializeMobileFiltersFromParams();
             applyFiltersAndUpdateMap();
         });
 
