@@ -21,6 +21,8 @@ let lots = [];
 let currentListing = null;
 let loadingListings = false;
 let activeMarker = null; // Track the currently active/selected marker
+let loadingDetailQueue = []; // Queue for loadListingDetail calls
+let isLoadingDetail = false; // Flag to prevent multiple simultaneous detail loads
 
 // ===== MAP ICONS =====
 // Custom marker style (dashed tím + pin vàng) - Improved design
@@ -757,18 +759,25 @@ async function renderVipCarousel() {
 // Debounce timer for loadListings
 let loadListingsTimer = null;
 
+// Global variable to track queued loadListings calls
+let loadListingsQueue = null;
+
 async function loadListings(filters = {}) {
     // Prevent multiple simultaneous calls
     if (loadingListings) {
-        // If already loading, queue this call
-        return new Promise((resolve) => {
-            const checkLoading = setInterval(() => {
-                if (!loadingListings) {
-                    clearInterval(checkLoading);
-                    loadListings(filters).then(resolve);
-                }
-            }, 100);
-        });
+        // If already loading, queue this call (only one queue)
+        if (!loadListingsQueue) {
+            loadListingsQueue = new Promise((resolve) => {
+                const checkLoading = setInterval(() => {
+                    if (!loadingListings) {
+                        clearInterval(checkLoading);
+                        loadListingsQueue = null;
+                        loadListings(filters).then(resolve);
+                    }
+                }, 200); // Increase interval to 200ms to reduce checks
+            });
+        }
+        return loadListingsQueue;
     }
 
     loadingListings = true;
@@ -874,8 +883,14 @@ async function loadListings(filters = {}) {
 
         if (lots.length > 0) {
             renderMarkers(lots);
-            // Load first listing detail
-            await loadListingDetail(lots[0].id);
+            // Load first listing detail only if not already loading and detail panel exists
+            const detailPanel = document.getElementById('detail-panel');
+            if (detailPanel && !isLoadingDetail && lots[0] && lots[0].id) {
+                // Only load detail if we don't already have it or if it's different
+                if (!currentListing || currentListing.id !== lots[0].id) {
+                    await loadListingDetail(lots[0].id);
+                }
+            }
         } else {
             markerLayers.forEach(m => map.removeLayer(m));
             markerLayers = [];
@@ -906,6 +921,35 @@ async function loadListings(filters = {}) {
 
 // Load listing detail from API
 async function loadListingDetail(listingId) {
+    // Prevent multiple simultaneous calls for the same listing
+    if (isLoadingDetail) {
+        // If already loading, check if it's the same listing
+        if (loadingDetailQueue.includes(listingId)) {
+            return; // Already queued
+        }
+        loadingDetailQueue.push(listingId);
+        // Wait for current load to finish
+        return new Promise((resolve) => {
+            const checkLoading = setInterval(() => {
+                if (!isLoadingDetail) {
+                    clearInterval(checkLoading);
+                    const index = loadingDetailQueue.indexOf(listingId);
+                    if (index > -1) {
+                        loadingDetailQueue.splice(index, 1);
+                    }
+                    loadListingDetail(listingId).then(resolve);
+                }
+            }, 100);
+        });
+    }
+
+    // Skip if already have this listing detail loaded
+    if (currentListing && currentListing.id === listingId && currentListing.desc) {
+        return;
+    }
+
+    isLoadingDetail = true;
+
     try {
         const response = await fetch(`/api/listings/${listingId}`);
         const data = await response.json();
@@ -949,6 +993,13 @@ async function loadListingDetail(listingId) {
         }
     } catch (error) {
         console.error('Error loading listing detail:', error);
+    } finally {
+        isLoadingDetail = false;
+        // Remove this listingId from queue
+        const index = loadingDetailQueue.indexOf(listingId);
+        if (index > -1) {
+            loadingDetailQueue.splice(index, 1);
+        }
     }
 }
 
