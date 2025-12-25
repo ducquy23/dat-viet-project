@@ -334,6 +334,19 @@ class ListingResource extends Resource
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['primaryImage', 'images']))
             ->columns([
+                Tables\Columns\TextColumn::make('stt')
+                    ->label('STT')
+                    ->getStateUsing(function ($record, $livewire) {
+                        if (!isset($livewire->tableRecords)) {
+                            return '';
+                        }
+                        $records = $livewire->tableRecords;
+                        $index = $records->search($record);
+                        $page = $records->currentPage() ?? 1;
+                        $perPage = $records->perPage() ?? 10;
+                        return ($page - 1) * $perPage + $index + 1;
+                    })
+                    ->sortable(false),
                 Tables\Columns\ImageColumn::make('thumbnail')
                     ->label('Ảnh đại diện')
                     ->disk('public')
@@ -356,19 +369,6 @@ class ListingResource extends Resource
                         }
                         return null;
                     }),
-                Tables\Columns\TextColumn::make('stt')
-                    ->label('STT')
-                    ->getStateUsing(function ($record, $livewire) {
-                        if (!isset($livewire->tableRecords)) {
-                            return '';
-                        }
-                        $records = $livewire->tableRecords;
-                        $index = $records->search($record);
-                        $page = $records->currentPage() ?? 1;
-                        $perPage = $records->perPage() ?? 10;
-                        return ($page - 1) * $perPage + $index + 1;
-                    })
-                    ->sortable(false),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Đối tác')
                     ->searchable()
@@ -389,7 +389,7 @@ class ListingResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Giá')
-                    ->money('VND')
+                    ->formatStateUsing(fn ($state) => formatPrice($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('area')
                     ->label('Diện tích')
