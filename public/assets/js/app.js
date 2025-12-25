@@ -29,10 +29,10 @@ function ensureLotMarkerStyle() {
     const style = document.createElement('style');
     style.id = 'lot-marker-style';
     style.innerHTML = `
-      .lot-marker { 
-        position: relative; 
-        width: 36px; 
-        height: 48px; 
+      .lot-marker {
+        position: relative;
+        width: 36px;
+        height: 48px;
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
         filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
@@ -42,56 +42,56 @@ function ensureLotMarkerStyle() {
         filter: drop-shadow(0 6px 16px rgba(0,0,0,0.25));
         z-index: 1000;
       }
-      .lot-marker .lot-rect { 
-        position: absolute; 
-        top: 8px; 
-        left: 3px; 
-        width: 30px; 
-        height: 28px; 
-        border: 2.5px dashed #7c3aed; 
-        border-radius: 8px; 
-        background: linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(139,92,246,0.1) 100%); 
+      .lot-marker .lot-rect {
+        position: absolute;
+        top: 8px;
+        left: 3px;
+        width: 30px;
+        height: 28px;
+        border: 2.5px dashed #7c3aed;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(139,92,246,0.1) 100%);
         box-sizing: border-box;
         animation: pulse-border 2s ease-in-out infinite;
       }
-      .lot-marker .lot-pin { 
-        position: absolute; 
-        left: 50%; 
-        top: -4px; 
-        transform: translateX(-50%); 
-        width: 22px; 
-        height: 22px; 
-        background: linear-gradient(135deg, #335793 0%, #4a6ba8 100%); 
-        border: 3px solid #ffffff; 
-        border-radius: 50%; 
+      .lot-marker .lot-pin {
+        position: absolute;
+        left: 50%;
+        top: -4px;
+        transform: translateX(-50%);
+        width: 22px;
+        height: 22px;
+        background: linear-gradient(135deg, #335793 0%, #4a6ba8 100%);
+        border: 3px solid #ffffff;
+        border-radius: 50%;
         box-shadow: 0 3px 8px rgba(51,87,147,0.4), 0 0 0 2px rgba(51,87,147,0.2);
         z-index: 2;
       }
-      .lot-marker .lot-pin:after { 
-        content: ''; 
-        position: absolute; 
-        left: 50%; 
-        bottom: -10px; 
-        transform: translateX(-50%); 
-        width: 0; 
-        height: 0; 
-        border-left: 6px solid transparent; 
-        border-right: 6px solid transparent; 
+      .lot-marker .lot-pin:after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: -10px;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
         border-top: 12px solid #335793;
         filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
       }
-      .lot-marker.vip .lot-rect { 
-        border-color: #f97316; 
+      .lot-marker.vip .lot-rect {
+        border-color: #f97316;
         background: linear-gradient(135deg, rgba(249,115,22,0.2) 0%, rgba(251,146,60,0.15) 100%);
         border-width: 3px;
         animation: pulse-border-vip 2s ease-in-out infinite;
       }
-      .lot-marker.vip .lot-pin { 
-        background: linear-gradient(135deg, #f4b400 0%, #ffd700 100%); 
+      .lot-marker.vip .lot-pin {
+        background: linear-gradient(135deg, #f4b400 0%, #ffd700 100%);
         border-color: #fff3cd;
         box-shadow: 0 3px 10px rgba(244,180,0,0.5), 0 0 0 2px rgba(244,180,0,0.3);
       }
-      .lot-marker.vip .lot-pin:after { 
+      .lot-marker.vip .lot-pin:after {
         border-top-color: #f4b400;
       }
       .lot-marker-active {
@@ -130,21 +130,21 @@ function ensureLotMarkerStyle() {
         50% { border-color: #fb923c; opacity: 0.8; }
       }
       @keyframes pulse-active {
-        0%, 100% { 
+        0%, 100% {
           box-shadow: 0 0 0 3px rgba(51,87,147,0.3);
           transform: scale(1);
         }
-        50% { 
+        50% {
           box-shadow: 0 0 0 6px rgba(51,87,147,0.15);
           transform: scale(1.05);
         }
       }
       @keyframes pulse-active-vip {
-        0%, 100% { 
+        0%, 100% {
           box-shadow: 0 0 0 3px rgba(244,180,0,0.4);
           transform: scale(1);
         }
-        50% { 
+        50% {
           box-shadow: 0 0 0 6px rgba(244,180,0,0.2);
           transform: scale(1.05);
         }
@@ -195,7 +195,7 @@ function renderMarkers(data) {
         }
     });
     markerLayers = [];
-    
+
     // Clear mapAreaMarkers
     if (window.mapAreaMarkers && Array.isArray(window.mapAreaMarkers)) {
         window.mapAreaMarkers.forEach(m => {
@@ -205,14 +205,14 @@ function renderMarkers(data) {
         });
         window.mapAreaMarkers = [];
     }
-    
+
     // Clear any other markers that might exist on the map
     currentMap.eachLayer(function(layer) {
         if (layer instanceof L.Marker && layer.lotId) {
             currentMap.removeLayer(layer);
         }
     });
-    
+
     // Clear active marker reference
     activeMarker = null;
 
@@ -248,7 +248,7 @@ function renderMarkers(data) {
             riseOnHover: true,
             zIndexOffset: lot.isVip ? 1000 : 500
         }).addTo(currentMap);
-        
+
         // Store lot ID in marker for easy lookup
         marker.lotId = lot.id;
 
@@ -330,7 +330,7 @@ function renderMarkers(data) {
         // Calculate bounds from all markers
         const group = new L.featureGroup(markerLayers);
         const bounds = group.getBounds();
-        
+
         // Fit map to show all markers with padding
         currentMap.fitBounds(bounds, {
             padding: [50, 50], // Padding in pixels
@@ -338,7 +338,7 @@ function renderMarkers(data) {
             animate: true,
             duration: 0.8
         });
-        
+
         // KHÔNG highlight tất cả markers khi load - chỉ highlight khi user click
     }
 }
@@ -426,11 +426,11 @@ async function updateDetail(lot) {
     const skeleton = document.getElementById('detail-panel-skeleton');
     const emptyState = document.getElementById('detail-panel-empty');
     const detailContent = document.getElementById('detail-panel-content');
-    
+
     if (skeleton) skeleton.style.display = 'block';
     if (emptyState) emptyState.style.display = 'none';
     if (detailContent) detailContent.style.display = 'none';
-    
+
     // Load full detail if not loaded yet
     if (!lot.desc && lot.id) {
         await loadListingDetail(lot.id);
@@ -643,7 +643,7 @@ async function renderVipCarousel() {
         const data = await response.json();
         const vipListings = data.listings.filter(l => l.is_vip).slice(0, 10);
 
-    wrap.innerHTML = "";
+        wrap.innerHTML = "";
 
         if (vipListings.length === 0) {
             wrap.innerHTML = '<div class="text-center text-muted py-4 w-100"><i class="bi bi-inbox" style="font-size: 48px;"></i><p class="mt-2">Chưa có tin VIP nào</p></div>';
@@ -663,15 +663,15 @@ async function renderVipCarousel() {
                 seller: { name: '', phone: '' },
                 slug: listing.slug
             };
-        const card = document.createElement("div");
-        card.className = "vip-card";
+            const card = document.createElement("div");
+            card.className = "vip-card";
 
-        // Tạo tags HTML
-        const tagsHtml = lot.tags.slice(0, 3).map(tag =>
-            `<span class="badge badge-vip-card">${tag}</span>`
-        ).join('');
+            // Tạo tags HTML
+            const tagsHtml = lot.tags.slice(0, 3).map(tag =>
+                `<span class="badge badge-vip-card">${tag}</span>`
+            ).join('');
 
-        card.innerHTML = `
+            card.innerHTML = `
             <div class="vip-badge-top">
                 <span class="vip-label">
                     <i class="bi bi-star-fill"></i> VIP
@@ -745,8 +745,8 @@ async function renderVipCarousel() {
                 </a>
             </div>
         `;
-        wrap.appendChild(card);
-    });
+            wrap.appendChild(card);
+        });
     } catch (error) {
         console.error('Error loading VIP listings:', error);
         wrap.innerHTML = '<div class="text-center text-muted py-4 w-100">Lỗi tải dữ liệu</div>';
@@ -757,7 +757,7 @@ async function renderVipCarousel() {
 async function loadListings(filters = {}) {
     if (loadingListings) return;
     loadingListings = true;
-    
+
     // Show loading state on map (optional - can add overlay)
     const mapElement = document.getElementById('map');
     if (mapElement) {
@@ -766,7 +766,7 @@ async function loadListings(filters = {}) {
 
     try {
         const params = new URLSearchParams();
-        
+
         // If filters object is empty, read from URL parameters
         if (Object.keys(filters).length === 0) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -848,14 +848,14 @@ async function loadListings(filters = {}) {
                 depth: '',
                 roadWidth: '',
                 direction: '',
-            roadAccess: false,
-            pricePer: '',
-            planning: '',
-            depositOnline: '',
-            desc: '',
-            images: [],
-            polygon: []
-        }));
+                roadAccess: false,
+                pricePer: '',
+                planning: '',
+                depositOnline: '',
+                desc: '',
+                images: [],
+                polygon: []
+            }));
 
         if (lots.length > 0) {
             renderMarkers(lots);
@@ -868,9 +868,9 @@ async function loadListings(filters = {}) {
             const filterParams = ['city', 'district', 'category', 'max_price', 'max_area', 'has_road', 'vip'];
             const hasUrlFilters = filterParams.some(param => urlParams.has(param));
             const hasAppliedFilters = Object.keys(filters).length > 0;
-        
+
             const isInitialLoad = !hasUrlFilters && !hasAppliedFilters;
-            
+
             if (!isInitialLoad && window.showToast) {
                 window.showToast('Không tìm thấy tin đăng nào phù hợp', 'info', 3000);
             }
@@ -946,29 +946,25 @@ function formatPrice(price) {
     // Convert to triệu if price is in đồng (VND)
     let priceInMillion = price >= 1000000 ? price / 1000000 : price;
 
-    // Format based on value
+    // Format based on value - Rule: < 1 tỉ hiển thị triệu, >= 1 tỉ hiển thị tỉ
     if (priceInMillion >= 1000) {
-        // >= 1000 triệu → hiển thị theo tỉ
+        // >= 1000 triệu (>= 1 tỉ) → hiển thị theo tỉ
         const ty = priceInMillion / 1000;
         if (ty === Math.floor(ty)) {
             return new Intl.NumberFormat('vi-VN').format(ty) + ' tỉ';
         } else {
-            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(ty) + ' tỉ';
-        }
-    } else if (priceInMillion >= 100) {
-        // >= 100 triệu → hiển thị theo trăm triệu
-        const tram = priceInMillion / 100;
-        if (tram === Math.floor(tram)) {
-            return new Intl.NumberFormat('vi-VN').format(tram) + ' trăm triệu';
-        } else {
-            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(tram) + ' trăm triệu';
+            // Làm tròn đến 1 chữ số thập phân
+            const tyRounded = Math.round(ty * 10) / 10;
+            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(tyRounded) + ' tỉ';
         }
     } else {
-        // < 100 triệu → hiển thị theo triệu
+        // < 1000 triệu (< 1 tỉ) → hiển thị theo triệu
         if (priceInMillion === Math.floor(priceInMillion)) {
             return new Intl.NumberFormat('vi-VN').format(priceInMillion) + ' triệu';
         } else {
-            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(priceInMillion) + ' triệu';
+            // Làm tròn đến 1 chữ số thập phân
+            const priceRounded = Math.round(priceInMillion * 10) / 10;
+            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(priceRounded) + ' triệu';
         }
     }
 }
@@ -1367,10 +1363,10 @@ async function locateUserAndPickNearest() {
     navigator.geolocation.getCurrentPosition(
         async (pos) => {
             const { latitude, longitude } = pos.coords;
-            
+
             // Mark user location on map
             markUserLocation(latitude, longitude);
-            
+
             // Use current map bounds or no bounds limit (get all listings)
             // Include existing filters from URL
             const params = new URLSearchParams();
@@ -1385,7 +1381,7 @@ async function locateUserAndPickNearest() {
             try {
                 const response = await fetch(`/api/listings/map?${params.toString()}`);
                 const data = await response.json();
-                
+
                 if (data.listings && data.listings.length > 0) {
                     // Convert API data to app format
                     const nearbyLots = data.listings
@@ -1393,9 +1389,9 @@ async function locateUserAndPickNearest() {
                             if (!listing.latitude || !listing.longitude) return false;
                             const lat = parseFloat(listing.latitude);
                             const lng = parseFloat(listing.longitude);
-                            return !isNaN(lat) && !isNaN(lng) && 
-                                   lat >= 8.5 && lat <= 23.5 && 
-                                   lng >= 102.0 && lng <= 110.0;
+                            return !isNaN(lat) && !isNaN(lng) &&
+                                lat >= 8.5 && lat <= 23.5 &&
+                                lng >= 102.0 && lng <= 110.0;
                         })
                         .map(listing => ({
                             id: listing.id,
@@ -1433,16 +1429,16 @@ async function locateUserAndPickNearest() {
 
                     // Update lots array with listings
                     lots = nearbyLots;
-                    
+
                     // Render markers on map
                     renderMarkers(nearbyLots);
-                    
+
                     // Center map on user location
                     currentMap.setView([latitude, longitude], 15, {
                         animate: true,
                         duration: 0.5
                     });
-                    
+
                     if (window.showToast) {
                         window.showToast(`Tìm thấy ${nearbyLots.length} tin đăng`, 'success', 2000);
                     }
@@ -1482,7 +1478,7 @@ async function locateUserAndPickNearest() {
                 window.showToast(message, 'error', 4000);
             }
         },
-        { 
+        {
             enableHighAccuracy: false, // Set false để nhanh hơn, không cần GPS chính xác
             timeout: 15000, // Tăng timeout lên 15 giây
             maximumAge: 60000 // Chấp nhận vị trí đã cache trong 1 phút
@@ -1613,15 +1609,15 @@ function setPostLocation(lat, lng) {
     }
 
     // Add new marker
-            postMarker = L.marker([lat, lng], {
-                icon: L.divIcon({
-                    className: "",
-                    html: '<div class="map-pin" style="background:#e03131;"></div>',
-                    iconSize: [18, 18],
-                    iconAnchor: [9, 18],
+    postMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+            className: "",
+            html: '<div class="map-pin" style="background:#e03131;"></div>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 18],
         }),
         draggable: true
-            }).addTo(postMap);
+    }).addTo(postMap);
 
     // Center map on location
     postMap.setView([lat, lng], 16);

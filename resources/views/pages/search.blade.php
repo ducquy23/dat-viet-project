@@ -458,15 +458,27 @@
 
 @push('scripts')
     <script>
-        // Format price helper
+        // Format price helper - Rule: < 1 tỉ hiển thị triệu, >= 1 tỉ hiển thị tỉ
         function formatPrice(million) {
             if (million >= 50000) {
                 return 'Không giới hạn';
             } else if (million >= 1000) {
-                const ty = (million / 1000).toFixed(million % 1000 === 0 ? 0 : 1);
-                return `đ${ty} tỉ`;
+                // >= 1000 triệu (>= 1 tỉ) → hiển thị theo tỉ
+                const ty = million / 1000;
+                if (ty === Math.floor(ty)) {
+                    return `đ${new Intl.NumberFormat('vi-VN').format(ty)} tỉ`;
+                } else {
+                    const tyRounded = Math.round(ty * 10) / 10;
+                    return `đ${new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(tyRounded)} tỉ`;
+                }
             } else {
-                return `đ${new Intl.NumberFormat('vi-VN').format(million)} triệu`;
+                // < 1000 triệu (< 1 tỉ) → hiển thị theo triệu
+                if (million === Math.floor(million)) {
+                    return `đ${new Intl.NumberFormat('vi-VN').format(million)} triệu`;
+                } else {
+                    const priceRounded = Math.round(million * 10) / 10;
+                    return `đ${new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(priceRounded)} triệu`;
+                }
             }
         }
 
