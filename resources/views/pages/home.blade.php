@@ -1072,9 +1072,9 @@
 
                     // Prevent multiple API calls
                     if (isLocatingUser) {
-                        return; // Nếu đang gọi API, ngừng không gọi lại
+                        return;
                     }
-                    isLocatingUser = true;  // Đặt flag cho biết API đang được gọi
+                    isLocatingUser = true;
 
                     // Get current filter values from mobile form
                     const mobileForm = document.getElementById('filter-form-mobile');
@@ -1115,10 +1115,12 @@
                         // Only add max_price if it's not default (unlimited) or was already in URL
                         if (maxInput) {
                             const maxMillion = parseInt(maxInput.value) || defaultMax;
-                            if (maxMillion >= defaultMax) {
-                                // Don't add unlimited to URL
-                            } else {
-                                params.set('max_price', maxMillion * 1_000_000);
+                            if (maxMillion < defaultMax || currentMaxPrice) {
+                                if (maxMillion >= defaultMax) {
+                                    // Don't add unlimited to URL
+                                } else {
+                                    params.set('max_price', maxMillion * 1_000_000);
+                                }
                             }
                         }
                     }
@@ -1145,17 +1147,17 @@
                         if (result && typeof result.then === 'function') {
                             result.finally(() => {
                                 setTimeout(() => {
-                                    isLocatingUser = false; // Reset flag when done
+                                    isLocatingUser = false;
                                 }, 1000);
                             });
                         } else {
                             // If not a promise, reset after a delay
                             setTimeout(() => {
-                                isLocatingUser = false; // Reset flag when done
+                                isLocatingUser = false;
                             }, 2000);
                         }
                     } else {
-                        isLocatingUser = false; // Reset flag if function doesn't exist
+                        isLocatingUser = false;
                     }
                 });
             }
@@ -1486,6 +1488,9 @@
             }
         }
 
+        // Debounce timer for API calls
+        let applyFiltersTimer = null;
+
         // Function to apply filters and update map markers
         async function applyFiltersAndUpdateMap() {
             // Skip API call if currently locating user
@@ -1493,72 +1498,80 @@
                 return;
             }
 
-            // Call loadListings from app.js if available (it will read URL params automatically)
-            if (window.loadListings) {
-                await window.loadListings(); // Empty filters object means read from URL
-            } else if (window.loadListingsForMap) {
-                // Fallback to map-area function
-                window.loadListingsForMap();
-            } else {
-                // Direct API call as last resort
-                try {
-                    const params = new URLSearchParams(window.location.search);
-                    const apiUrl = new URL('/api/listings/map', window.location.origin);
-                    params.forEach((value, key) => {
-                        if (['city', 'category', 'min_price', 'max_price', 'vip', 'legal_status'].includes(key)) {
-                            apiUrl.searchParams.append(key, value);
+            // Clear existing timer
+            if (applyFiltersTimer) {
+                clearTimeout(applyFiltersTimer);
+            }
+
+            // Debounce API call to prevent multiple rapid calls
+            applyFiltersTimer = setTimeout(async () => {
+                // Call loadListings from app.js if available (it will read URL params automatically)
+                if (window.loadListings) {
+                    await window.loadListings(); // Empty filters object means read from URL
+                } else if (window.loadListingsForMap) {
+                    // Fallback to map-area function
+                    window.loadListingsForMap();
+                } else {
+                    // Direct API call as last resort
+                    try {
+                        const params = new URLSearchParams(window.location.search);
+                        const apiUrl = new URL('/api/listings/map', window.location.origin);
+                        params.forEach((value, key) => {
+                            if (['city', 'category', 'min_price', 'max_price', 'vip', 'legal_status'].includes(key)) {
+                                apiUrl.searchParams.append(key, value);
+                            }
+                        });
+
+                        const response = await fetch(apiUrl);
+                        const data = await response.json();
+
+                        // Update markers using renderMarkers if available
+                        if (window.renderMarkers) {
+                            const formatPriceHelper = (price) => {
+                                if (!price) return '0 triệu';
+                                return new Intl.NumberFormat('vi-VN').format(price) + ' triệu';
+                            };
+
+                            const formattedListings = data.listings
+                                .filter(listing => {
+                                    if (!listing.latitude || !listing.longitude) return false;
+                                    const lat = parseFloat(listing.latitude);
+                                    const lng = parseFloat(listing.longitude);
+                                    return !isNaN(lat) && !isNaN(lng) &&
+                                        lat >= 8.5 && lat <= 23.5 &&
+                                        lng >= 102.0 && lng <= 110.0;
+                                })
+                                .map(listing => ({
+                                    id: listing.id,
+                                    name: listing.title,
+                                    title: listing.title,
+                                    price: formatPriceHelper(listing.price),
+                                    size: `${listing.area}m²`,
+                                    priceValue: listing.price,
+                                    sizeValue: listing.area,
+                                    lat: parseFloat(listing.latitude),
+                                    lng: parseFloat(listing.longitude),
+                                    slug: listing.slug,
+                                    img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/Image-not-found.png',
+                                    type: listing.category || 'Đất',
+                                    address: listing.address || '',
+                                    city: listing.city || '',
+                                    district: listing.district || '',
+                                    tags: [],
+                                    seller: { name: '', phone: '' },
+                                    isVip: listing.is_vip || false
+                                }));
+
+                            window.renderMarkers(formattedListings);
                         }
-                    });
-
-                    const response = await fetch(apiUrl);
-                    const data = await response.json();
-
-                    // Update markers using renderMarkers if available
-                    if (window.renderMarkers) {
-                        const formatPriceHelper = (price) => {
-                            if (!price) return '0 triệu';
-                            return new Intl.NumberFormat('vi-VN').format(price) + ' triệu';
-                        };
-
-                        const formattedListings = data.listings
-                            .filter(listing => {
-                                if (!listing.latitude || !listing.longitude) return false;
-                                const lat = parseFloat(listing.latitude);
-                                const lng = parseFloat(listing.longitude);
-                                return !isNaN(lat) && !isNaN(lng) &&
-                                    lat >= 8.5 && lat <= 23.5 &&
-                                    lng >= 102.0 && lng <= 110.0;
-                            })
-                            .map(listing => ({
-                                id: listing.id,
-                                name: listing.title,
-                                title: listing.title,
-                                price: formatPriceHelper(listing.price),
-                                size: `${listing.area}m²`,
-                                priceValue: listing.price,
-                                sizeValue: listing.area,
-                                lat: parseFloat(listing.latitude),
-                                lng: parseFloat(listing.longitude),
-                                slug: listing.slug,
-                                img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/Image-not-found.png',
-                                type: listing.category || 'Đất',
-                                address: listing.address || '',
-                                city: listing.city || '',
-                                district: listing.district || '',
-                                tags: [],
-                                seller: { name: '', phone: '' },
-                                isVip: listing.is_vip || false
-                            }));
-
-                        window.renderMarkers(formattedListings);
-                    }
-                } catch (error) {
-                    console.error('Error loading filtered listings:', error);
-                    if (window.showToast) {
-                        window.showToast('Có lỗi xảy ra khi tải dữ liệu', 'error', 3000);
+                    } catch (error) {
+                        console.error('Error loading filtered listings:', error);
+                        if (window.showToast) {
+                            window.showToast('Có lỗi xảy ra khi tải dữ liệu', 'error', 3000);
+                        }
                     }
                 }
-            }
+            }, 300); // 300ms debounce
         }
 
         // Initialize on page load

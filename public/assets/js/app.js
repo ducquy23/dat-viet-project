@@ -754,8 +754,23 @@ async function renderVipCarousel() {
 }
 
 // ===== LOAD DATA FROM API =====
+// Debounce timer for loadListings
+let loadListingsTimer = null;
+
 async function loadListings(filters = {}) {
-    if (loadingListings) return;
+    // Prevent multiple simultaneous calls
+    if (loadingListings) {
+        // If already loading, queue this call
+        return new Promise((resolve) => {
+            const checkLoading = setInterval(() => {
+                if (!loadingListings) {
+                    clearInterval(checkLoading);
+                    loadListings(filters).then(resolve);
+                }
+            }, 100);
+        });
+    }
+
     loadingListings = true;
 
     // Show loading state on map (optional - can add overlay)
@@ -1157,11 +1172,8 @@ if (btnNearby) {
     btnNearby.addEventListener("click", locateUserAndPickNearest);
 }
 
-// Add event listener for mobile nearby button
-const btnNearbyMobile = document.getElementById("btn-nearby-mobile");
-if (btnNearbyMobile) {
-    btnNearbyMobile.addEventListener("click", locateUserAndPickNearest);
-}
+// Mobile nearby button is handled in home.blade.php to avoid duplicate API calls
+// Event listener removed to prevent double API calls
 if (filterPriceEl) {
     filterPriceEl.addEventListener("input", function() {
         updateRangeLabels();

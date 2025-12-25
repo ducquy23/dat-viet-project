@@ -71,3 +71,5 @@ Route::prefix('api')->withoutMiddleware([VerifyCsrfToken::class])->group(functio
     });
     Route::post('/payments/webhook', [PaymentWebhookController::class, 'handle'])->name('api.payments.webhook');
 });
+
+
