@@ -28,26 +28,31 @@ class SearchController extends Controller
         $districtId = $request->get('district') ?: $request->get('district_id');
         // Support both 'category' and 'category_id' parameter names
         $categoryId = $request->get('category') ?: $request->get('category_id');
-        // Get price filters - handle both direct values and empty strings
+        // Get price filters - values should be in VND (đồng) from hidden inputs
         $minPrice = $request->input('min_price');
         $maxPrice = $request->input('max_price');
-        
-        // Normalize max_price: empty string, null, or falsy values mean "unlimited"
-        // Use input() instead of get() to get exact value including empty strings
-        // Also check if it's the string "0" or numeric 0
-        if ($maxPrice === '' || $maxPrice === null || $maxPrice === false || $maxPrice === '0' || $maxPrice === 0) {
-            $maxPrice = null;
+
+        // Normalize min_price: convert to integer, handle empty/null
+        if ($minPrice !== null && $minPrice !== '') {
+            $minPrice = (int)$minPrice;
+            // If value is less than 1 million, assume it's in millions and convert to VND
+            if ($minPrice > 0 && $minPrice < 1000000) {
+                $minPrice = $minPrice * 1000000;
+            }
+        } else {
+            $minPrice = null;
         }
-        
-        // Debug: Log price filter values (remove in production)
-        \Log::info('Price filters debug', [
-            'min_raw' => $request->input('min_price'),
-            'max_raw' => $request->input('max_price'),
-            'min' => $minPrice,
-            'max' => $maxPrice,
-            'max_type' => gettype($maxPrice),
-            'all_params' => $request->all()
-        ]);
+
+        // Normalize max_price: empty string, null, or falsy values mean "unlimited"
+        if ($maxPrice !== null && $maxPrice !== '' && $maxPrice !== '0' && $maxPrice !== 0) {
+            $maxPrice = (int)$maxPrice;
+            // If value is less than 1 million, assume it's in millions and convert to VND
+            if ($maxPrice > 0 && $maxPrice < 1000000) {
+                $maxPrice = $maxPrice * 1000000;
+            }
+        } else {
+            $maxPrice = null; // null means unlimited
+        }
         $minArea = $request->get('min_area');
         $maxArea = $request->get('max_area');
         $vip = $request->boolean('vip');
@@ -74,20 +79,20 @@ class SearchController extends Controller
                     ->orWhere('address', 'like', "%{$keyword}%")
                     ->orWhere('contact_name', 'like', "%{$keyword}%")
                     ->orWhere('legal_status', 'like', "%{$keyword}%");
-                
+
                 // Only search in relationships if not already filtered by them
                 if (!$cityId) {
                     $q->orWhereHas('city', function ($cityQuery) use ($keyword) {
                         $cityQuery->where('name', 'like', "%{$keyword}%");
                     });
                 }
-                
+
                 if (!$districtId) {
                     $q->orWhereHas('district', function ($districtQuery) use ($keyword) {
                         $districtQuery->where('name', 'like', "%{$keyword}%");
                     });
                 }
-                
+
                 if (!$categoryId) {
                     $q->orWhereHas('category', function ($categoryQuery) use ($keyword) {
                         $categoryQuery->where('name', 'like', "%{$keyword}%");
@@ -109,35 +114,15 @@ class SearchController extends Controller
             $query->where('category_id', $categoryId);
         }
 
-        // Handle price filters - values are already in VND (đồng) from hidden inputs
-        // Handle min_price filter
-        if ($minPrice && $minPrice !== '' && $minPrice !== null) {
-            // minPrice is already in VND from hidden input (min_price_million * 1000000)
-            // But check if it's accidentally in millions (less than 1000000)
-            $minPriceFilter = (int)$minPrice;
-            if ($minPriceFilter < 1000000) {
-                // If less than 1 million, assume it's in millions and convert
-                $minPriceFilter = $minPriceFilter * 1000000;
-            }
-            $query->where('price', '>=', $minPriceFilter);
+        // Apply price filters - values are already normalized to VND (đồng) above
+        if ($minPrice !== null && $minPrice > 0) {
+            $query->where('price', '>=', $minPrice);
         }
 
-        // Handle max_price filter - only apply if value exists and is not empty/null
-        // Empty string or null means "unlimited" - don't apply max price filter
-        // After normalization above, $maxPrice is null if it was empty string/null/false
-        if ($maxPrice !== null) {
-            // maxPrice is already in VND from hidden input (max_price_million * 1000000)
-            // But check if it's accidentally in millions (less than 1000000)
-            $maxPriceFilter = (int)$maxPrice;
-            if ($maxPriceFilter > 0) {
-                if ($maxPriceFilter < 1000000) {
-                    // If less than 1 million, assume it's in millions and convert
-                    $maxPriceFilter = $maxPriceFilter * 1000000;
-                }
-                $query->where('price', '<=', $maxPriceFilter);
-            }
+        // Apply max_price filter only if value exists (null means unlimited)
+        if ($maxPrice !== null && $maxPrice > 0) {
+            $query->where('price', '<=', $maxPrice);
         }
-        // If maxPrice is null (was empty string/null/false), don't apply max price filter (unlimited)
 
         if ($minArea) {
             $query->where('area', '>=', $minArea);
@@ -172,7 +157,6 @@ class SearchController extends Controller
             default:
                 $query->latest();
         }
-
         $listings = $query->paginate(12)->withQueryString();
 
         return view('pages.search', [
