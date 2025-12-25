@@ -595,30 +595,42 @@
             window.location.href = window.location.pathname;
         }
 
+        // Global flag to prevent sync during mobile select change
+        let isMobileSelectChanging = false;
+
         // Sync desktop and mobile filters
-        function syncFilters() {
+        function syncFilters(skipMobileToDesktop = false) {
             if (isPriceDragging) return;
             const desktopForm = document.getElementById('filter-form');
             const mobileForm = document.getElementById('filter-form-mobile');
 
             if (!desktopForm || !mobileForm) return;
 
-            // Sync from desktop to mobile
-            ['filter-type', 'filter-city', 'filter-vip', 'filter-legal-status'].forEach(id => {
-                const desktop = document.getElementById(id);
-                const mobile = document.getElementById(id + '-mobile');
-                if (desktop && mobile) {
-                    if (desktop.type === 'checkbox') {
-                        mobile.checked = desktop.checked;
-                    } else if (desktop.type === 'hidden') {
-                        mobile.value = desktop.value;
-                    } else {
-                        // For select elements, ensure value is set as string
-                        const desktopValue = String(desktop.value || '');
-                        mobile.value = desktopValue;
+            // Sync from desktop to mobile (only if not changing on mobile)
+            if (!isMobileSelectChanging) {
+                ['filter-type', 'filter-city', 'filter-vip', 'filter-legal-status'].forEach(id => {
+                    const desktop = document.getElementById(id);
+                    const mobile = document.getElementById(id + '-mobile');
+                    if (desktop && mobile) {
+                        if (desktop.type === 'checkbox') {
+                            mobile.checked = desktop.checked;
+                        } else if (desktop.type === 'hidden') {
+                            mobile.value = desktop.value;
+                        } else {
+                            // For select elements, ensure value is set as string
+                            const desktopValue = String(desktop.value || '');
+                            mobile.value = desktopValue;
+                            // Update selectedIndex
+                            if (desktopValue) {
+                                const optionIndex = Array.from(mobile.options).findIndex(opt => opt.value === desktopValue);
+                                if (optionIndex >= 0) {
+                                    mobile.selectedIndex = optionIndex;
+                                }
+                            }
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // Sync price range
             const minPriceDesktop = document.getElementById('filter-price-min');
@@ -628,23 +640,32 @@
             if (minPriceDesktop && minPriceMobile) minPriceMobile.value = minPriceDesktop.value;
             if (maxPriceDesktop && maxPriceMobile) maxPriceMobile.value = maxPriceDesktop.value;
 
-            // Sync from mobile to desktop
-            ['filter-type-mobile', 'filter-city-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
-                const mobile = document.getElementById(id);
-                const desktopId = id.replace('-mobile', '');
-                const desktop = document.getElementById(desktopId);
-                if (mobile && desktop) {
-                    if (mobile.type === 'checkbox') {
-                        desktop.checked = mobile.checked;
-                    } else if (mobile.type === 'hidden') {
-                        desktop.value = mobile.value;
-                    } else {
-                        // For select elements, ensure value is set as string
-                        const mobileValue = String(mobile.value || '');
-                        desktop.value = mobileValue;
+            // Sync from mobile to desktop (only if not skipping)
+            if (!skipMobileToDesktop) {
+                ['filter-type-mobile', 'filter-city-mobile', 'filter-vip-mobile', 'filter-legal-status-mobile'].forEach(id => {
+                    const mobile = document.getElementById(id);
+                    const desktopId = id.replace('-mobile', '');
+                    const desktop = document.getElementById(desktopId);
+                    if (mobile && desktop) {
+                        if (mobile.type === 'checkbox') {
+                            desktop.checked = mobile.checked;
+                        } else if (mobile.type === 'hidden') {
+                            desktop.value = mobile.value;
+                        } else {
+                            // For select elements, ensure value is set as string
+                            const mobileValue = String(mobile.value || '');
+                            desktop.value = mobileValue;
+                            // Update selectedIndex
+                            if (mobileValue) {
+                                const optionIndex = Array.from(desktop.options).findIndex(opt => opt.value === mobileValue);
+                                if (optionIndex >= 0) {
+                                    desktop.selectedIndex = optionIndex;
+                                }
+                            }
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // Sync price range from mobile to desktop
             if (minPriceMobile && minPriceDesktop) minPriceDesktop.value = minPriceMobile.value;
@@ -915,9 +936,133 @@
             ['filter-type-mobile', 'filter-city-mobile'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                    el.addEventListener('change', syncFilters);
+                    el.addEventListener('change', function(e) {
+                        // Set flag to prevent desktop-to-mobile sync
+                        isMobileSelectChanging = true;
+
+                        // Get the selected value
+                        const selectedValue = String(this.value || '');
+
+                        // Ensure the value is set correctly
+                        this.value = selectedValue;
+
+                        // Force UI update by setting selectedIndex
+                        if (selectedValue) {
+                            const optionIndex = Array.from(this.options).findIndex(opt => opt.value === selectedValue);
+                            if (optionIndex >= 0) {
+                                this.selectedIndex = optionIndex;
+                                // Ensure the option is selected
+                                this.options[optionIndex].selected = true;
+                            }
+                        } else {
+                            this.selectedIndex = 0; // Select first option (empty)
+                            if (this.options[0]) {
+                                this.options[0].selected = true;
+                            }
+                        }
+
+                        // Use setTimeout to ensure value is set before syncing
+                        setTimeout(() => {
+                            // Double-check value is still correct
+                            if (this.value !== selectedValue) {
+                                this.value = selectedValue;
+                                if (selectedValue) {
+                                    const optionIndex = Array.from(this.options).findIndex(opt => opt.value === selectedValue);
+                                    if (optionIndex >= 0) {
+                                        this.selectedIndex = optionIndex;
+                                        this.options[optionIndex].selected = true;
+                                    }
+                                }
+                            }
+
+                            // Sync from mobile to desktop only
+                            syncFilters(false);
+
+                            // Reset flag after sync
+                            setTimeout(() => {
+                                isMobileSelectChanging = false;
+                            }, 50);
+                        }, 10);
+                    });
                 }
             });
+
+            // Handle "Tìm gần tôi" button for mobile
+            const btnNearbyMobile = document.getElementById('btn-nearby-mobile');
+            if (btnNearbyMobile) {
+                btnNearbyMobile.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Get current filter values from mobile form
+                    const mobileForm = document.getElementById('filter-form-mobile');
+                    if (mobileForm) {
+                        // Update price hidden inputs first
+                        const minInput = document.getElementById('filter-price-min-mobile');
+                        const maxInput = document.getElementById('filter-price-max-mobile');
+                        const minHidden = mobileForm.querySelector('#min_price_hidden_mobile');
+                        const maxHidden = mobileForm.querySelector('#max_price_hidden_mobile');
+
+                        if (minInput && minHidden) {
+                            const minMillion = parseInt(minInput.value) || 50;
+                            minHidden.value = minMillion * 1_000_000;
+                        }
+                        if (maxInput && maxHidden) {
+                            const maxMillion = parseInt(maxInput.value) || 50000;
+                            if (maxMillion >= 50000) {
+                                maxHidden.value = '';
+                            } else {
+                                maxHidden.value = maxMillion * 1_000_000;
+                            }
+                        }
+
+                        const formData = new FormData(mobileForm);
+                        const params = new URLSearchParams();
+
+                        // Collect current filter values
+                        for (const [key, value] of formData.entries()) {
+                            if (key === 'min_price_million' || key === 'max_price_million') {
+                                continue;
+                            }
+                            if (value && value.trim() !== '') {
+                                params.append(key, value);
+                            }
+                        }
+
+                        // Get price from hidden inputs
+                        if (minHidden && minHidden.value) {
+                            params.set('min_price', minHidden.value);
+                        }
+                        if (maxHidden && maxHidden.value) {
+                            params.set('max_price', maxHidden.value);
+                        }
+
+                        // Update URL with current filters
+                        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                        window.history.pushState({}, '', newUrl);
+
+                        // Update active filters
+                        updateActiveFilters();
+                    }
+
+                    // Call locateUserAndPickNearest function
+                    if (window.locateUserAndPickNearest) {
+                        window.locateUserAndPickNearest();
+                    }
+                });
+            }
+
+            // Ensure buttons are not disabled
+            const btnApplyMobile = document.getElementById('btn-apply-filters-mobile');
+            const btnNearbyMobileCheck = document.getElementById('btn-nearby-mobile');
+            if (btnApplyMobile) {
+                btnApplyMobile.disabled = false;
+                btnApplyMobile.removeAttribute('disabled');
+            }
+            if (btnNearbyMobileCheck) {
+                btnNearbyMobileCheck.disabled = false;
+                btnNearbyMobileCheck.removeAttribute('disabled');
+            }
         }
 
         // Apply filters from form and update map
@@ -1005,6 +1150,11 @@
             if (offcanvas) {
                 offcanvas.hide();
             }
+
+            // Re-initialize mobile filters after applying to ensure UI is in sync
+            setTimeout(() => {
+                initializeMobileFiltersFromParams();
+            }, 100);
         }
 
         // Quick Filter Chips
