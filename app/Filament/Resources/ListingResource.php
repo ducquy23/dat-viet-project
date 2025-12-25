@@ -302,9 +302,6 @@ class ListingResource extends Resource
                             ->label('Thông tin quy hoạch')
                             ->rows(3)
                             ->columnSpanFull(),
-                        Forms\Components\Toggle::make('deposit_online')
-                            ->label('Có đặt cọc online')
-                            ->default(false),
                         Forms\Components\Textarea::make('meta_description')
                             ->label('Mô tả SEO')
                             ->rows(2)
