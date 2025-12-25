@@ -102,6 +102,11 @@
     // 4. Loading Button States
     function initLoadingButtons() {
         document.querySelectorAll('form').forEach(form => {
+            // Skip filter forms - they handle their own button states
+            if (form.id === 'filter-form' || form.id === 'filter-form-mobile') {
+                return;
+            }
+
             form.addEventListener('submit', function() {
                 const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
                 if (submitBtn && !submitBtn.disabled) {

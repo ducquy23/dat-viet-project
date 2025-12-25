@@ -1252,8 +1252,23 @@
             // Update active filters display
             updateActiveFilters();
 
+            // Re-enable submit button immediately (ux-enhancements.js may have disabled it)
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.removeAttribute('disabled');
+                submitBtn.classList.remove('btn-loading');
+            }
+
             // Reload listings and update map markers
-            applyFiltersAndUpdateMap();
+            applyFiltersAndUpdateMap().finally(() => {
+                // Ensure button is enabled after API call completes
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.removeAttribute('disabled');
+                    submitBtn.classList.remove('btn-loading');
+                }
+            });
 
             // Close mobile filter offcanvas if open (only when submitting form via "Áp dụng bộ lọc")
             // This function is called from form submit, so it's safe to close
@@ -1265,6 +1280,12 @@
             // Re-initialize mobile filters after applying to ensure UI is in sync
             setTimeout(() => {
                 initializeMobileFiltersFromParams();
+                // Ensure button is still enabled
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.removeAttribute('disabled');
+                    submitBtn.classList.remove('btn-loading');
+                }
             }, 100);
         }
 
