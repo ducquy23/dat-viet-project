@@ -26,19 +26,25 @@
                         <i class="bi bi-headset"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <h6 class="mb-1 fw-bold text-primary">Hỗ trợ 24/7 - Công ty vận hành Đất Việt Map</h6>
-                        <p class="mb-0 text-muted small">Nếu cần hỗ trợ đăng tin, thanh toán hoặc xử lý sự cố, vui lòng liên hệ:</p>
+                        <h6 class="mb-1 fw-bold text-primary">Hỗ trợ 24/7 - Công ty vận hành {{ $settings->site_name ?? 'Đất Việt Map' }}</h6>
+                        <p class="mb-0 text-muted small">{{ $settings->support_message ?? 'Nếu cần hỗ trợ đăng tin, thanh toán hoặc xử lý sự cố, vui lòng liên hệ:' }}</p>
                     </div>
                     <div class="support-actions d-flex flex-column flex-sm-row gap-2">
-                        <a class="btn btn-outline-primary" href="tel:0909000888">
-                            <i class="bi bi-telephone-fill me-1"></i> Hotline: 0968425499
+                        @if($settings->hotline)
+                        <a class="btn btn-outline-primary" href="tel:{{ $settings->hotline }}">
+                            <i class="bi bi-telephone-fill me-1"></i> Hotline: {{ $settings->hotline }}
                         </a>
-                        <a class="btn btn-outline-success" href="https://zalo.me/0909000888" target="_blank" rel="noopener">
-                            <i class="bi bi-chat-dots-fill me-1"></i> Zalo: 0968425499
+                        @endif
+                        @if($settings->zalo)
+                        <a class="btn btn-outline-success" href="https://zalo.me/{{ $settings->zalo }}" target="_blank" rel="noopener">
+                            <i class="bi bi-chat-dots-fill me-1"></i> Zalo: {{ $settings->zalo }}
                         </a>
-                        <a class="btn btn-outline-secondary" href="mailto:support@datvietmap.vn">
-                            <i class="bi bi-envelope-fill me-1"></i> support@datvietmap.vn
+                        @endif
+                        @if($settings->support_email)
+                        <a class="btn btn-outline-secondary" href="mailto:{{ $settings->support_email }}">
+                            <i class="bi bi-envelope-fill me-1"></i> {{ $settings->support_email }}
                         </a>
+                        @endif
                     </div>
                 </div>
             </div>

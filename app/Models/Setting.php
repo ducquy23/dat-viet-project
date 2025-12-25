@@ -21,6 +21,21 @@ class Setting extends Model
         'vip_sort',
         'support_message',
     ];
+
+    /**
+     * Lấy settings hiện tại (record đầu tiên hoặc tạo mặc định)
+     */
+    public static function getCurrent(): self
+    {
+        return static::firstOrCreate(
+            ['id' => 1],
+            [
+                'site_name' => 'Đất Việt Map',
+                'vip_limit' => 10,
+                'vip_sort' => 'latest',
+            ]
+        );
+    }
 }
 
 

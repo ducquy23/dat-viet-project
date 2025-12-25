@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Listing;
+use App\Models\Setting;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
@@ -23,10 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (request()->header('X-Forwarded-Proto') === 'https') {
-            URL::forceScheme('https');
-        }
-        // Share VIP listings với tất cả views
+        // Share VIP listings và settings với tất cả views
         View::composer('*', function ($view) {
             $vipListings = Listing::active()
                 ->whereHas('package', function ($q) {
@@ -37,7 +35,12 @@ class AppServiceProvider extends ServiceProvider
                 ->take(10)
                 ->get();
 
-            $view->with('vipListings', $vipListings);
+            $settings = Setting::getCurrent();
+
+            $view->with([
+                'vipListings' => $vipListings,
+                'settings' => $settings,
+            ]);
         });
 
         // Register helper functions for price formatting
