@@ -772,22 +772,24 @@
                 return distanceToMin <= distanceToMax ? minInput : maxInput;
             }
 
-            // Handle mousedown to determine which slider to activate
-            wrapper.addEventListener('mousedown', function (e) {
+            // Helper function to handle pointer/touch start
+            function handlePointerStart(e) {
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+
                 // Only handle if clicking on the track area, not on the inputs directly
                 if (e.target === minInput || e.target === maxInput) {
                     activeInput = e.target;
                     isDragging = true;
-                    isPriceDragging = true; // ⬅️ BƯỚC 1: Set flag
+                    isPriceDragging = true;
                     return;
                 }
 
                 const rect = wrapper.getBoundingClientRect();
-                const percent = ((e.clientX - rect.left) / rect.width) * 100;
+                const percent = ((clientX - rect.left) / rect.width) * 100;
 
-                activeInput = getActiveInput(e.clientX);
+                activeInput = getActiveInput(clientX);
                 isDragging = true;
-                isPriceDragging = true; // ⬅️ BƯỚC 1: Set flag
+                isPriceDragging = true;
 
                 const minVal = parseInt(activeInput.min);
                 const maxVal = parseInt(activeInput.max);
@@ -803,20 +805,69 @@
 
                 activeInput.value = value;
                 activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-            });
+            }
+
+            // Handle mousedown to determine which slider to activate
+            wrapper.addEventListener('mousedown', handlePointerStart);
+
+            // Handle touchstart for mobile
+            wrapper.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                handlePointerStart(e);
+            }, { passive: false });
 
 
-            // Re-enable both inputs on mouseup
-            const handleMouseUp = function() {
+            // Re-enable both inputs on mouseup/touchend
+            const handlePointerEnd = function() {
                 minInput.style.zIndex = '5';
                 maxInput.style.zIndex = '6';
                 activeInput = null;
                 isDragging = false;
                 isPriceDragging = false; // ⬅️ BƯỚC 1: Reset flag
             };
-            document.addEventListener('mouseup', handleMouseUp);
-            wrapper.addEventListener('mouseup', handleMouseUp);
-            wrapper.addEventListener('mouseleave', handleMouseUp);
+            document.addEventListener('mouseup', handlePointerEnd);
+            wrapper.addEventListener('mouseup', handlePointerEnd);
+            wrapper.addEventListener('mouseleave', handlePointerEnd);
+
+            // Handle touch events for mobile
+            wrapper.addEventListener('touchmove', function(e) {
+                if (activeInput && isDragging) {
+                    e.preventDefault();
+                    const clientX = e.touches[0].clientX;
+                    const rect = wrapper.getBoundingClientRect();
+                    const x = clientX - rect.left;
+                    const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                    const minVal = parseInt(activeInput.min);
+                    const maxVal = parseInt(activeInput.max);
+                    let value = minVal + (percent / 100) * (maxVal - minVal);
+                    value = Math.round(value / 50) * 50; // Round to step (50 triệu)
+
+                    // Ensure value is within bounds
+                    value = Math.max(minVal, Math.min(maxVal, value));
+
+                    // Apply constraints
+                    if (activeInput === minInput) {
+                        const currentMax = parseInt(maxInput.value);
+                        value = Math.min(value, currentMax);
+                    } else {
+                        const currentMin = parseInt(minInput.value);
+                        value = Math.max(value, currentMin);
+                    }
+
+                    // Only update if value changed
+                    if (parseInt(activeInput.value) !== value) {
+                        activeInput.value = value;
+                        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            }, { passive: false });
+
+            wrapper.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                handlePointerEnd();
+            });
+
+            document.addEventListener('touchend', handlePointerEnd);
 
             // Add event listeners with proper min/max constraints
             minInput.addEventListener('input', function() {
@@ -994,6 +1045,7 @@
                     e.preventDefault();
                     e.stopPropagation();
 
+                    // Don't close the offcanvas - keep it open
                     // Get current filter values from mobile form
                     const mobileForm = document.getElementById('filter-form-mobile');
                     if (mobileForm) {
@@ -1048,6 +1100,12 @@
                     // Call locateUserAndPickNearest function
                     if (window.locateUserAndPickNearest) {
                         window.locateUserAndPickNearest();
+                    }
+
+                    // Explicitly prevent offcanvas from closing
+                    const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('filter-offcanvas'));
+                    if (offcanvas) {
+                        // Don't close - keep it open
                     }
                 });
             }
@@ -1145,7 +1203,8 @@
             // Reload listings and update map markers
             applyFiltersAndUpdateMap();
 
-            // Close mobile filter offcanvas if open
+            // Close mobile filter offcanvas if open (only when submitting form via "Áp dụng bộ lọc")
+            // This function is called from form submit, so it's safe to close
             const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('filter-offcanvas'));
             if (offcanvas) {
                 offcanvas.hide();
