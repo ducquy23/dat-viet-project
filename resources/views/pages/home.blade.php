@@ -598,6 +598,9 @@
         // Global flag to prevent sync during mobile select change
         let isMobileSelectChanging = false;
 
+        // Global flag to prevent API calls during "Tìm gần tôi"
+        let isLocatingUser = false;
+
         // Sync desktop and mobile filters
         function syncFilters(skipMobileToDesktop = false) {
             if (isPriceDragging) return;
@@ -1067,6 +1070,12 @@
                     e.preventDefault();
                     e.stopPropagation();
 
+                    // Prevent multiple API calls
+                    if (isLocatingUser) {
+                        return;
+                    }
+                    isLocatingUser = true;
+
                     // Get current filter values from mobile form
                     const mobileForm = document.getElementById('filter-form-mobile');
                     const params = new URLSearchParams();
@@ -1117,10 +1126,11 @@
                     }
 
                     // Update URL with current filters (only non-default values)
+                    // Use replaceState instead of pushState to avoid triggering popstate event
                     const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-                    window.history.pushState({}, '', newUrl);
+                    window.history.replaceState({ skipApiCall: true, isLocating: true }, '', newUrl);
 
-                    // Update active filters
+                    // Update active filters (without triggering API call)
                     updateActiveFilters();
 
                     // Close mobile filter offcanvas
@@ -1129,9 +1139,25 @@
                         offcanvas.hide();
                     }
 
-                    // Call locateUserAndPickNearest function
+                    // Call locateUserAndPickNearest function (this will call API once)
                     if (window.locateUserAndPickNearest) {
-                        window.locateUserAndPickNearest();
+                        // Call the function and reset flag after it completes
+                        const result = window.locateUserAndPickNearest();
+                        // If it returns a promise, wait for it
+                        if (result && typeof result.then === 'function') {
+                            result.finally(() => {
+                                setTimeout(() => {
+                                    isLocatingUser = false;
+                                }, 1000);
+                            });
+                        } else {
+                            // If not a promise, reset after a delay
+                            setTimeout(() => {
+                                isLocatingUser = false;
+                            }, 2000);
+                        }
+                    } else {
+                        isLocatingUser = false;
                     }
                 });
             }
@@ -1464,6 +1490,11 @@
 
         // Function to apply filters and update map markers
         async function applyFiltersAndUpdateMap() {
+            // Skip API call if currently locating user
+            if (isLocatingUser) {
+                return;
+            }
+
             // Call loadListings from app.js if available (it will read URL params automatically)
             if (window.loadListings) {
                 await window.loadListings(); // Empty filters object means read from URL
@@ -1544,27 +1575,47 @@
             const filterOffcanvas = document.getElementById('filter-offcanvas');
             if (filterOffcanvas) {
                 filterOffcanvas.addEventListener('shown.bs.offcanvas', function() {
-                    // Initialize from URL params first
+                    // Initialize price range from URL params first (this sets the values correctly)
+                    initializePriceRangeFromParams();
+                    // Initialize other mobile filters from URL params
                     initializeMobileFiltersFromParams();
                     // Then sync from desktop to ensure consistency
                     syncFilters();
-                    // Update price range display for mobile
-                    const minInputMobile = document.getElementById('filter-price-min-mobile');
-                    const maxInputMobile = document.getElementById('filter-price-max-mobile');
-                    if (minInputMobile && maxInputMobile) {
-                        const displayEl = document.getElementById('price-range-display-mobile');
-                        const wrapper = minInputMobile.closest('.price-range-slider-wrapper');
-                        const fillEl = wrapper?.querySelector('.price-range-fill');
-                        const minHandle = wrapper?.querySelector('.price-handle-min');
-                        const maxHandle = wrapper?.querySelector('.price-handle-max');
-                        updatePriceRange(minInputMobile, maxInputMobile, displayEl, fillEl, minHandle, maxHandle);
-                    }
+                    // Force update price range display for mobile after a small delay to ensure DOM is ready
+                    setTimeout(() => {
+                        const minInputMobile = document.getElementById('filter-price-min-mobile');
+                        const maxInputMobile = document.getElementById('filter-price-max-mobile');
+                        if (minInputMobile && maxInputMobile) {
+                            const displayEl = document.getElementById('price-range-display-mobile');
+                            const wrapper = minInputMobile.closest('.price-range-slider-wrapper');
+                            const fillEl = wrapper?.querySelector('.price-range-fill');
+                            const minHandle = wrapper?.querySelector('.price-handle-min');
+                            const maxHandle = wrapper?.querySelector('.price-handle-max');
+                            updatePriceRange(minInputMobile, maxInputMobile, displayEl, fillEl, minHandle, maxHandle);
+                        }
+                    }, 50);
                 });
             }
         });
 
         // Update filters when URL changes
-        window.addEventListener('popstate', function() {
+        window.addEventListener('popstate', function(e) {
+            // Skip API call if state indicates it should be skipped (e.g., from "Tìm gần tôi")
+            if (e.state && (e.state.skipApiCall || e.state.isLocating)) {
+                updateActiveFilters();
+                initializePriceRangeFromParams();
+                initializeMobileFiltersFromParams();
+                return;
+            }
+
+            // Skip if currently locating user
+            if (isLocatingUser) {
+                updateActiveFilters();
+                initializePriceRangeFromParams();
+                initializeMobileFiltersFromParams();
+                return;
+            }
+
             updateActiveFilters();
             initializePriceRangeFromParams();
             initializeMobileFiltersFromParams();
