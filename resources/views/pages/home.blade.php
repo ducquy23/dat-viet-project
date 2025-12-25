@@ -1072,9 +1072,9 @@
 
                     // Prevent multiple API calls
                     if (isLocatingUser) {
-                        return;
+                        return; // Nếu đang gọi API, ngừng không gọi lại
                     }
-                    isLocatingUser = true;
+                    isLocatingUser = true;  // Đặt flag cho biết API đang được gọi
 
                     // Get current filter values from mobile form
                     const mobileForm = document.getElementById('filter-form-mobile');
@@ -1115,12 +1115,10 @@
                         // Only add max_price if it's not default (unlimited) or was already in URL
                         if (maxInput) {
                             const maxMillion = parseInt(maxInput.value) || defaultMax;
-                            if (maxMillion < defaultMax || currentMaxPrice) {
-                                if (maxMillion >= defaultMax) {
-                                    // Don't add unlimited to URL
-                                } else {
-                                    params.set('max_price', maxMillion * 1_000_000);
-                                }
+                            if (maxMillion >= defaultMax) {
+                                // Don't add unlimited to URL
+                            } else {
+                                params.set('max_price', maxMillion * 1_000_000);
                             }
                         }
                     }
@@ -1147,17 +1145,17 @@
                         if (result && typeof result.then === 'function') {
                             result.finally(() => {
                                 setTimeout(() => {
-                                    isLocatingUser = false;
+                                    isLocatingUser = false; // Reset flag when done
                                 }, 1000);
                             });
                         } else {
                             // If not a promise, reset after a delay
                             setTimeout(() => {
-                                isLocatingUser = false;
+                                isLocatingUser = false; // Reset flag when done
                             }, 2000);
                         }
                     } else {
-                        isLocatingUser = false;
+                        isLocatingUser = false; // Reset flag if function doesn't exist
                     }
                 });
             }
