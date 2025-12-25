@@ -1,11 +1,11 @@
 <!-- Mobile Filter Toggle Button -->
-<button class="btn btn-primary d-md-none position-fixed bottom-0 start-0 m-3 rounded-circle shadow-lg" 
-        id="mobile-filter-toggle" 
+<button class="btn btn-primary d-md-none position-fixed bottom-0 start-0 m-3 rounded-circle shadow-lg"
+        id="mobile-filter-toggle"
         style="width: 56px; height: 56px; z-index: 1000;"
-        data-bs-toggle="offcanvas" 
+        data-bs-toggle="offcanvas"
         data-bs-target="#filter-offcanvas"
         aria-controls="filter-offcanvas">
-    <i class="bi bi-funnel-fill"></i>
+    <i class="bi bi-search"></i>
     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="mobile-filter-badge" style="display: none;">0</span>
 </button>
 
@@ -79,25 +79,25 @@
                         <div class="price-range-track" style="height: 6px; background: #e9ecef; border-radius: 3px; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);">
                             <div class="price-range-fill" style="height: 100%; background: #335793; border-radius: 3px; position: absolute; left: 0%; right: 0%;"></div>
                         </div>
-                        <input 
-                            type="range" 
-                            class="form-range price-range-input price-range-min" 
-                            min="50" 
-                            max="50000" 
-                            step="50" 
-                            id="filter-price-min" 
+                        <input
+                            type="range"
+                            class="form-range price-range-input price-range-min"
+                            min="50"
+                            max="50000"
+                            step="50"
+                            id="filter-price-min"
                             name="min_price_million"
                             data-price-type="min"
                             value="{{ request('min_price') ? round(request('min_price') / 1000000) : 50 }}"
                             style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
                         <input type="hidden" name="min_price" id="min_price_hidden" value="{{ request('min_price') ? request('min_price') : (50 * 1000000) }}">
-                        <input 
-                            type="range" 
-                            class="form-range price-range-input price-range-max" 
-                            min="50" 
-                            max="50000" 
-                            step="50" 
-                            id="filter-price-max" 
+                        <input
+                            type="range"
+                            class="form-range price-range-input price-range-max"
+                            min="50"
+                            max="50000"
+                            step="50"
+                            id="filter-price-max"
                             name="max_price_million"
                             data-price-type="max"
                             value="{{ request('max_price') ? round(request('max_price') / 1000000) : 50000 }}"
@@ -205,25 +205,25 @@
                             <div class="price-range-track" style="height: 6px; background: #e9ecef; border-radius: 3px; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);">
                                 <div class="price-range-fill" style="height: 100%; background: #335793; border-radius: 3px; position: absolute; left: 0%; right: 0%;"></div>
                             </div>
-                            <input 
-                                type="range" 
-                                class="form-range price-range-input price-range-min" 
-                                min="50" 
-                                max="50000" 
-                                step="50" 
-                                id="filter-price-min-mobile" 
+                            <input
+                                type="range"
+                                class="form-range price-range-input price-range-min"
+                                min="50"
+                                max="50000"
+                                step="50"
+                                id="filter-price-min-mobile"
                                 name="min_price_million"
                                 data-price-type="min"
                                 value="{{ request('min_price') ? round(request('min_price') / 1000000) : 50 }}"
                                 style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
                             <input type="hidden" name="min_price" id="min_price_hidden_mobile" value="{{ request('min_price') ? request('min_price') : (50 * 1000000) }}">
-                            <input 
-                                type="range" 
-                                class="form-range price-range-input price-range-max" 
-                                min="50" 
-                                max="50000" 
-                                step="50" 
-                                id="filter-price-max-mobile" 
+                            <input
+                                type="range"
+                                class="form-range price-range-input price-range-max"
+                                min="50"
+                                max="50000"
+                                step="50"
+                                id="filter-price-max-mobile"
                                 name="max_price_million"
                                 data-price-type="max"
                                 value="{{ request('max_price') ? round(request('max_price') / 1000000) : 50000 }}"

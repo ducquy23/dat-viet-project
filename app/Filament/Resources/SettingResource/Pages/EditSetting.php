@@ -10,3 +10,4 @@ class EditSetting extends EditRecord
     protected static string $resource = SettingResource::class;
 }
 
+

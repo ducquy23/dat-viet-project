@@ -10,3 +10,4 @@ class CreateSetting extends CreateRecord
     protected static string $resource = SettingResource::class;
 }
 
+

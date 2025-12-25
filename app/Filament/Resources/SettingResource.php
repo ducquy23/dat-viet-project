@@ -133,3 +133,4 @@ class SettingResource extends Resource
     }
 }
 
+

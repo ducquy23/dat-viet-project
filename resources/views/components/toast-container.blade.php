@@ -52,3 +52,4 @@ window.showToast = function(message, type = 'info', duration = 3000) {
 </script>
 @endpush
 
+
