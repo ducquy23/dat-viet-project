@@ -332,13 +332,30 @@ class ListingResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['primaryImage', 'images']))
             ->columns([
                 Tables\Columns\ImageColumn::make('thumbnail')
                     ->label('Ảnh đại diện')
                     ->disk('public')
                     ->circular()
                     ->size(50)
-                    ->defaultImageUrl(asset('images/Image-not-found.png')),
+                    ->defaultImageUrl(asset('images/Image-not-found.png'))
+                    ->getStateUsing(function ($record) {
+                        // Thử lấy từ field thumbnail trước
+                        if ($record->thumbnail) {
+                            return $record->thumbnail;
+                        }
+                        // Nếu không có, lấy từ primaryImage
+                        if ($record->primaryImage) {
+                            return $record->primaryImage->thumbnail_path ?? $record->primaryImage->image_path;
+                        }
+                        // Nếu không có primaryImage, lấy ảnh đầu tiên trong gallery
+                        $firstImage = $record->images()->first();
+                        if ($firstImage) {
+                            return $firstImage->thumbnail_path ?? $firstImage->image_path;
+                        }
+                        return null;
+                    }),
                 Tables\Columns\TextColumn::make('stt')
                     ->label('STT')
                     ->getStateUsing(function ($record, $livewire) {
