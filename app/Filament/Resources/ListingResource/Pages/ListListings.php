@@ -9,6 +9,8 @@ use Filament\Resources\Pages\ListRecords;
 class ListListings extends ListRecords
 {
     protected static string $resource = ListingResource::class;
+    
+    public $sttCounter = 0;
 
     protected function getHeaderActions(): array
     {
@@ -16,5 +18,11 @@ class ListListings extends ListRecords
             // Không cho tạo tin mới từ admin - đối tác tự đăng
             // Actions\CreateAction::make(),
         ];
+    }
+    
+    public function mount(): void
+    {
+        parent::mount();
+        $this->sttCounter = 0;
     }
 }

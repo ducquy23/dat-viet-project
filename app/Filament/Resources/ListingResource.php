@@ -12,6 +12,8 @@ use App\Models\District;
 use App\Models\Package;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -337,13 +339,26 @@ class ListingResource extends Resource
                 Tables\Columns\TextColumn::make('stt')
                     ->label('STT')
                     ->getStateUsing(function ($record, $livewire) {
-                        if (!isset($livewire->tableRecords)) {
+                        // Lấy records hiện tại
+                        $records = $livewire->getTableRecords();
+                        
+                        if (!$records || $records->isEmpty()) {
                             return '';
                         }
-                        $records = $livewire->tableRecords;
-                        $index = $records->search($record);
-                        $page = $records->currentPage() ?? 1;
-                        $perPage = $records->perPage() ?? 10;
+                        
+                        // Tìm index của record trong collection
+                        $index = $records->values()->search(function ($item) use ($record) {
+                            return $item->id === $record->id;
+                        });
+                        
+                        if ($index === false) {
+                            return '';
+                        }
+                        
+                        // Tính STT
+                        $page = max(1, (int) request()->get('page', 1));
+                        $perPage = (int) ($livewire->tableRecordsPerPage ?? 10);
+                        
                         return ($page - 1) * $perPage + $index + 1;
                     })
                     ->sortable(false),
@@ -503,6 +518,219 @@ class ListingResource extends Resource
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Thông tin cơ bản')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('title')
+                            ->label('Tiêu đề')
+                            ->columnSpanFull()
+                            ->size(Infolists\Components\TextEntry\TextEntrySize::Large),
+                        Infolists\Components\TextEntry::make('description')
+                            ->label('Mô tả')
+                            ->columnSpanFull()
+                            ->html(),
+                        Infolists\Components\TextEntry::make('user.name')
+                            ->label('Đối tác'),
+                        Infolists\Components\TextEntry::make('category.name')
+                            ->label('Danh mục'),
+                        Infolists\Components\TextEntry::make('city.name')
+                            ->label('Tỉnh/Thành phố'),
+                        Infolists\Components\TextEntry::make('district.name')
+                            ->label('Quận/Huyện'),
+                        Infolists\Components\TextEntry::make('package.name')
+                            ->label('Gói đăng tin'),
+                        Infolists\Components\TextEntry::make('status')
+                            ->label('Trạng thái')
+                            ->badge()
+                            ->color(fn (string $state): string => match ($state) {
+                                'approved' => 'success',
+                                'pending' => 'warning',
+                                'rejected' => 'danger',
+                                'expired' => 'gray',
+                                'sold' => 'info',
+                                default => 'gray',
+                            })
+                            ->formatStateUsing(fn (string $state): string => match ($state) {
+                                'draft' => 'Nháp',
+                                'pending' => 'Chờ duyệt',
+                                'approved' => 'Đã duyệt',
+                                'rejected' => 'Từ chối',
+                                'expired' => 'Hết hạn',
+                                'sold' => 'Đã bán',
+                                default => $state,
+                            }),
+                    ])
+                    ->columns(2),
+                
+                Infolists\Components\Section::make('Thông tin giá và diện tích')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('price')
+                            ->label('Giá')
+                            ->formatStateUsing(fn ($state) => formatPrice($state)),
+                        Infolists\Components\TextEntry::make('price_per_m2')
+                            ->label('Đơn giá /m²')
+                            ->formatStateUsing(function ($state, $record) {
+                                if (!$state && $record->price && $record->area && $record->area > 0) {
+                                    return formatPricePerM2(null, $record->price, $record->area);
+                                }
+                                return $state ? formatPricePerM2($state) : '-';
+                            }),
+                        Infolists\Components\TextEntry::make('area')
+                            ->label('Diện tích')
+                            ->suffix(' m²'),
+                        Infolists\Components\TextEntry::make('front_width')
+                            ->label('Mặt tiền')
+                            ->formatStateUsing(fn ($state) => $state ? $state . ' m' : '-'),
+                        Infolists\Components\TextEntry::make('depth')
+                            ->label('Chiều sâu')
+                            ->formatStateUsing(fn ($state) => $state ? $state . ' m' : '-'),
+                    ])
+                    ->columns(3),
+                
+                Infolists\Components\Section::make('Thông tin pháp lý và đường')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('legal_status')
+                            ->label('Tình trạng pháp lý')
+                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                        Infolists\Components\TextEntry::make('road_type')
+                            ->label('Loại đường')
+                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                        Infolists\Components\TextEntry::make('road_width')
+                            ->label('Độ rộng đường')
+                            ->formatStateUsing(fn ($state) => $state ? $state . ' m' : '-'),
+                        Infolists\Components\TextEntry::make('direction')
+                            ->label('Hướng')
+                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                        Infolists\Components\IconEntry::make('has_road_access')
+                            ->label('Có đường ô tô vào')
+                            ->boolean(),
+                    ])
+                    ->columns(3),
+                
+                Infolists\Components\Section::make('Thông tin liên hệ')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('contact_name')
+                            ->label('Tên người liên hệ'),
+                        Infolists\Components\TextEntry::make('contact_phone')
+                            ->label('Số điện thoại')
+                            ->copyable()
+                            ->copyMessage('Đã sao chép số điện thoại'),
+                        Infolists\Components\TextEntry::make('contact_zalo')
+                            ->label('Zalo')
+                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                    ])
+                    ->columns(3),
+                
+                Infolists\Components\Section::make('Hình ảnh')
+                    ->schema([
+                        Infolists\Components\ImageEntry::make('thumbnail')
+                            ->label('Ảnh đại diện')
+                            ->disk('public')
+                            ->getStateUsing(function ($record) {
+                                if ($record->thumbnail) {
+                                    return $record->thumbnail;
+                                }
+                                if ($record->primaryImage) {
+                                    return $record->primaryImage->thumbnail_path ?? $record->primaryImage->image_path;
+                                }
+                                $firstImage = $record->images()->first();
+                                return $firstImage ? ($firstImage->thumbnail_path ?? $firstImage->image_path) : null;
+                            })
+                            ->columnSpanFull(),
+                        Infolists\Components\ViewEntry::make('gallery')
+                            ->label('Gallery ảnh')
+                            ->view('filament.infolists.components.image-gallery')
+                            ->columnSpanFull()
+                            ->getStateUsing(function ($record) {
+                                // Load images nếu chưa được load
+                                $images = $record->relationLoaded('images') 
+                                    ? $record->images 
+                                    : $record->images()->get();
+                                
+                                return $images->map(function ($image) {
+                                    return [
+                                        'url' => $image->thumbnail_path ?? $image->image_path,
+                                        'full_url' => $image->image_path,
+                                    ];
+                                })->toArray();
+                            }),
+                    ])
+                    ->collapsible(),
+                
+                Infolists\Components\Section::make('Vị trí trên bản đồ')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('address')
+                            ->label('Địa chỉ')
+                            ->columnSpanFull(),
+                        Infolists\Components\TextEntry::make('latitude')
+                            ->label('Vĩ độ'),
+                        Infolists\Components\TextEntry::make('longitude')
+                            ->label('Kinh độ'),
+                        Infolists\Components\ViewEntry::make('map')
+                            ->label('Bản đồ')
+                            ->view('filament.infolists.components.google-map')
+                            ->columnSpanFull()
+                            ->getStateUsing(function ($record) {
+                                return [
+                                    'latitude' => $record->latitude,
+                                    'longitude' => $record->longitude,
+                                    'address' => $record->address,
+                                    'title' => $record->title,
+                                ];
+                            }),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
+                
+                Infolists\Components\Section::make('Thông tin khác')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('planning_info')
+                            ->label('Thông tin quy hoạch')
+                            ->columnSpanFull()
+                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                        Infolists\Components\IconEntry::make('deposit_online')
+                            ->label('Có đặt cọc online')
+                            ->boolean(),
+                        Infolists\Components\TextEntry::make('meta_description')
+                            ->label('Mô tả SEO')
+                            ->columnSpanFull()
+                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                        Infolists\Components\TextEntry::make('slug')
+                            ->label('Slug (URL)')
+                            ->columnSpanFull()
+                            ->copyable(),
+                    ])
+                    ->collapsible(),
+                
+                Infolists\Components\Section::make('Thống kê')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('views_count')
+                            ->label('Lượt xem')
+                            ->formatStateUsing(fn ($state) => number_format($state ?? 0)),
+                        Infolists\Components\TextEntry::make('favorites_count')
+                            ->label('Lượt yêu thích')
+                            ->formatStateUsing(fn ($state) => number_format($state ?? 0)),
+                        Infolists\Components\TextEntry::make('contacts_count')
+                            ->label('Lượt liên hệ')
+                            ->formatStateUsing(fn ($state) => number_format($state ?? 0)),
+                        Infolists\Components\TextEntry::make('created_at')
+                            ->label('Ngày đăng')
+                            ->dateTime('d/m/Y H:i'),
+                        Infolists\Components\TextEntry::make('approved_at')
+                            ->label('Ngày duyệt')
+                            ->formatStateUsing(fn ($state) => $state ? $state->format('d/m/Y H:i') : '-'),
+                        Infolists\Components\TextEntry::make('expires_at')
+                            ->label('Ngày hết hạn')
+                            ->formatStateUsing(fn ($state) => $state ? $state->format('d/m/Y H:i') : '-'),
+                    ])
+                    ->columns(3)
+                    ->collapsible(),
+            ]);
     }
 
     public static function getRelations(): array
