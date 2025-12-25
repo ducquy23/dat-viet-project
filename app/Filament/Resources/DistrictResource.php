@@ -134,4 +134,9 @@ class DistrictResource extends Resource
             'edit' => Pages\EditDistrict::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
 }
