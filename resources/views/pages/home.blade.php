@@ -1045,35 +1045,17 @@
                     e.preventDefault();
                     e.stopPropagation();
 
-                    // Don't close the offcanvas - keep it open
                     // Get current filter values from mobile form
                     const mobileForm = document.getElementById('filter-form-mobile');
+                    const params = new URLSearchParams();
+
                     if (mobileForm) {
-                        // Update price hidden inputs first
-                        const minInput = document.getElementById('filter-price-min-mobile');
-                        const maxInput = document.getElementById('filter-price-max-mobile');
-                        const minHidden = mobileForm.querySelector('#min_price_hidden_mobile');
-                        const maxHidden = mobileForm.querySelector('#max_price_hidden_mobile');
-
-                        if (minInput && minHidden) {
-                            const minMillion = parseInt(minInput.value) || 50;
-                            minHidden.value = minMillion * 1_000_000;
-                        }
-                        if (maxInput && maxHidden) {
-                            const maxMillion = parseInt(maxInput.value) || 50000;
-                            if (maxMillion >= 50000) {
-                                maxHidden.value = '';
-                            } else {
-                                maxHidden.value = maxMillion * 1_000_000;
-                            }
-                        }
-
                         const formData = new FormData(mobileForm);
-                        const params = new URLSearchParams();
 
-                        // Collect current filter values
+                        // Collect current filter values (excluding price if default)
                         for (const [key, value] of formData.entries()) {
-                            if (key === 'min_price_million' || key === 'max_price_million') {
+                            // Skip price inputs - we'll handle them separately
+                            if (key === 'min_price_million' || key === 'max_price_million' || key === 'min_price' || key === 'max_price') {
                                 continue;
                             }
                             if (value && value.trim() !== '') {
@@ -1081,31 +1063,53 @@
                             }
                         }
 
-                        // Get price from hidden inputs
-                        if (minHidden && minHidden.value) {
-                            params.set('min_price', minHidden.value);
-                        }
-                        if (maxHidden && maxHidden.value) {
-                            params.set('max_price', maxHidden.value);
+                        // Only add price if user has changed from default
+                        const minInput = document.getElementById('filter-price-min-mobile');
+                        const maxInput = document.getElementById('filter-price-max-mobile');
+                        const currentParams = new URLSearchParams(window.location.search);
+                        const currentMinPrice = currentParams.get('min_price');
+                        const currentMaxPrice = currentParams.get('max_price');
+
+                        const defaultMin = 50;
+                        const defaultMax = 50000;
+
+                        // Only add min_price if it's not default or was already in URL
+                        if (minInput) {
+                            const minMillion = parseInt(minInput.value) || defaultMin;
+                            if (minMillion !== defaultMin || currentMinPrice) {
+                                params.set('min_price', minMillion * 1_000_000);
+                            }
                         }
 
-                        // Update URL with current filters
-                        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-                        window.history.pushState({}, '', newUrl);
+                        // Only add max_price if it's not default (unlimited) or was already in URL
+                        if (maxInput) {
+                            const maxMillion = parseInt(maxInput.value) || defaultMax;
+                            if (maxMillion < defaultMax || currentMaxPrice) {
+                                if (maxMillion >= defaultMax) {
+                                    // Don't add unlimited to URL
+                                } else {
+                                    params.set('max_price', maxMillion * 1_000_000);
+                                }
+                            }
+                        }
+                    }
 
-                        // Update active filters
-                        updateActiveFilters();
+                    // Update URL with current filters (only non-default values)
+                    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                    window.history.pushState({}, '', newUrl);
+
+                    // Update active filters
+                    updateActiveFilters();
+
+                    // Close mobile filter offcanvas
+                    const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('filter-offcanvas'));
+                    if (offcanvas) {
+                        offcanvas.hide();
                     }
 
                     // Call locateUserAndPickNearest function
                     if (window.locateUserAndPickNearest) {
                         window.locateUserAndPickNearest();
-                    }
-
-                    // Explicitly prevent offcanvas from closing
-                    const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('filter-offcanvas'));
-                    if (offcanvas) {
-                        // Don't close - keep it open
                     }
                 });
             }
