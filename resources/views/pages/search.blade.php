@@ -193,7 +193,7 @@
                             <!-- Pagination -->
                             @if($listings->total() > 12)
                                 <div class="mt-4">
-                                    {{ $listings->links() }}
+                                    {{ $listings->links('pagination::bootstrap-4') }}
                                 </div>
                             @endif
                         </div>
