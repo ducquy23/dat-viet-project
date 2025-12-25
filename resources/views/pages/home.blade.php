@@ -698,36 +698,58 @@
 
         // Update price range slider UI
         function updatePriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle) {
-            const min = parseInt(minInput.value);
-            const max = parseInt(maxInput.value);
-            const minVal = parseInt(minInput.min);
-            const maxVal = parseInt(maxInput.max);
+            if (!minInput || !maxInput) return;
 
-            const minPercent = ((min - minVal) / (maxVal - minVal)) * 100;
-            const maxPercent = ((max - minVal) / (maxVal - minVal)) * 100;
+            const min = parseInt(minInput.value) || parseInt(minInput.min) || 50;
+            const max = parseInt(maxInput.value) || parseInt(maxInput.max) || 50000;
+            const minVal = parseInt(minInput.min) || 50;
+            const maxVal = parseInt(maxInput.max) || 50000;
 
+            // Ensure values are within bounds
+            const clampedMin = Math.max(minVal, Math.min(maxVal, min));
+            const clampedMax = Math.max(minVal, Math.min(maxVal, max));
+
+            // Ensure min <= max
+            const finalMin = Math.min(clampedMin, clampedMax);
+            const finalMax = Math.max(clampedMin, clampedMax);
+
+            // Calculate percentages
+            const minPercent = ((finalMin - minVal) / (maxVal - minVal)) * 100;
+            const maxPercent = ((finalMax - minVal) / (maxVal - minVal)) * 100;
+
+            // Update fill bar
             if (fillEl) {
-                fillEl.style.left = minPercent + '%';
-                fillEl.style.right = (100 - maxPercent) + '%';
+                fillEl.style.left = Math.max(0, Math.min(100, minPercent)) + '%';
+                fillEl.style.right = Math.max(0, Math.min(100, 100 - maxPercent)) + '%';
             }
 
-            if (minHandle) minHandle.style.left = minPercent + '%';
-            if (maxHandle) maxHandle.style.left = maxPercent + '%';
+            // Update handles
+            if (minHandle) {
+                minHandle.style.left = Math.max(0, Math.min(100, minPercent)) + '%';
+            }
+            if (maxHandle) {
+                maxHandle.style.left = Math.max(0, Math.min(100, maxPercent)) + '%';
+            }
 
+            // Update display text
             if (displayEl) {
-                const maxLabel = max >= 50000 ? 'Không giới hạn' : formatPrice(max);
-                displayEl.textContent = `${formatPrice(min)} - ${maxLabel}`;
+                const maxLabel = finalMax >= 50000 ? 'Không giới hạn' : formatPrice(finalMax);
+                displayEl.textContent = `${formatPrice(finalMin)} - ${maxLabel}`;
             }
 
-            const minHidden = document.getElementById('min_price_hidden') || document.getElementById('min_price_hidden_mobile');
-            const maxHidden = document.getElementById('max_price_hidden') || document.getElementById('max_price_hidden_mobile');
-            if (minHidden) minHidden.value = min * 1_000_000;
-            // If max is 50000 (unlimited), set a very high value or empty
+            // Update hidden inputs (only if they exist and match the current slider)
+            const isMobile = minInput.id.includes('mobile');
+            const minHidden = isMobile ? document.getElementById('min_price_hidden_mobile') : document.getElementById('min_price_hidden');
+            const maxHidden = isMobile ? document.getElementById('max_price_hidden_mobile') : document.getElementById('max_price_hidden');
+
+            if (minHidden) {
+                minHidden.value = finalMin * 1_000_000;
+            }
             if (maxHidden) {
-                if (max >= 50000) {
+                if (finalMax >= 50000) {
                     maxHidden.value = ''; // Empty means no limit
                 } else {
-                    maxHidden.value = max * 1_000_000;
+                    maxHidden.value = finalMax * 1_000_000;
                 }
             }
         }
@@ -1393,7 +1415,7 @@
             let minPriceMillion = minPrice ? Math.round(minPrice / 1000000) : 50;
             let maxPriceMillion = maxPrice && maxPrice !== '' ? Math.round(maxPrice / 1000000) : 50000;
 
-            // Validate and fix min/max order
+            // Ensure min <= max
             if (minPriceMillion > maxPriceMillion && maxPrice) {
                 // Swap if reversed
                 const temp = minPriceMillion;
@@ -1405,28 +1427,38 @@
             const minInputDesktop = document.getElementById('filter-price-min');
             const maxInputDesktop = document.getElementById('filter-price-max');
             if (minInputDesktop && maxInputDesktop) {
+                // Set values first
                 minInputDesktop.value = minPriceMillion;
                 maxInputDesktop.value = maxPriceMillion;
-                const displayEl = document.getElementById('price-range-display');
-                const wrapper = minInputDesktop.closest('.price-range-slider-wrapper');
-                const fillEl = wrapper?.querySelector('.price-range-fill');
-                const minHandle = wrapper?.querySelector('.price-handle-min');
-                const maxHandle = wrapper?.querySelector('.price-handle-max');
-                updatePriceRange(minInputDesktop, maxInputDesktop, displayEl, fillEl, minHandle, maxHandle);
+
+                // Force a small delay to ensure DOM is updated
+                setTimeout(() => {
+                    const displayEl = document.getElementById('price-range-display');
+                    const wrapper = minInputDesktop.closest('.price-range-slider-wrapper');
+                    const fillEl = wrapper?.querySelector('.price-range-fill');
+                    const minHandle = wrapper?.querySelector('.price-handle-min');
+                    const maxHandle = wrapper?.querySelector('.price-handle-max');
+                    updatePriceRange(minInputDesktop, maxInputDesktop, displayEl, fillEl, minHandle, maxHandle);
+                }, 10);
             }
 
             // Mobile
             const minInputMobile = document.getElementById('filter-price-min-mobile');
             const maxInputMobile = document.getElementById('filter-price-max-mobile');
             if (minInputMobile && maxInputMobile) {
+                // Set values first
                 minInputMobile.value = minPriceMillion;
                 maxInputMobile.value = maxPriceMillion;
-                const displayEl = document.getElementById('price-range-display-mobile');
-                const wrapper = minInputMobile.closest('.price-range-slider-wrapper');
-                const fillEl = wrapper?.querySelector('.price-range-fill');
-                const minHandle = wrapper?.querySelector('.price-handle-min');
-                const maxHandle = wrapper?.querySelector('.price-handle-max');
-                updatePriceRange(minInputMobile, maxInputMobile, displayEl, fillEl, minHandle, maxHandle);
+
+                // Force a small delay to ensure DOM is updated
+                setTimeout(() => {
+                    const displayEl = document.getElementById('price-range-display-mobile');
+                    const wrapper = minInputMobile.closest('.price-range-slider-wrapper');
+                    const fillEl = wrapper?.querySelector('.price-range-fill');
+                    const minHandle = wrapper?.querySelector('.price-handle-min');
+                    const maxHandle = wrapper?.querySelector('.price-handle-max');
+                    updatePriceRange(minInputMobile, maxInputMobile, displayEl, fillEl, minHandle, maxHandle);
+                }, 10);
             }
         }
 
