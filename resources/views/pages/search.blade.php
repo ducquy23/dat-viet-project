@@ -36,12 +36,6 @@
                             @if($filters['category'])
                                 <input type="hidden" name="category" value="{{ $filters['category'] }}">
                             @endif
-                            @if($filters['min_price'])
-                                <input type="hidden" name="min_price" value="{{ $filters['min_price'] }}">
-                            @endif
-                            @if($filters['max_price'])
-                                <input type="hidden" name="max_price" value="{{ $filters['max_price'] }}">
-                            @endif
                             @if($filters['vip'])
                                 <input type="hidden" name="vip" value="{{ $filters['vip'] }}">
                             @endif
@@ -121,51 +115,6 @@
                                         </option>
                                     @endforeach
                                 </select>
-                            </div>
-
-                            <!-- Khoảng giá -->
-                            <div class="mb-3 price-filter-section">
-                                <div class="price-filter-header d-flex align-items-center justify-content-between mb-2" style="cursor: pointer;" onclick="toggleSearchPriceFilter(this)">
-                                    <label class="form-label fw-semibold mb-0" style="color: #335793;">Lọc theo giá</label>
-                                    <i class="bi bi-chevron-down price-filter-icon" style="color: #000;"></i>
-                                </div>
-                                <div class="price-filter-content" style="display: block;">
-                                    <div class="price-range-slider-wrapper position-relative mb-3" style="height: 30px; padding: 12px 0;">
-                                        <div class="price-range-track" style="height: 6px; background: #e9ecef; border-radius: 3px; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);">
-                                            <div class="price-range-fill" style="height: 100%; background: #335793; border-radius: 3px; position: absolute; left: 0%; right: 0%;"></div>
-                                        </div>
-                                        <input
-                                            type="range"
-                                            class="form-range price-range-input price-range-min"
-                                            min="50"
-                                            max="50000"
-                                            step="50"
-                                            id="search-filter-price-min"
-                                            data-price-type="min"
-                                            value="{{ $filters['min_price'] ? round($filters['min_price'] / 1000000) : 50 }}"
-                                            style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 5;">
-                                        <input type="hidden" name="min_price" id="search_min_price_hidden" value="{{ $filters['min_price'] ?? '' }}">
-                                        <input
-                                            type="range"
-                                            class="form-range price-range-input price-range-max"
-                                            min="50"
-                                            max="50000"
-                                            step="50"
-                                            id="search-filter-price-max"
-                                            data-price-type="max"
-                                            value="{{ $filters['max_price'] ? round($filters['max_price'] / 1000000) : 50000 }}"
-                                            style="position: absolute; top: 50%; left: 0; width: 100%; height: 30px; margin: 0; padding: 0; transform: translateY(-50%); opacity: 0; cursor: pointer; z-index: 6;">
-                                        <input type="hidden" name="max_price" id="search_max_price_hidden" value="{{ $filters['max_price'] ?? '' }}">
-                                        <div class="price-range-handles" style="position: absolute; top: 50%; left: 0; right: 0; height: 30px; transform: translateY(-50%); pointer-events: none; z-index: 1;">
-                                            <div class="price-handle price-handle-min" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #335793; border-radius: 50%; top: 50%; left: 0%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
-                                            <div class="price-handle price-handle-max" style="position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid #335793; border-radius: 50%; top: 50%; left: 100%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
-                                        </div>
-                                    </div>
-                                    <div class="price-range-display">
-                                        <span class="text-dark fw-semibold">Giá: </span>
-                                        <span class="text-dark" id="search-price-range-display">đ50 triệu - Không giới hạn</span>
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- Buttons -->
@@ -482,194 +431,6 @@
             }
         }
 
-        // Update price range slider UI
-        function updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle) {
-            const min = parseInt(minInput.value);
-            const max = parseInt(maxInput.value);
-            const minVal = parseInt(minInput.min);
-            const maxVal = parseInt(maxInput.max);
-
-            const minPercent = ((min - minVal) / (maxVal - minVal)) * 100;
-            const maxPercent = ((max - minVal) / (maxVal - minVal)) * 100;
-
-            if (fillEl) {
-                fillEl.style.left = minPercent + '%';
-                fillEl.style.right = (100 - maxPercent) + '%';
-            }
-
-            if (minHandle) minHandle.style.left = minPercent + '%';
-            if (maxHandle) maxHandle.style.left = maxPercent + '%';
-
-            if (displayEl) {
-                const maxLabel = max >= 50000 ? 'Không giới hạn' : formatPrice(max);
-                displayEl.textContent = `${formatPrice(min)} - ${maxLabel}`;
-            }
-
-            const minHidden = document.getElementById('search_min_price_hidden');
-            const maxHidden = document.getElementById('search_max_price_hidden');
-            if (minHidden) minHidden.value = min * 1_000_000;
-            if (maxHidden) {
-                if (max >= 50000) {
-                    maxHidden.value = '';
-                } else {
-                    maxHidden.value = max * 1_000_000;
-                }
-            }
-        }
-
-        // Setup price range slider for search page
-        function setupSearchPriceRangeSlider() {
-            const minInput = document.getElementById('search-filter-price-min');
-            const maxInput = document.getElementById('search-filter-price-max');
-            const displayEl = document.getElementById('search-price-range-display');
-            const wrapper = minInput?.closest('.price-range-slider-wrapper');
-            const fillEl = wrapper?.querySelector('.price-range-fill');
-            const minHandle = wrapper?.querySelector('.price-handle-min');
-            const maxHandle = wrapper?.querySelector('.price-handle-max');
-
-            if (!minInput || !maxInput) return;
-
-            let activeInput = null;
-            let isPriceDragging = false;
-
-            // Initial update
-            updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
-
-            function getActiveInput(x) {
-                const rect = wrapper.getBoundingClientRect();
-                const percent = ((x - rect.left) / rect.width) * 100;
-
-                const min = parseInt(minInput.value);
-                const max = parseInt(maxInput.value);
-                const minVal = parseInt(minInput.min);
-                const maxVal = parseInt(minInput.max);
-                const minPercent = ((min - minVal) / (maxVal - minVal)) * 100;
-                const maxPercent = ((max - minVal) / (maxVal - minVal)) * 100;
-
-                const distanceToMin = Math.abs(percent - minPercent);
-                const distanceToMax = Math.abs(percent - maxPercent);
-
-                return distanceToMin <= distanceToMax ? minInput : maxInput;
-            }
-
-            wrapper.addEventListener('mousedown', function (e) {
-                if (e.target === minInput || e.target === maxInput) {
-                    activeInput = e.target;
-                    isPriceDragging = true;
-                    return;
-                }
-
-                const rect = wrapper.getBoundingClientRect();
-                const percent = ((e.clientX - rect.left) / rect.width) * 100;
-
-                activeInput = getActiveInput(e.clientX);
-                isPriceDragging = true;
-
-                const minVal = parseInt(activeInput.min);
-                const maxVal = parseInt(activeInput.max);
-
-                let value = minVal + (percent / 100) * (maxVal - minVal);
-                value = Math.round(value / 50) * 50;
-
-                if (activeInput === minInput) {
-                    value = Math.min(value, parseInt(maxInput.value));
-                } else {
-                    value = Math.max(value, parseInt(minInput.value));
-                }
-
-                activeInput.value = value;
-                activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-            });
-
-            const handleMouseUp = function() {
-                minInput.style.zIndex = '5';
-                maxInput.style.zIndex = '6';
-                activeInput = null;
-                isPriceDragging = false;
-            };
-            document.addEventListener('mouseup', handleMouseUp);
-            wrapper.addEventListener('mouseup', handleMouseUp);
-            wrapper.addEventListener('mouseleave', handleMouseUp);
-
-            minInput.addEventListener('input', function() {
-                let currentMin = parseInt(this.value);
-                const currentMax = parseInt(maxInput.value);
-                const minVal = parseInt(this.min);
-                const maxVal = parseInt(this.max);
-
-                currentMin = Math.max(minVal, Math.min(maxVal, currentMin));
-                if (currentMin > currentMax) {
-                    currentMin = currentMax;
-                }
-
-                this.value = currentMin;
-                updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
-            });
-
-            maxInput.addEventListener('input', function() {
-                const currentMin = parseInt(minInput.value);
-                let currentMax = parseInt(this.value);
-                const minVal = parseInt(this.min);
-                const maxVal = parseInt(this.max);
-
-                currentMax = Math.max(minVal, Math.min(maxVal, currentMax));
-                if (currentMax < currentMin) {
-                    currentMax = currentMin;
-                }
-
-                this.value = currentMax;
-                updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
-            });
-
-            let isDragging = false;
-            wrapper.addEventListener('mousemove', function(e) {
-                if (activeInput && (e.buttons === 1 || isDragging)) {
-                    isDragging = true;
-                    isPriceDragging = true;
-                    const rect = wrapper.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
-                    const minVal = parseInt(activeInput.min);
-                    const maxVal = parseInt(activeInput.max);
-                    let value = minVal + (percent / 100) * (maxVal - minVal);
-                    value = Math.round(value / 50) * 50;
-
-                    value = Math.max(minVal, Math.min(maxVal, value));
-
-                    if (activeInput === minInput) {
-                        const currentMax = parseInt(maxInput.value);
-                        value = Math.min(value, currentMax);
-                    } else {
-                        const currentMin = parseInt(minInput.value);
-                        value = Math.max(value, currentMin);
-                    }
-
-                    if (parseInt(activeInput.value) !== value) {
-                        activeInput.value = value;
-                        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                }
-            });
-
-            document.addEventListener('mouseup', function() {
-                isPriceDragging = false;
-            });
-        }
-
-        // Toggle price filter collapse/expand
-        window.toggleSearchPriceFilter = function(header) {
-            const content = header.nextElementSibling;
-            const icon = header.querySelector('.price-filter-icon');
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                icon.classList.remove('bi-chevron-up');
-                icon.classList.add('bi-chevron-down');
-            } else {
-                content.style.display = 'none';
-                icon.classList.remove('bi-chevron-down');
-                icon.classList.add('bi-chevron-up');
-            }
-        };
 
         // Update active filters
         function updateSearchActiveFilters() {
@@ -704,17 +465,6 @@
                         activeCount++;
                     }
                 }
-            }
-
-            // Price Range
-            const minPrice = params.get('min_price');
-            const maxPrice = params.get('max_price');
-            if (minPrice || maxPrice) {
-                const minMillion = minPrice ? Math.round(parseInt(minPrice) / 1000000) : 50;
-                const maxMillion = maxPrice ? Math.round(parseInt(maxPrice) / 1000000) : 50000;
-                const maxLabel = maxMillion >= 50000 ? 'Không giới hạn' : formatPrice(maxMillion);
-                filters.push({ type: 'price', label: `Giá: ${formatPrice(minMillion)} - ${maxLabel}`, key: 'price_range' });
-                activeCount++;
             }
 
             // VIP
@@ -758,12 +508,7 @@
             const params = new URLSearchParams(window.location.search);
             const keyword = params.get('q') || '';
 
-            if (key === 'price_range') {
-                params.delete('min_price');
-                params.delete('max_price');
-            } else {
-                params.delete(key);
-            }
+            params.delete(key);
 
             // Redirect with new params
             const newUrl = '/tim-kiem?q=' + encodeURIComponent(keyword) + (params.toString() ? '&' + params.toString() : '');
@@ -821,58 +566,6 @@
             });
         }
 
-        // Initialize price range from URL params
-        function initializeSearchPriceRangeFromParams() {
-            const params = new URLSearchParams(window.location.search);
-            const minPriceParam = params.get('min_price');
-            const maxPriceParam = params.get('max_price');
-
-            // Parse min_price - should be in VND (đồng) from URL
-            let minPrice = null;
-            if (minPriceParam && minPriceParam !== '' && minPriceParam !== '0') {
-                minPrice = parseInt(minPriceParam);
-                // If value is less than 1 million, it might already be in millions
-                // Otherwise, convert from VND to millions
-                if (minPrice >= 1000000) {
-                    minPrice = Math.round(minPrice / 1000000);
-                }
-            }
-
-            // Parse max_price - empty/null means unlimited
-            let maxPrice = null;
-            if (maxPriceParam && maxPriceParam !== '' && maxPriceParam !== '0') {
-                maxPrice = parseInt(maxPriceParam);
-                // If value is less than 1 million, it might already be in millions
-                // Otherwise, convert from VND to millions
-                if (maxPrice >= 1000000) {
-                    maxPrice = Math.round(maxPrice / 1000000);
-                }
-            }
-
-            // Set default values
-            let minPriceMillion = minPrice || 50;
-            let maxPriceMillion = maxPrice || 50000;
-
-            // Ensure min <= max
-            if (minPriceMillion > maxPriceMillion && maxPrice) {
-                const temp = minPriceMillion;
-                minPriceMillion = maxPriceMillion;
-                maxPriceMillion = temp;
-            }
-
-            const minInput = document.getElementById('search-filter-price-min');
-            const maxInput = document.getElementById('search-filter-price-max');
-            if (minInput && maxInput) {
-                minInput.value = minPriceMillion;
-                maxInput.value = maxPriceMillion;
-                const displayEl = document.getElementById('search-price-range-display');
-                const wrapper = minInput.closest('.price-range-slider-wrapper');
-                const fillEl = wrapper?.querySelector('.price-range-fill');
-                const minHandle = wrapper?.querySelector('.price-handle-min');
-                const maxHandle = wrapper?.querySelector('.price-handle-max');
-                updateSearchPriceRange(minInput, maxInput, displayEl, fillEl, minHandle, maxHandle);
-            }
-        }
 
         // Load districts when city changes
         const searchCityEl = document.getElementById('search-filter-city');
@@ -914,44 +607,16 @@
             });
         }
 
-        // Update hidden inputs before form submit
-        const searchFilterForm = document.getElementById('search-filter-form');
-        if (searchFilterForm) {
-            searchFilterForm.addEventListener('submit', function(e) {
-                // Update price hidden inputs before submit
-                const minInput = document.getElementById('search-filter-price-min');
-                const maxInput = document.getElementById('search-filter-price-max');
-                const minHidden = document.getElementById('search_min_price_hidden');
-                const maxHidden = document.getElementById('search_max_price_hidden');
-
-                if (minInput && minHidden) {
-                    const minMillion = parseInt(minInput.value) || 50;
-                    minHidden.value = minMillion * 1_000_000;
-                }
-
-                if (maxInput && maxHidden) {
-                    const maxMillion = parseInt(maxInput.value) || 50000;
-                    if (maxMillion >= 50000) {
-                        maxHidden.value = ''; // Unlimited
-                    } else {
-                        maxHidden.value = maxMillion * 1_000_000;
-                    }
-                }
-            });
-        }
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
-            setupSearchPriceRangeSlider();
             updateSearchActiveFilters();
             setupSearchQuickFilterChips();
-            initializeSearchPriceRangeFromParams();
         });
 
         // Update filters when URL changes
         window.addEventListener('popstate', function() {
             updateSearchActiveFilters();
-            initializeSearchPriceRangeFromParams();
         });
     </script>
 @endpush
