@@ -130,7 +130,7 @@
                                     <div style="font-weight: 700; font-size: 16px; color: #1a202c; margin-bottom: 8px; line-height: 1.3; display: flex; align-items: center; gap: 6px;">
                                         <span style="color: #335793;">${price}</span>
                                         <span style="color: #6c757d; font-weight: 500;">•</span>
-                                        <span style="color: #335793;">${listing.area}m²</span>
+                                        <span style="color: #335793;">${(parseFloat(listing.area) || 0).toString().replace(/\.0+$/, '')}m²</span>
                                     </div>
                                     ${listing.category ? `<div style="display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, rgba(51,87,147,0.1) 0%, rgba(74,107,168,0.08) 100%); color: #335793; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-bottom: 8px;">
                                         <i class="bi bi-tag-fill" style="font-size: 10px;"></i> ${listing.category}

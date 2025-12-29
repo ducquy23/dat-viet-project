@@ -657,7 +657,7 @@ async function renderVipCarousel() {
                 id: listing.id,
                 name: listing.title,
                 price: formatPrice(listing.price),
-                size: `${listing.area}m²`,
+                size: `${formatNumberJS(listing.area)}m²`,
                 img: listing.image ? (listing.image.startsWith('http') ? listing.image : `/storage/${listing.image}`) : '/images/Image-not-found.png',
                 type: listing.category || '',
                 address: listing.address,
@@ -852,7 +852,7 @@ async function loadListings(filters = {}) {
                 name: listing.title,
                 title: listing.title,
                 price: formatPrice(listing.price),
-                size: `${listing.area}m²`,
+                size: `${formatNumberJS(listing.area)}m²`,
                 priceValue: listing.price,
                 sizeValue: listing.area,
                 lat: parseFloat(listing.latitude),
@@ -1003,6 +1003,14 @@ async function loadListingDetail(listingId) {
     }
 }
 
+// Helper function to format number without .0
+function formatNumberJS(num) {
+    if (num === null || num === undefined || isNaN(num)) return '0';
+    const numFloat = parseFloat(num);
+    // Remove trailing .0 or .00
+    return numFloat.toString().replace(/\.0+$/, '');
+}
+
 function formatPrice(price) {
     // Format price in a user-friendly way (đồng nhất với PHP helper)
     if (!price || price <= 0) {
@@ -1019,18 +1027,22 @@ function formatPrice(price) {
         if (ty === Math.floor(ty)) {
             return new Intl.NumberFormat('vi-VN').format(ty) + ' tỉ';
         } else {
-            // Làm tròn đến 1 chữ số thập phân
+            // Làm tròn đến 1 chữ số thập phân, sau đó bỏ .0 nếu không cần
             const tyRounded = Math.round(ty * 10) / 10;
-            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(tyRounded) + ' tỉ';
+            let formatted = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(tyRounded);
+            formatted = formatted.replace(/\.0+$/, '');
+            return formatted + ' tỉ';
         }
     } else {
         // < 1000 triệu (< 1 tỉ) → hiển thị theo triệu
         if (priceInMillion === Math.floor(priceInMillion)) {
             return new Intl.NumberFormat('vi-VN').format(priceInMillion) + ' triệu';
         } else {
-            // Làm tròn đến 1 chữ số thập phân
+            // Làm tròn đến 1 chữ số thập phân, sau đó bỏ .0 nếu không cần
             const priceRounded = Math.round(priceInMillion * 10) / 10;
-            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(priceRounded) + ' triệu';
+            let formatted = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(priceRounded);
+            formatted = formatted.replace(/\.0+$/, '');
+            return formatted + ' triệu';
         }
     }
 }
@@ -1115,7 +1127,7 @@ function updateRangeLabels() {
     }
     if (areaLabel) {
         const areaValue = parseInt(filterAreaEl.value);
-        areaLabel.textContent = `${new Intl.NumberFormat('vi-VN').format(areaValue)} m²`;
+        areaLabel.textContent = `${formatNumberJS(areaValue)} m²`;
     }
 }
 
@@ -1459,7 +1471,7 @@ async function locateUserAndPickNearest() {
                             name: listing.title,
                             title: listing.title,
                             price: formatPrice(listing.price),
-                            size: `${listing.area}m²`,
+                            size: `${formatNumberJS(listing.area)}m²`,
                             priceValue: listing.price,
                             sizeValue: listing.area,
                             lat: parseFloat(listing.latitude),

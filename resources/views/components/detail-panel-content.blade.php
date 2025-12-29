@@ -21,7 +21,7 @@
 <!-- Price & Address -->
 <div class="d-flex align-items-start justify-content-between mb-3">
     <div class="flex-grow-1">
-        <h4 class="lot-price fw-bold mb-1">{{ formatPrice($listing->price) }} • {{ $listing->area }}m²</h4>
+        <h4 class="lot-price fw-bold mb-1">{{ formatPrice($listing->price) }} • {{ formatNumber($listing->area) }}m²</h4>
         <p class="text-muted small mb-0 d-flex align-items-center gap-1" id="lot-address">
             <i class="bi bi-geo-alt-fill"></i>
             <span>{{ $listing->address }}</span>
@@ -141,7 +141,7 @@
             <img src="{{ $similar->primaryImage?->image_url ?? asset('images/Image-not-found.png') }}" alt="{{ $similar->title }}">
             <div class="flex-grow-1">
                 <div class="fw-bold">{{ number_format($similar->price, 0) }} triệu</div>
-                <div class="text-muted small">{{ $similar->area }}m² • {{ $similar->category->name }}</div>
+                <div class="text-muted small">{{ formatNumber($similar->area) }}m² • {{ $similar->category->name }}</div>
                 <a href="{{ route('listings.show', $similar->slug) }}" class="btn btn-outline-primary btn-sm mt-1">Xem chi tiết</a>
             </div>
         </div>

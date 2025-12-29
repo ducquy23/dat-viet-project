@@ -681,6 +681,14 @@
         }
 
         // Format price: convert million to display format - Rule: < 1 tỉ hiển thị triệu, >= 1 tỉ hiển thị tỉ
+        // Helper function to format number without .0
+        function formatNumberJS(num) {
+            if (num === null || num === undefined || isNaN(num)) return '0';
+            const numFloat = parseFloat(num);
+            // Remove trailing .0 or .00
+            return numFloat.toString().replace(/\.0+$/, '');
+        }
+
         function formatPrice(million) {
             if (million >= 1000) {
                 // >= 1000 triệu (>= 1 tỉ) → hiển thị theo tỉ
@@ -697,7 +705,9 @@
                     return `đ${new Intl.NumberFormat('vi-VN').format(million)} triệu`;
                 } else {
                     const priceRounded = Math.round(million * 10) / 10;
-                    return `đ${new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(priceRounded)} triệu`;
+                    let formatted = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(priceRounded);
+                    formatted = formatted.replace(/\.0+$/, '');
+                    return `đ${formatted} triệu`;
                 }
             }
         }
@@ -1569,7 +1579,7 @@
                                     name: listing.title,
                                     title: listing.title,
                                     price: formatPriceHelper(listing.price),
-                                    size: `${listing.area}m²`,
+                                    size: `${formatNumberJS(listing.area)}m²`,
                                     priceValue: listing.price,
                                     sizeValue: listing.area,
                                     lat: parseFloat(listing.latitude),
