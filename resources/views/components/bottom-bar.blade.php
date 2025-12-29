@@ -43,7 +43,7 @@
                                             <h6 class="vip-card-title mb-1">{{ Str::limit($listing->title, 50) }}</h6>
                                             <div class="vip-card-meta mb-2">
                                                 <span class="vip-meta-item">
-                                                    <i class="bi bi-rulers"></i> {{ number_format($listing->area, 1) }}m²
+                                                    <i class="bi bi-rulers"></i> {{ formatNumber($listing->area) }}m²
                                                 </span>
                                                 <span class="vip-meta-item">
                                                     <i class="bi bi-tag"></i> {{ $listing->category->name }}

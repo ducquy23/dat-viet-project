@@ -159,7 +159,7 @@
                                                 <div class="listing-price mb-2">
                                                     <span class="text-primary fw-bold fs-5">{{ formatPrice($listing->price) }}</span>
                                                     <span class="text-muted"> • </span>
-                                                    <span class="text-dark fw-semibold">{{ number_format($listing->area, 1) }} m²</span>
+                                                    <span class="text-dark fw-semibold">{{ formatNumber($listing->area) }} m²</span>
                                                     @if($pricePerM2Formatted = formatPricePerM2($listing->price_per_m2, $listing->price, $listing->area))
                                                         <span class="text-muted small">({{ $pricePerM2Formatted }})</span>
                                                     @endif

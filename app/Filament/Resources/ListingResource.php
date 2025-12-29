@@ -483,9 +483,8 @@ class ListingResource extends Resource
                 Tables\Columns\TextColumn::make('area')
                     ->label('Diện tích')
                     ->formatStateUsing(function ($state) {
-                        if ($state === null) return '-';
-                        $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
-                        return $formatted . ' m²';
+                        if ($state === null) return 'Chưa cập nhật';
+                        return formatNumber($state) . ' m²';
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
@@ -653,20 +652,24 @@ class ListingResource extends Resource
                         Infolists\Components\TextEntry::make('price_per_m2')
                             ->label('Đơn giá /m²')
                             ->formatStateUsing(function ($state, $record) {
-                                if (!$state && $record->price && $record->area && $record->area > 0) {
-                                    return formatPricePerM2(null, $record->price, $record->area);
+                                $formatted = formatPricePerM2($state, $record->price, $record->area);
+                                if ($formatted) {
+                                    return str_replace(' tr/m²', ' triệu/m²', $formatted);
                                 }
-                                return $state ? formatPricePerM2($state) : '-';
+                                return 'Chưa cập nhật';
                             }),
                         Infolists\Components\TextEntry::make('area')
                             ->label('Diện tích')
-                            ->suffix(' m²'),
+                            ->formatStateUsing(function ($state) {
+                                if ($state === null) return 'Chưa cập nhật';
+                                return formatNumber($state) . ' m²';
+                            }),
                         Infolists\Components\TextEntry::make('front_width')
                             ->label('Mặt tiền')
-                            ->formatStateUsing(fn ($state) => $state ? $state . ' m' : '-'),
+                            ->formatStateUsing(fn ($state) => $state ? formatNumber($state) . ' m' : 'Chưa cập nhật'),
                         Infolists\Components\TextEntry::make('depth')
                             ->label('Chiều sâu')
-                            ->formatStateUsing(fn ($state) => $state ? $state . ' m' : '-'),
+                            ->formatStateUsing(fn ($state) => $state ? formatNumber($state) . ' m' : 'Chưa cập nhật'),
                     ])
                     ->columns(3),
                 
@@ -674,16 +677,16 @@ class ListingResource extends Resource
                     ->schema([
                         Infolists\Components\TextEntry::make('legal_status')
                             ->label('Tình trạng pháp lý')
-                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                            ->formatStateUsing(fn ($state) => $state ?: 'Chưa cập nhật'),
                         Infolists\Components\TextEntry::make('road_type')
                             ->label('Loại đường')
-                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                            ->formatStateUsing(fn ($state) => $state ?: 'Chưa cập nhật'),
                         Infolists\Components\TextEntry::make('road_width')
                             ->label('Độ rộng đường')
-                            ->formatStateUsing(fn ($state) => $state ? $state . ' m' : '-'),
+                            ->formatStateUsing(fn ($state) => $state ? formatNumber($state) . ' m' : 'Chưa cập nhật'),
                         Infolists\Components\TextEntry::make('direction')
                             ->label('Hướng')
-                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                            ->formatStateUsing(fn ($state) => $state ?: 'Chưa cập nhật'),
                         Infolists\Components\IconEntry::make('has_road_access')
                             ->label('Có đường ô tô vào')
                             ->boolean(),
@@ -700,7 +703,7 @@ class ListingResource extends Resource
                             ->copyMessage('Đã sao chép số điện thoại'),
                         Infolists\Components\TextEntry::make('contact_zalo')
                             ->label('Zalo')
-                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                            ->formatStateUsing(fn ($state) => $state ?: 'Chưa cập nhật'),
                     ])
                     ->columns(3),
                 
@@ -770,14 +773,14 @@ class ListingResource extends Resource
                         Infolists\Components\TextEntry::make('planning_info')
                             ->label('Thông tin quy hoạch')
                             ->columnSpanFull()
-                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                            ->formatStateUsing(fn ($state) => $state ?: 'Chưa cập nhật'),
                         Infolists\Components\IconEntry::make('deposit_online')
                             ->label('Có đặt cọc online')
                             ->boolean(),
                         Infolists\Components\TextEntry::make('meta_description')
                             ->label('Mô tả SEO')
                             ->columnSpanFull()
-                            ->formatStateUsing(fn ($state) => $state ?: '-'),
+                            ->formatStateUsing(fn ($state) => $state ?: 'Chưa cập nhật'),
                         Infolists\Components\TextEntry::make('slug')
                             ->label('Slug (URL)')
                             ->columnSpanFull()

@@ -97,7 +97,7 @@
         </li>
         <li class="d-flex justify-content-between py-1">
             <span class="text-muted">Đơn giá</span>
-            <span class="fw-semibold text-dark">{{ $listing->price_per_m2 ? number_format($listing->price_per_m2, 1) . 'tr/m²' : 'Đang cập nhật' }}</span>
+            <span class="fw-semibold text-dark">{{ $listing->price_per_m2 ? formatNumber($listing->price_per_m2) . 'tr/m²' : 'Đang cập nhật' }}</span>
         </li>
     </ul>
 </div>

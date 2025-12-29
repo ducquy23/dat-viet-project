@@ -77,7 +77,7 @@
                                     @endif
                                 </div>
                                 <div class="price-breakdown mt-2">
-                                    <span class="badge bg-primary-subtle text-primary me-2">{{ number_format($listing->area, 1) }} m²</span>
+                                    <span class="badge bg-primary-subtle text-primary me-2">{{ formatNumber($listing->area) }} m²</span>
                                     @if($pricePerM2Formatted = formatPricePerM2($listing->price_per_m2, $listing->price, $listing->area))
                                         <span class="text-muted small">Đơn giá: {{ str_replace(' tr/m²', ' triệu/m²', $pricePerM2Formatted) }}</span>
                                     @endif
@@ -137,7 +137,7 @@
                                         <i class="bi bi-rulers"></i>
                                         <span>Diện tích</span>
                                     </div>
-                                    <div class="info-value">{{ number_format($listing->area, 1) }} m²</div>
+                                    <div class="info-value">{{ formatNumber($listing->area) }} m²</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -146,7 +146,7 @@
                                         <i class="bi bi-arrows-expand"></i>
                                         <span>Mặt tiền</span>
                                     </div>
-                                    <div class="info-value">{{ $listing->front_width ? number_format($listing->front_width, 1) . ' m' : 'Chưa cập nhật' }}</div>
+                                    <div class="info-value">{{ $listing->front_width ? formatNumber($listing->front_width) . ' m' : 'Chưa cập nhật' }}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -155,7 +155,7 @@
                                         <i class="bi bi-arrows-angle-contract"></i>
                                         <span>Chiều sâu</span>
                                     </div>
-                                    <div class="info-value">{{ $listing->depth ? number_format($listing->depth, 1) . ' m' : 'Chưa cập nhật' }}</div>
+                                    <div class="info-value">{{ $listing->depth ? formatNumber($listing->depth) . ' m' : 'Chưa cập nhật' }}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -192,7 +192,7 @@
                                         <i class="bi bi-arrows-angle-expand"></i>
                                         <span>Độ rộng đường</span>
                                     </div>
-                                    <div class="info-value">{{ number_format($listing->road_width, 1) }} m</div>
+                                    <div class="info-value">{{ formatNumber($listing->road_width) }} m</div>
                                 </div>
                             </div>
                             @endif
@@ -361,7 +361,7 @@
                                     {{ formatPrice($related->price) }}
                                 </div>
                                 <div class="related-meta">
-                                    <span>{{ number_format($related->area, 1) }} m²</span>
+                                    <span>{{ formatNumber($related->area) }} m²</span>
                                     <span>•</span>
                                     <span>{{ $related->category->name }}</span>
                                 </div>

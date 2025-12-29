@@ -100,7 +100,7 @@
                           <span class="price-value">{{ number_format($listing->price / 1000000) }} triệu</span>
                           @if($listing->price_per_m2)
                             <small class="price-per-m2 d-block text-muted">
-                              {{ number_format($listing->price_per_m2 / 1000000, 1) }} tr/m²
+                              {{ formatNumber($listing->price_per_m2 / 1000000) }} tr/m²
                             </small>
                           @endif
                         </div>
@@ -108,7 +108,7 @@
                       <td>
                         <div class="area-cell">
                           <i class="bi bi-rulers text-primary"></i>
-                          <span>{{ number_format($listing->area, 1) }} m²</span>
+                          <span>{{ formatNumber($listing->area) }} m²</span>
                         </div>
                       </td>
                       <td>
@@ -233,7 +233,7 @@
                           <span class="price-value">{{ number_format($listing->price / 1000000) }} triệu</span>
                           @if($listing->price_per_m2)
                             <small class="price-per-m2 d-block text-muted">
-                              {{ number_format($listing->price_per_m2 / 1000000, 1) }} tr/m²
+                              {{ formatNumber($listing->price_per_m2 / 1000000) }} tr/m²
                             </small>
                           @endif
                         </div>
@@ -241,7 +241,7 @@
                       <td>
                         <div class="area-cell">
                           <i class="bi bi-rulers text-primary"></i>
-                          <span>{{ number_format($listing->area, 1) }} m²</span>
+                          <span>{{ formatNumber($listing->area) }} m²</span>
                         </div>
                       </td>
                       <td>

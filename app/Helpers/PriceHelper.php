@@ -22,18 +22,22 @@ if (!function_exists('formatPrice')) {
             if ($ty == (int)$ty) {
                 return number_format($ty, 0, ',', '.') . ' tỉ';
             } else {
-                // Làm tròn đến 1 chữ số thập phân
+                // Làm tròn đến 1 chữ số thập phân, sau đó bỏ .0 nếu không cần
                 $ty = round($ty, 1);
-                return number_format($ty, 1, ',', '.') . ' tỉ';
+                $formatted = number_format($ty, 1, ',', '.');
+                $formatted = rtrim(rtrim($formatted, '0'), ',');
+                return $formatted . ' tỉ';
             }
         } else {
             // < 1000 triệu (< 1 tỉ) → hiển thị theo triệu
             if ($priceInMillion == (int)$priceInMillion) {
                 return number_format($priceInMillion, 0, ',', '.') . ' triệu';
             } else {
-                // Làm tròn đến 1 chữ số thập phân
+                // Làm tròn đến 1 chữ số thập phân, sau đó bỏ .0 nếu không cần
                 $priceInMillion = round($priceInMillion, 1);
-                return number_format($priceInMillion, 1, ',', '.') . ' triệu';
+                $formatted = number_format($priceInMillion, 1, ',', '.');
+                $formatted = rtrim(rtrim($formatted, '0'), ',');
+                return $formatted . ' triệu';
             }
         }
     }
@@ -63,8 +67,29 @@ if (!function_exists('formatPricePerM2')) {
             ? $pricePerM2 / 1000000
             : $pricePerM2;
 
-        // Format with 1 decimal place
-        return number_format($pricePerM2InMillion, 1, ',', '.') . ' tr/m²';
+        // Format with 1 decimal place, then remove .0 if not needed
+        $formatted = number_format($pricePerM2InMillion, 1, ',', '.');
+        $formatted = rtrim(rtrim($formatted, '0'), ',');
+        return $formatted . ' tr/m²';
+    }
+}
+
+if (!function_exists('formatNumber')) {
+    /**
+     * Format number without unnecessary .0
+     *
+     * @param float|int|null $number Number to format
+     * @param int $decimals Number of decimal places (default 1)
+     * @return string Formatted number string
+     */
+    function formatNumber($number, $decimals = 1) {
+        if ($number === null) {
+            return '0';
+        }
+        $formatted = number_format((float) $number, $decimals, '.', ',');
+        // Remove trailing .0 or .00 etc
+        $formatted = rtrim(rtrim($formatted, '0'), '.');
+        return $formatted;
     }
 }
 
