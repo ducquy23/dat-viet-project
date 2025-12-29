@@ -1014,7 +1014,14 @@
 
   // Toggle favorite
   function toggleFavorite(listingId) {
-    @auth('partner')
+    // Kiểm tra đăng nhập trước khi gọi API
+    if (typeof window.isAuthenticated === 'undefined' || !window.isAuthenticated) {
+      // Chưa đăng nhập, mở modal đăng nhập và không làm gì cả
+      const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+      loginModal.show();
+      return;
+    }
+    
     fetch(`/api/listings/${listingId}/favorite`, {
       method: 'POST',
       headers: {
@@ -1022,8 +1029,18 @@
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
       }
     })
-    .then(response => response.json())
+    .then(response => {
+      if (response.status === 401) {
+        // Mở modal đăng nhập, không hiển thị toast
+        const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        loginModal.show();
+        return null;
+      }
+      return response.json();
+    })
     .then(data => {
+      if (!data) return;
+      
       const btn = document.getElementById('favorite-btn');
       const icon = btn.querySelector('i');
       if (data.favorited) {
@@ -1037,14 +1054,6 @@
     .catch(error => {
       console.error('Error:', error);
     });
-    @else
-    Swal.fire({
-      icon: 'warning',
-      title: 'Yêu cầu đăng nhập',
-      text: 'Vui lòng đăng nhập để sử dụng tính năng này',
-      confirmButtonText: 'Đã hiểu'
-    });
-    @endauth
   }
 
   function showContactForm(listingId) {

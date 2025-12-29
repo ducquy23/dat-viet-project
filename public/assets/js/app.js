@@ -1271,10 +1271,8 @@ async function flyToLot(id) {
 }
 
 // ===== FAVORITE BUTTON =====
-const favBtn = document.getElementById("favorite-btn");
-if (favBtn) {
-    favBtn.onclick = () => favBtn.classList.toggle("active");
-}
+// Removed: onclick handler is already set in detail-panel.blade.php
+// Không override onclick handler để tránh conflict với toggleFavorite function
 
 // Initialize: Load listings on page load
 loadListings().then(() => {

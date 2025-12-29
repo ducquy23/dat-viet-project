@@ -9,7 +9,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListListings extends ListRecords
 {
     protected static string $resource = ListingResource::class;
-    
+
     public $sttCounter = 0;
 
     protected function getHeaderActions(): array

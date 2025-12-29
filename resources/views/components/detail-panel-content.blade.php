@@ -27,15 +27,13 @@
             <span>{{ $listing->address }}</span>
         </p>
     </div>
-    @auth('partner')
     <button class="btn btn-light btn-fav d-flex align-items-center justify-content-center {{ isset($isFavorited) && $isFavorited ? 'active' : '' }}"
             id="favorite-btn"
             onclick="toggleFavorite({{ $listing->id }})"
             title="Thêm vào yêu thích"
             style="width:44px; height:44px; border-radius:50%; padding:0;">
-        <i class="bi bi-heart" style="font-size:18px;"></i>
+        <i class="bi bi-heart{{ isset($isFavorited) && $isFavorited ? '-fill' : '' }}" style="font-size:18px;"></i>
     </button>
-    @endauth
 </div>
 
 <!-- Mini Map -->

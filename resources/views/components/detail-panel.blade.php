@@ -167,14 +167,17 @@
     }
 
     function toggleFavoriteFromDetail() {
+        if (typeof window.isAuthenticated === 'undefined' || !window.isAuthenticated) {
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+            return;
+        }
+        
         const listingId = window.currentListingId || document.getElementById('favorite-btn')?.getAttribute('data-listing-id');
         if (!listingId) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Yêu cầu đăng nhập',
-                text: 'Vui lòng đăng nhập để sử dụng tính năng này',
-                confirmButtonText: 'Đã hiểu'
-            });
+            // Mở modal đăng nhập
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
             return;
         }
 
@@ -182,6 +185,14 @@
     }
 
     function toggleFavorite(listingId) {
+        // Kiểm tra đăng nhập trước khi gọi API
+        if (typeof window.isAuthenticated === 'undefined' || !window.isAuthenticated) {
+            // Chưa đăng nhập, mở modal đăng nhập và không làm gì cả
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+            return;
+        }
+        
         fetch(`/api/listings/${listingId}/favorite`, {
             method: 'POST',
             headers: {
@@ -191,12 +202,9 @@
         })
         .then(response => {
             if (response.status === 401) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Yêu cầu đăng nhập',
-                    text: 'Vui lòng đăng nhập để sử dụng tính năng này',
-                    confirmButtonText: 'Đã hiểu'
-                });
+                // Mở modal đăng nhập, không hiển thị toast
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
                 return null;
             }
             return response.json();

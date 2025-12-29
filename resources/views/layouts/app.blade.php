@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>
+        window.isAuthenticated = @json(auth('partner')->check());
+    </script>
 
     <title>@yield('title', 'Đất Việt Map') - Bản đồ bất động sản địa phương</title>
     <meta name="description" content="@yield('description', 'Tìm kiếm và đăng tin bán đất trên bản đồ trực quan')">

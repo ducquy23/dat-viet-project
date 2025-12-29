@@ -88,7 +88,7 @@ class ListingResource extends Resource
                             ->collapsible()
                             ->itemLabel(function (array $state): ?string {
                                 $image = $state['image'] ?? null;
-
+                                
                                 // Nếu là array, kiểm tra có phần tử và lấy phần tử đầu tiên
                                 if (is_array($image)) {
                                     if (!empty($image) && isset($image[0])) {
@@ -97,12 +97,12 @@ class ListingResource extends Resource
                                         $image = null;
                                     }
                                 }
-
+                                
                                 // Nếu là string và có giá trị, lấy tên file
                                 if (is_string($image) && !empty($image)) {
                                     return basename($image);
                                 }
-
+                                
                                 return 'Ảnh mới';
                             })
                             ->columnSpanFull(),
@@ -135,7 +135,7 @@ class ListingResource extends Resource
                             ->afterStateUpdated(fn (Forms\Set $set) => $set('district_id', null)),
                         Forms\Components\Select::make('district_id')
                             ->label('Quận/Huyện')
-                            ->relationship('district', 'name', fn (Builder $query, Forms\Get $get) =>
+                            ->relationship('district', 'name', fn (Builder $query, Forms\Get $get) => 
                                 $query->where('city_id', $get('city_id')))
                             ->searchable()
                             ->preload()
