@@ -17,12 +17,27 @@ class CreateListing extends CreateRecord
 
     /**
      * Xử lý sau khi tạo listing - lưu thumbnail và gallery images
+     * Convert giá từ triệu (Form) → đồng (DB) để lưu
      */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $this->thumbnail = $data['thumbnail'] ?? null;
         $this->galleryImages = $data['gallery_images'] ?? [];
         unset($data['thumbnail'], $data['gallery_images']);
+
+        // Convert price từ triệu (Form) → đồng (DB)
+        // Form nhập: triệu đồng, DB lưu: đồng
+        if (isset($data['price']) && $data['price'] > 0) {
+            $data['price'] = $data['price'] * 1000000;
+        }
+        
+        // Convert price_per_m2 từ triệu/m² (Form) → đồng/m² (DB)
+        if (isset($data['price_per_m2']) && $data['price_per_m2'] > 0) {
+            $data['price_per_m2'] = $data['price_per_m2'] * 1000000;
+        } elseif (isset($data['price']) && isset($data['area']) && $data['area'] > 0) {
+            // Nếu không có price_per_m2, tính từ price và area
+            $data['price_per_m2'] = $data['price'] / $data['area'];
+        }
 
         // Tự động set approved_at khi status = 'approved'
         if (isset($data['status']) && $data['status'] === 'approved') {

@@ -220,10 +220,11 @@ class ListingResource extends Resource
                                                 }
                                             }),
                                         Forms\Components\TextInput::make('price_per_m2')
-                                            ->label('Đơn giá /m²')
+                                            ->label('Đơn giá /m² (triệu đồng/m²)')
                                             ->numeric()
                                             ->prefix('₫')
                                             ->step(0.01)
+                                            ->helperText('Hoặc để trống, hệ thống sẽ tự tính từ Giá và Diện tích')
                                             ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
                                                 if ($state !== null) {
                                                     $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
