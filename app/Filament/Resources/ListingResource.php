@@ -191,28 +191,58 @@ class ListingResource extends Resource
                             ->required()
                             ->numeric()
                             ->prefix('₫')
-                            ->step(0.01),
+                            ->step(0.01)
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                if ($state !== null) {
+                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                    $component->state($formatted);
+                                }
+                            }),
                         Forms\Components\TextInput::make('price_per_m2')
                             ->label('Đơn giá /m²')
                             ->numeric()
                             ->prefix('₫')
-                            ->step(0.01),
+                            ->step(0.01)
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                if ($state !== null) {
+                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                    $component->state($formatted);
+                                }
+                            }),
                         Forms\Components\TextInput::make('area')
                             ->label('Diện tích (m²)')
                             ->required()
                             ->numeric()
                             ->suffix('m²')
-                            ->step(0.01),
+                            ->step(0.01)
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                if ($state !== null) {
+                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                    $component->state($formatted);
+                                }
+                            }),
                         Forms\Components\TextInput::make('front_width')
                             ->label('Mặt tiền (m)')
                             ->numeric()
                             ->suffix('m')
-                            ->step(0.01),
+                            ->step(0.01)
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                if ($state !== null) {
+                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                    $component->state($formatted);
+                                }
+                            }),
                         Forms\Components\TextInput::make('depth')
                             ->label('Chiều sâu (m)')
                             ->numeric()
                             ->suffix('m')
-                            ->step(0.01),
+                            ->step(0.01)
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                if ($state !== null) {
+                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                    $component->state($formatted);
+                                }
+                            }),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Thông tin pháp lý và đường')
@@ -236,7 +266,13 @@ class ListingResource extends Resource
                             ->label('Độ rộng đường (m)')
                             ->numeric()
                             ->suffix('m')
-                            ->step(0.01),
+                            ->step(0.01)
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                if ($state !== null) {
+                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                    $component->state($formatted);
+                                }
+                            }),
                         Forms\Components\Select::make('direction')
                             ->label('Hướng')
                             ->options([
