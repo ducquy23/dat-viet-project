@@ -409,9 +409,7 @@
     <script>
         // Format price helper - Rule: < 1 tỉ hiển thị triệu, >= 1 tỉ hiển thị tỉ
         function formatPrice(million) {
-            if (million >= 50000) {
-                return 'Không giới hạn';
-            } else if (million >= 1000) {
+            if (million >= 1000) {
                 // >= 1000 triệu (>= 1 tỉ) → hiển thị theo tỉ
                 const ty = million / 1000;
                 if (ty === Math.floor(ty)) {

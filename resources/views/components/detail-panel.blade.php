@@ -172,7 +172,7 @@
             loginModal.show();
             return;
         }
-        
+
         const listingId = window.currentListingId || document.getElementById('favorite-btn')?.getAttribute('data-listing-id');
         if (!listingId) {
             // Mở modal đăng nhập
@@ -192,7 +192,7 @@
             loginModal.show();
             return;
         }
-        
+
         fetch(`/api/listings/${listingId}/favorite`, {
             method: 'POST',
             headers: {

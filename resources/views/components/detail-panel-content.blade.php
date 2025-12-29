@@ -21,7 +21,7 @@
 <!-- Price & Address -->
 <div class="d-flex align-items-start justify-content-between mb-3">
     <div class="flex-grow-1">
-        <h4 class="lot-price fw-bold mb-1">{{ number_format($listing->price, 0) }} triệu • {{ $listing->area }}m²</h4>
+        <h4 class="lot-price fw-bold mb-1">{{ formatPrice($listing->price) }} • {{ $listing->area }}m²</h4>
         <p class="text-muted small mb-0 d-flex align-items-center gap-1" id="lot-address">
             <i class="bi bi-geo-alt-fill"></i>
             <span>{{ $listing->address }}</span>

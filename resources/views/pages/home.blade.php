@@ -510,8 +510,7 @@
             if (minPrice || maxPrice) {
                 const minMillion = minPrice ? Math.round(parseInt(minPrice) / 1000000) : 50;
                 const maxMillion = maxPrice ? Math.round(parseInt(maxPrice) / 1000000) : 50000;
-                const maxLabel = maxMillion >= 50000 ? 'Không giới hạn' : formatPrice(maxMillion);
-                filters.push({ type: 'price', label: `Giá: ${formatPrice(minMillion)} - ${maxLabel}`, key: 'price_range' });
+                filters.push({ type: 'price', label: `Giá: ${formatPrice(minMillion)} - ${formatPrice(maxMillion)}`, key: 'price_range' });
                 activeCount++;
             }
 
@@ -683,9 +682,7 @@
 
         // Format price: convert million to display format - Rule: < 1 tỉ hiển thị triệu, >= 1 tỉ hiển thị tỉ
         function formatPrice(million) {
-            if (million >= 50000) {
-                return 'Không giới hạn';
-            } else if (million >= 1000) {
+            if (million >= 1000) {
                 // >= 1000 triệu (>= 1 tỉ) → hiển thị theo tỉ
                 const ty = million / 1000;
                 if (ty === Math.floor(ty)) {
@@ -742,8 +739,7 @@
 
             // Update display text
             if (displayEl) {
-                const maxLabel = finalMax >= 50000 ? 'Không giới hạn' : formatPrice(finalMax);
-                displayEl.textContent = `${formatPrice(finalMin)} - ${maxLabel}`;
+                displayEl.textContent = `${formatPrice(finalMin)} - ${formatPrice(finalMax)}`;
             }
 
             // Update hidden inputs (only if they exist and match the current slider)
