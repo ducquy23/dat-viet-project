@@ -131,14 +131,15 @@
                                           placeholder="Mô tả về lô đất: vị trí, tiện ích xung quanh, pháp lý..."></textarea>
                             </div>
 
-                            <!-- Giá và Diện tích -->
+                            <!-- Đơn giá/m² và Diện tích -->
                             <div class="col-12 col-md-6">
                                 <label class="form-label fw-semibold d-flex align-items-center gap-2">
                                     <i class="bi bi-currency-dollar text-primary"></i>
-                                    <span>Giá bán (triệu đồng) *</span>
+                                    <span>Đơn giá /m² (triệu đồng/m²) *</span>
                                 </label>
-                                <input type="number" class="form-control form-control-lg" name="price" id="post-price" 
-                                       placeholder="Ví dụ: 1500" step="0.01" min="0" required>
+                                <input type="number" class="form-control form-control-lg" name="price_per_m2" id="post-price-per-m2" 
+                                       placeholder="Ví dụ: 50" step="0.01" min="0" required>
+                                <small class="text-muted">Hệ thống sẽ tự tính Giá tổng từ Đơn giá × Diện tích</small>
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label fw-semibold d-flex align-items-center gap-2">
@@ -147,6 +148,20 @@
                                 </label>
                                 <input type="number" class="form-control form-control-lg" name="area" id="post-area" 
                                        placeholder="Ví dụ: 200" step="0.01" min="0" required>
+                            </div>
+                            <!-- Giá tổng (tự động tính) -->
+                            <div class="col-12">
+                                <div class="alert alert-info mb-0">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <i class="bi bi-calculator text-primary"></i>
+                                            <strong>Giá tổng:</strong>
+                                            <span id="post-total-price-display" class="text-primary fw-bold">0 triệu đồng</span>
+                                        </div>
+                                        <small class="text-muted">Tự động tính từ Đơn giá × Diện tích</small>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="price" id="post-price" value="0">
                             </div>
 
                             <!-- Mặt tiền và Chiều sâu -->

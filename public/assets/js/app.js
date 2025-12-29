@@ -1586,6 +1586,38 @@ let postMarker;
 let selectedPackage = 'vip';
 
 // Initialize post map when modal opens
+// Tính giá tổng tự động từ đơn giá/m² × diện tích
+function calculateTotalPrice() {
+    const pricePerM2 = parseFloat(document.getElementById('post-price-per-m2')?.value) || 0;
+    const area = parseFloat(document.getElementById('post-area')?.value) || 0;
+    const priceInput = document.getElementById('post-price');
+    const priceDisplay = document.getElementById('post-total-price-display');
+    
+    if (pricePerM2 > 0 && area > 0) {
+        const totalPrice = pricePerM2 * area; // Giá tổng (triệu đồng)
+        if (priceInput) {
+            priceInput.value = totalPrice;
+        }
+        if (priceDisplay) {
+            // Format số với dấu phẩy ngăn cách hàng nghìn
+            const formatted = new Intl.NumberFormat('vi-VN', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 1
+            }).format(totalPrice).replace(/,0+$/, '');
+            priceDisplay.textContent = formatted + ' triệu đồng';
+        }
+    } else {
+        if (priceInput) priceInput.value = 0;
+        if (priceDisplay) priceDisplay.textContent = '0 triệu đồng';
+    }
+}
+
+// Event listeners để tính giá tổng tự động
+document.getElementById('post-price-per-m2')?.addEventListener('input', calculateTotalPrice);
+document.getElementById('post-price-per-m2')?.addEventListener('change', calculateTotalPrice);
+document.getElementById('post-area')?.addEventListener('input', calculateTotalPrice);
+document.getElementById('post-area')?.addEventListener('change', calculateTotalPrice);
+
 document.getElementById('postModal')?.addEventListener('shown.bs.modal', async function() {
     // Reset step
     currentStep = 1;
@@ -1593,6 +1625,9 @@ document.getElementById('postModal')?.addEventListener('shown.bs.modal', async f
 
     // Load form data (categories, cities)
     await loadPostFormData();
+    
+    // Reset và tính lại giá tổng
+    calculateTotalPrice();
 
     // Wait for modal to fully render before initializing map
     setTimeout(() => {
@@ -2114,17 +2149,21 @@ document.getElementById('btn-submit-post')?.addEventListener('click', async func
 });
 
 async function submitPostForm() {
+    // Tính lại giá tổng trước khi submit
+    calculateTotalPrice();
+    
+    const pricePerM2 = document.getElementById('post-price-per-m2')?.value;
     const price = document.getElementById('post-price')?.value;
     const area = document.getElementById('post-area')?.value;
     const phone = document.getElementById('post-phone')?.value;
     const lat = document.getElementById('post-latitude')?.value;
     const lng = document.getElementById('post-longitude')?.value;
 
-    if (!price || !area || !phone || !lat || !lng) {
+    if (!pricePerM2 || !price || !area || !phone || !lat || !lng) {
         Swal.fire({
             icon: 'warning',
             title: 'Thiếu thông tin',
-            text: 'Vui lòng điền đầy đủ thông tin',
+            text: 'Vui lòng điền đầy đủ thông tin (Đơn giá/m², Diện tích, Số điện thoại, Vị trí)',
             confirmButtonText: 'Đã hiểu'
         });
         return;

@@ -207,24 +207,36 @@ class ListingResource extends Resource
                             ->schema([
                                 Forms\Components\Section::make('Thông tin giá và diện tích')
                                     ->schema([
-                                        Forms\Components\TextInput::make('price')
-                                            ->label('Giá (triệu đồng)')
+                                        Forms\Components\TextInput::make('price_per_m2')
+                                            ->label('Đơn giá /m² (triệu đồng/m²)')
                                             ->required()
                                             ->numeric()
                                             ->prefix('₫')
                                             ->step(0.01)
+                                            ->helperText('Hệ thống sẽ tự tính Giá tổng từ Đơn giá × Diện tích')
                                             ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
                                                 if ($state !== null) {
                                                     $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
                                                     $component->state($formatted);
                                                 }
+                                            })
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, $get) {
+                                                // Tự động tính giá tổng khi đơn giá/m² hoặc diện tích thay đổi
+                                                $area = $get('area');
+                                                if ($state && $area && $area > 0) {
+                                                    $totalPrice = $state * $area;
+                                                    $set('price', $totalPrice);
+                                                }
                                             }),
-                                        Forms\Components\TextInput::make('price_per_m2')
-                                            ->label('Đơn giá /m² (triệu đồng/m²)')
+                                        Forms\Components\TextInput::make('price')
+                                            ->label('Giá tổng (triệu đồng)')
                                             ->numeric()
                                             ->prefix('₫')
                                             ->step(0.01)
-                                            ->helperText('Hoặc để trống, hệ thống sẽ tự tính từ Giá và Diện tích')
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->helperText('Tự động tính từ Đơn giá × Diện tích')
                                             ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
                                                 if ($state !== null) {
                                                     $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
@@ -237,6 +249,15 @@ class ListingResource extends Resource
                                             ->numeric()
                                             ->suffix('m²')
                                             ->step(0.01)
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, $get) {
+                                                // Tự động tính giá tổng khi diện tích thay đổi
+                                                $pricePerM2 = $get('price_per_m2');
+                                                if ($pricePerM2 && $state && $state > 0) {
+                                                    $totalPrice = $pricePerM2 * $state;
+                                                    $set('price', $totalPrice);
+                                                }
+                                            })
                                             ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
                                                 if ($state !== null) {
                                                     $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');

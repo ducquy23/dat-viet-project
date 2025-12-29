@@ -75,15 +75,22 @@ class EditListing extends EditRecord
         // Xóa khỏi data để không lưu vào listing
         unset($data['thumbnail'], $data['gallery_images']);
 
-        if (isset($data['price']) && $data['price'] > 0) {
-            $data['price'] = $data['price'] * 1000000;
-        }
-
+        // Convert price_per_m2 từ triệu/m² (Form) → đồng/m² (DB)
         if (isset($data['price_per_m2']) && $data['price_per_m2'] > 0) {
             $data['price_per_m2'] = $data['price_per_m2'] * 1000000;
-        } elseif (isset($data['price']) && isset($data['area']) && $data['area'] > 0) {
-            // Nếu không có price_per_m2, tính từ price và area
-            $data['price_per_m2'] = $data['price'] / $data['area'];
+        }
+        
+        // Tính giá tổng từ đơn giá/m² × diện tích
+        if (isset($data['price_per_m2']) && isset($data['area']) && $data['area'] > 0) {
+            // Giá tổng = đơn giá/m² × diện tích (đã convert sang đồng)
+            $data['price'] = $data['price_per_m2'] * $data['area'];
+        } elseif (isset($data['price']) && $data['price'] > 0) {
+            // Fallback: nếu có nhập giá tổng trực tiếp (triệu) → convert sang đồng
+            $data['price'] = $data['price'] * 1000000;
+            // Tính lại đơn giá/m² nếu chưa có
+            if (!isset($data['price_per_m2']) && isset($data['area']) && $data['area'] > 0) {
+                $data['price_per_m2'] = $data['price'] / $data['area'];
+            }
         }
 
         // Tự động set approved_at khi status = 'approved'
