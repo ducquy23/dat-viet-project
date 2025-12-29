@@ -962,14 +962,31 @@ async function loadListingDetail(listingId) {
         lot.name = listing.title;
         lot.desc = listing.description || '';
         lot.legal = listing.legal_status || '';
-        lot.front = listing.front_width ? `${listing.front_width}m` : '';
+        lot.front = listing.front_width ? `${formatNumberJS(listing.front_width)}m` : '';
         lot.road = listing.road_type || '';
-        lot.depth = listing.depth ? `${listing.depth}m` : '';
-        lot.roadWidth = listing.road_width ? `${listing.road_width}m` : '';
+        lot.depth = listing.depth ? `${formatNumberJS(listing.depth)}m` : '';
+        lot.roadWidth = listing.road_width ? `${formatNumberJS(listing.road_width)}m` : '';
         lot.direction = listing.direction || '';
         lot.roadAccess = listing.has_road_access || false;
         lot.price = formatPrice(listing.price);
-        lot.pricePer = listing.price_per_m2 ? `${parseFloat(listing.price_per_m2).toFixed(1)}tr/m²` : '';
+        // Format price per m2 - convert to triệu/m² if needed
+        if (listing.price_per_m2) {
+            let pricePerM2 = parseFloat(listing.price_per_m2);
+            // Convert to triệu/m² if price_per_m2 is in đồng/m²
+            if (pricePerM2 >= 1000000) {
+                pricePerM2 = pricePerM2 / 1000000;
+            }
+            lot.pricePer = `${formatNumberJS(pricePerM2)} triệu/m²`;
+        } else if (listing.price && listing.area && listing.area > 0) {
+            // Calculate from price and area
+            let pricePerM2 = parseFloat(listing.price) / parseFloat(listing.area);
+            if (pricePerM2 >= 1000000) {
+                pricePerM2 = pricePerM2 / 1000000;
+            }
+            lot.pricePer = `${formatNumberJS(pricePerM2)} triệu/m²`;
+        } else {
+            lot.pricePer = '';
+        }
         lot.planning = listing.planning_info || '';
         lot.depositOnline = listing.deposit_online ? 'Có' : 'Không';
         lot.tags = listing.tags && Array.isArray(listing.tags) ? listing.tags : [];
