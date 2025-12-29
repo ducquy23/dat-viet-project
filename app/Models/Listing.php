@@ -61,8 +61,8 @@ class Listing extends Model
         'package_id' => 'integer',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
-        'price' => 'decimal:2',
-        'price_per_m2' => 'decimal:2',
+        'price' => 'int',
+        'price_per_m2' => 'int',
         'area' => 'decimal:2',
         'front_width' => 'decimal:2',
         'depth' => 'decimal:2',
@@ -245,7 +245,7 @@ class Listing extends Model
      */
     public function getIsActiveAttribute(): bool
     {
-        return $this->status === 'approved' && 
+        return $this->status === 'approved' &&
                ($this->expires_at === null || $this->expires_at > now());
     }
 
@@ -267,12 +267,12 @@ class Listing extends Model
         if ($value !== null && $value > 0) {
             return $value;
         }
-        
+
         // Otherwise, calculate it from price and area
         if ($this->price && $this->area && $this->area > 0) {
             return $this->price / $this->area;
         }
-        
+
         return null;
     }
 }
