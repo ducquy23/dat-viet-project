@@ -135,11 +135,17 @@
                             <div class="col-12 col-md-6">
                                 <label class="form-label fw-semibold d-flex align-items-center gap-2">
                                     <i class="bi bi-currency-dollar text-primary"></i>
-                                    <span>Đơn giá /m² (triệu đồng/m²) *</span>
+                                    <span>Đơn giá /m² *</span>
                                 </label>
-                                <input type="number" class="form-control form-control-lg" name="price_per_m2" id="post-price-per-m2" 
-                                       placeholder="Ví dụ: 50" step="0.01" min="0" required>
-                                <small class="text-muted">Hệ thống sẽ tự tính Giá tổng từ Đơn giá × Diện tích</small>
+                                <div class="input-group">
+                                    <input type="number" class="form-control form-control-lg" name="price_per_m2" id="post-price-per-m2" 
+                                           placeholder="Ví dụ: 50" step="0.01" min="0.1" max="10000" required>
+                                    <span class="input-group-text bg-light">triệu đồng/m²</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="bi bi-info-circle"></i> Nhập số theo đơn vị <strong>TRIỆU ĐỒNG</strong> cho mỗi m². 
+                                    <br>Ví dụ: Nhập "50" nghĩa là <strong>50 triệu đồng/m²</strong>
+                                </small>
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label fw-semibold d-flex align-items-center gap-2">
@@ -152,13 +158,17 @@
                             <!-- Giá tổng (tự động tính) -->
                             <div class="col-12">
                                 <div class="alert alert-info mb-0">
-                                    <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                         <div>
                                             <i class="bi bi-calculator text-primary"></i>
                                             <strong>Giá tổng:</strong>
-                                            <span id="post-total-price-display" class="text-primary fw-bold">0 triệu đồng</span>
+                                            <span id="post-total-price-display" class="text-primary fw-bold fs-5">0 triệu đồng</span>
                                         </div>
-                                        <small class="text-muted">Tự động tính từ Đơn giá × Diện tích</small>
+                                        <small class="text-muted">
+                                            <i class="bi bi-arrow-left-right"></i> Tự động tính: Đơn giá/m² × Diện tích
+                                            <br>
+                                            <span class="text-muted small">Ví dụ: 50 triệu/m² × 200m² = 10.000 triệu đồng (10 tỉ đồng)</span>
+                                        </small>
                                     </div>
                                 </div>
                                 <input type="hidden" name="price" id="post-price" value="0">

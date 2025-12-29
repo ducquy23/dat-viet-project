@@ -208,12 +208,25 @@ class ListingResource extends Resource
                                 Forms\Components\Section::make('Thông tin giá và diện tích')
                                     ->schema([
                                         Forms\Components\TextInput::make('price_per_m2')
-                                            ->label('Đơn giá /m² (triệu đồng/m²)')
+                                            ->label('Đơn giá /m²')
                                             ->required()
                                             ->numeric()
-                                            ->prefix('₫')
+                                            ->suffix('triệu đồng/m²')
                                             ->step(0.01)
-                                            ->helperText('Hệ thống sẽ tự tính Giá tổng từ Đơn giá × Diện tích')
+                                            ->minValue(0.1)
+                                            ->maxValue(10000)
+                                            ->helperText('Nhập đơn giá cho mỗi m² theo đơn vị TRIỆU ĐỒNG. Ví dụ: Nhập "50" nghĩa là 50 triệu đồng/m²')
+                                            ->placeholder('Ví dụ: 50 (nghĩa là 50 triệu đồng/m²)')
+                                            ->rules([
+                                                'required',
+                                                'numeric',
+                                                'min:0.1',
+                                                'max:10000',
+                                            ])
+                                            ->validationMessages([
+                                                'min' => 'Đơn giá /m² phải lớn hơn 0,1 triệu đồng/m²',
+                                                'max' => 'Đơn giá /m² không được vượt quá 10.000 triệu đồng/m² (10 tỉ/m²)',
+                                            ])
                                             ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
                                                 if ($state !== null) {
                                                     $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
@@ -230,13 +243,13 @@ class ListingResource extends Resource
                                                 }
                                             }),
                                         Forms\Components\TextInput::make('price')
-                                            ->label('Giá tổng (triệu đồng)')
+                                            ->label('Giá tổng')
                                             ->numeric()
-                                            ->prefix('₫')
+                                            ->suffix('triệu đồng')
                                             ->step(0.01)
                                             ->disabled()
                                             ->dehydrated()
-                                            ->helperText('Tự động tính từ Đơn giá × Diện tích')
+                                            ->helperText('Tự động tính: Giá tổng = Đơn giá/m² × Diện tích. Ví dụ: 50 triệu/m² × 200m² = 10.000 triệu đồng (10 tỉ đồng)')
                                             ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
                                                 if ($state !== null) {
                                                     $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');

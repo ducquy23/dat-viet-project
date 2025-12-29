@@ -1599,16 +1599,36 @@ function calculateTotalPrice() {
             priceInput.value = totalPrice;
         }
         if (priceDisplay) {
-            // Format số với dấu phẩy ngăn cách hàng nghìn
-            const formatted = new Intl.NumberFormat('vi-VN', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 1
-            }).format(totalPrice).replace(/,0+$/, '');
-            priceDisplay.textContent = formatted + ' triệu đồng';
+            // Format số với đơn vị phù hợp (triệu hoặc tỉ)
+            let formatted;
+            if (totalPrice >= 1000) {
+                // >= 1000 triệu → hiển thị theo tỉ
+                const ty = totalPrice / 1000;
+                if (ty === Math.floor(ty)) {
+                    formatted = new Intl.NumberFormat('vi-VN').format(ty) + ' tỉ đồng';
+                } else {
+                    const tyRounded = Math.round(ty * 10) / 10;
+                    formatted = new Intl.NumberFormat('vi-VN', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 1
+                    }).format(tyRounded).replace(/,0+$/, '') + ' tỉ đồng';
+                }
+            } else {
+                // < 1000 triệu → hiển thị theo triệu
+                formatted = new Intl.NumberFormat('vi-VN', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 1
+                }).format(totalPrice).replace(/,0+$/, '') + ' triệu đồng';
+            }
+            priceDisplay.textContent = formatted;
+            priceDisplay.className = 'text-primary fw-bold fs-5';
         }
     } else {
         if (priceInput) priceInput.value = 0;
-        if (priceDisplay) priceDisplay.textContent = '0 triệu đồng';
+        if (priceDisplay) {
+            priceDisplay.textContent = '0 triệu đồng';
+            priceDisplay.className = 'text-muted fw-bold fs-5';
+        }
     }
 }
 
