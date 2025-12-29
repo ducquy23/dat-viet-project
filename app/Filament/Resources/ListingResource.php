@@ -41,326 +41,367 @@ class ListingResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Hình ảnh')
-                    ->description('Thumbnail là ảnh đại diện chính, Gallery là các ảnh bổ sung')
-                    ->schema([
-                        Forms\Components\FileUpload::make('thumbnail')
-                            ->label('Ảnh đại diện (Thumbnail)')
-                            ->image()
-                            ->directory('listings/thumbnails')
-                            ->disk('public')
-                            ->imageEditor()
-                            ->imageEditorAspectRatios([
-                                null,
-                                '16:9',
-                                '4:3',
-                                '1:1',
-                            ])
-                            ->maxSize(5120) // 5MB
-                            ->helperText('Ảnh này sẽ hiển thị làm ảnh đại diện cho tin đăng')
-                            ->columnSpanFull(),
-                        Forms\Components\Repeater::make('gallery_images')
-                            ->label('Gallery ảnh')
+                Forms\Components\Tabs::make('ListingTabs')
+                    ->tabs([
+                        Forms\Components\Tabs\Tab::make('Thông tin cơ bản')
+                            ->icon('heroicon-o-information-circle')
                             ->schema([
-                                Forms\Components\FileUpload::make('image')
-                                    ->label('Hình ảnh')
-                                    ->image()
-                                    ->directory('listings/gallery')
-                                    ->disk('public')
-                                    ->imageEditor()
-                                    ->imageEditorAspectRatios([
-                                        null,
-                                        '16:9',
-                                        '4:3',
-                                        '1:1',
+                                Forms\Components\Section::make('Thông tin cơ bản')
+                                    ->schema([
+                                        Forms\Components\Select::make('user_id')
+                                            ->label('Đối tác')
+                                            ->relationship('user', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->required()
+                                            ->disabled(fn ($record) => $record !== null),
+                                        Forms\Components\Select::make('category_id')
+                                            ->label('Danh mục')
+                                            ->relationship('category', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->required(),
+                                        Forms\Components\Select::make('city_id')
+                                            ->label('Tỉnh/Thành phố')
+                                            ->relationship('city', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->required()
+                                            ->reactive()
+                                            ->afterStateUpdated(fn (Forms\Set $set) => $set('district_id', null)),
+                                        Forms\Components\Select::make('district_id')
+                                            ->label('Quận/Huyện')
+                                            ->relationship('district', 'name', fn (Builder $query, Forms\Get $get) => 
+                                                $query->where('city_id', $get('city_id')))
+                                            ->searchable()
+                                            ->preload()
+                                            ->nullable(),
+                                        Forms\Components\Select::make('package_id')
+                                            ->label('Gói đăng tin')
+                                            ->relationship('package', 'name')
+                                            ->required()
+                                            ->default(1),
+                                    ])->columns(2),
+
+                                Forms\Components\Section::make('Nội dung tin đăng')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('title')
+                                            ->label('Tiêu đề')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->columnSpanFull(),
+                                        Forms\Components\Textarea::make('description')
+                                            ->label('Mô tả')
+                                            ->rows(4)
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('address')
+                                            ->label('Địa chỉ')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('slug')
+                                            ->label('Slug (URL)')
+                                            ->maxLength(255)
+                                            ->unique(ignoreRecord: true)
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Hình ảnh')
+                            ->icon('heroicon-o-photo')
+                            ->schema([
+                                Forms\Components\Section::make('Hình ảnh')
+                                    ->description('Thumbnail là ảnh đại diện chính, Gallery là các ảnh bổ sung')
+                                    ->schema([
+                                        Forms\Components\FileUpload::make('thumbnail')
+                                            ->label('Ảnh đại diện (Thumbnail)')
+                                            ->image()
+                                            ->directory('listings/thumbnails')
+                                            ->disk('public')
+                                            ->imageEditor()
+                                            ->imageEditorAspectRatios([
+                                                null,
+                                                '16:9',
+                                                '4:3',
+                                                '1:1',
+                                            ])
+                                            ->maxSize(5120) // 5MB
+                                            ->helperText('Ảnh này sẽ hiển thị làm ảnh đại diện cho tin đăng')
+                                            ->columnSpanFull(),
+                                        Forms\Components\Repeater::make('gallery_images')
+                                            ->label('Gallery ảnh')
+                                            ->schema([
+                                                Forms\Components\FileUpload::make('image')
+                                                    ->label('Hình ảnh')
+                                                    ->image()
+                                                    ->directory('listings/gallery')
+                                                    ->disk('public')
+                                                    ->imageEditor()
+                                                    ->imageEditorAspectRatios([
+                                                        null,
+                                                        '16:9',
+                                                        '4:3',
+                                                        '1:1',
+                                                    ])
+                                                    ->maxSize(5120) // 5MB
+                                                    ->required(),
+                                                Forms\Components\TextInput::make('sort_order')
+                                                    ->label('Thứ tự')
+                                                    ->numeric()
+                                                    ->default(0)
+                                                    ->minValue(0),
+                                            ])
+                                            ->defaultItems(0)
+                                            ->addActionLabel('Thêm ảnh')
+                                            ->reorderableWithButtons()
+                                            ->collapsible()
+                                            ->itemLabel(function (array $state): ?string {
+                                                $image = $state['image'] ?? null;
+                                                
+                                                // Nếu là array, kiểm tra có phần tử và lấy phần tử đầu tiên
+                                                if (is_array($image)) {
+                                                    if (!empty($image) && isset($image[0])) {
+                                                        $image = $image[0];
+                                                    } else {
+                                                        $image = null;
+                                                    }
+                                                }
+                                                
+                                                // Nếu là string và có giá trị, lấy tên file
+                                                if (is_string($image) && !empty($image)) {
+                                                    return basename($image);
+                                                }
+                                                
+                                                return 'Ảnh mới';
+                                            })
+                                            ->columnSpanFull(),
                                     ])
-                                    ->maxSize(5120) // 5MB
-                                    ->required(),
-                                Forms\Components\TextInput::make('sort_order')
-                                    ->label('Thứ tự')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->minValue(0),
-                            ])
-                            ->defaultItems(0)
-                            ->addActionLabel('Thêm ảnh')
-                            ->reorderableWithButtons()
-                            ->collapsible()
-                            ->itemLabel(function (array $state): ?string {
-                                $image = $state['image'] ?? null;
-                                
-                                // Nếu là array, kiểm tra có phần tử và lấy phần tử đầu tiên
-                                if (is_array($image)) {
-                                    if (!empty($image) && isset($image[0])) {
-                                        $image = $image[0];
-                                    } else {
-                                        $image = null;
-                                    }
-                                }
-                                
-                                // Nếu là string và có giá trị, lấy tên file
-                                if (is_string($image) && !empty($image)) {
-                                    return basename($image);
-                                }
-                                
-                                return 'Ảnh mới';
-                            })
-                            ->columnSpanFull(),
+                                    ->collapsible()
+                                    ->collapsed(false),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Vị trí & Bản đồ')
+                            ->icon('heroicon-o-map-pin')
+                            ->schema([
+                                Forms\Components\Section::make('Vị trí trên bản đồ')
+                                    ->schema([
+                                        Forms\Components\View::make('filament.forms.components.leaflet-map')
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('latitude')
+                                            ->label('Vĩ độ')
+                                            ->required()
+                                            ->numeric()
+                                            ->step(0.00000001)
+                                            ->helperText('Hoặc nhập trực tiếp, hoặc click/kéo marker trên bản đồ'),
+                                        Forms\Components\TextInput::make('longitude')
+                                            ->label('Kinh độ')
+                                            ->required()
+                                            ->numeric()
+                                            ->step(0.00000001)
+                                            ->helperText('Hoặc nhập trực tiếp, hoặc click/kéo marker trên bản đồ'),
+                                    ])->columns(2),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Giá & Diện tích')
+                            ->icon('heroicon-o-currency-dollar')
+                            ->schema([
+                                Forms\Components\Section::make('Thông tin giá và diện tích')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('price')
+                                            ->label('Giá (triệu đồng)')
+                                            ->required()
+                                            ->numeric()
+                                            ->prefix('₫')
+                                            ->step(0.01)
+                                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                                if ($state !== null) {
+                                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                                    $component->state($formatted);
+                                                }
+                                            }),
+                                        Forms\Components\TextInput::make('price_per_m2')
+                                            ->label('Đơn giá /m²')
+                                            ->numeric()
+                                            ->prefix('₫')
+                                            ->step(0.01)
+                                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                                if ($state !== null) {
+                                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                                    $component->state($formatted);
+                                                }
+                                            }),
+                                        Forms\Components\TextInput::make('area')
+                                            ->label('Diện tích (m²)')
+                                            ->required()
+                                            ->numeric()
+                                            ->suffix('m²')
+                                            ->step(0.01)
+                                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                                if ($state !== null) {
+                                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                                    $component->state($formatted);
+                                                }
+                                            }),
+                                        Forms\Components\TextInput::make('front_width')
+                                            ->label('Mặt tiền (m)')
+                                            ->numeric()
+                                            ->suffix('m')
+                                            ->step(0.01)
+                                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                                if ($state !== null) {
+                                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                                    $component->state($formatted);
+                                                }
+                                            }),
+                                        Forms\Components\TextInput::make('depth')
+                                            ->label('Chiều sâu (m)')
+                                            ->numeric()
+                                            ->suffix('m')
+                                            ->step(0.01)
+                                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                                if ($state !== null) {
+                                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                                    $component->state($formatted);
+                                                }
+                                            }),
+                                    ])->columns(3),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Pháp lý & Đường')
+                            ->icon('heroicon-o-document-text')
+                            ->schema([
+                                Forms\Components\Section::make('Thông tin pháp lý và đường')
+                                    ->schema([
+                                        Forms\Components\Select::make('legal_status')
+                                            ->label('Tình trạng pháp lý')
+                                            ->options([
+                                                'Sổ đỏ' => 'Sổ đỏ',
+                                                'Sổ hồng' => 'Sổ hồng',
+                                                'Đang làm sổ' => 'Đang làm sổ',
+                                                'Giấy tờ khác' => 'Giấy tờ khác',
+                                            ]),
+                                        Forms\Components\Select::make('road_type')
+                                            ->label('Loại đường')
+                                            ->options([
+                                                'Ô tô' => 'Ô tô',
+                                                'Hẻm' => 'Hẻm',
+                                                'Đường đất' => 'Đường đất',
+                                            ]),
+                                        Forms\Components\TextInput::make('road_width')
+                                            ->label('Độ rộng đường (m)')
+                                            ->numeric()
+                                            ->suffix('m')
+                                            ->step(0.01)
+                                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                                                if ($state !== null) {
+                                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                                                    $component->state($formatted);
+                                                }
+                                            }),
+                                        Forms\Components\Select::make('direction')
+                                            ->label('Hướng')
+                                            ->options([
+                                                'Đông' => 'Đông',
+                                                'Tây' => 'Tây',
+                                                'Nam' => 'Nam',
+                                                'Bắc' => 'Bắc',
+                                                'Đông Nam' => 'Đông Nam',
+                                                'Đông Bắc' => 'Đông Bắc',
+                                                'Tây Nam' => 'Tây Nam',
+                                                'Tây Bắc' => 'Tây Bắc',
+                                            ]),
+                                        Forms\Components\Toggle::make('has_road_access')
+                                            ->label('Có đường ô tô vào')
+                                            ->default(false),
+                                    ])->columns(3),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Liên hệ')
+                            ->icon('heroicon-o-phone')
+                            ->schema([
+                                Forms\Components\Section::make('Thông tin liên hệ')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('contact_name')
+                                            ->label('Tên người liên hệ')
+                                            ->required()
+                                            ->maxLength(255),
+                                        Forms\Components\TextInput::make('contact_phone')
+                                            ->label('Số điện thoại')
+                                            ->tel()
+                                            ->required()
+                                            ->maxLength(255),
+                                        Forms\Components\TextInput::make('contact_zalo')
+                                            ->label('Zalo')
+                                            ->maxLength(255),
+                                    ])->columns(3),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Trạng thái & SEO')
+                            ->icon('heroicon-o-flag')
+                            ->schema([
+                                Forms\Components\Section::make('Trạng thái và duyệt tin')
+                                    ->schema([
+                                        Forms\Components\Select::make('status')
+                                            ->label('Trạng thái')
+                                            ->options([
+                                                'draft' => 'Nháp',
+                                                'pending' => 'Chờ duyệt',
+                                                'approved' => 'Đã duyệt',
+                                                'rejected' => 'Từ chối',
+                                                'expired' => 'Hết hạn',
+                                                'sold' => 'Đã bán',
+                                            ])
+                                            ->required()
+                                            ->default('pending')
+                                            ->helperText('Khi đổi trạng thái thành "Đã duyệt", ngày duyệt sẽ tự động được cập nhật'),
+                                        Forms\Components\Textarea::make('rejection_reason')
+                                            ->label('Lý do từ chối')
+                                            ->rows(3)
+                                            ->visible(fn (Forms\Get $get) => $get('status') === 'rejected')
+                                            ->columnSpanFull(),
+                                        Forms\Components\DateTimePicker::make('expires_at')
+                                            ->label('Ngày hết hạn')
+                                            ->nullable()
+                                            ->helperText('Ngày tin đăng hết hạn (để trống nếu không giới hạn)'),
+                                    ])->columns(2),
+
+                                Forms\Components\Section::make('Thông tin khác')
+                                    ->schema([
+                                        Forms\Components\Textarea::make('planning_info')
+                                            ->label('Thông tin quy hoạch')
+                                            ->rows(3)
+                                            ->columnSpanFull(),
+                                        Forms\Components\Textarea::make('meta_description')
+                                            ->label('Mô tả SEO')
+                                            ->rows(2)
+                                            ->columnSpanFull(),
+                                    ])->collapsible(),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Thống kê')
+                            ->icon('heroicon-o-chart-bar')
+                            ->schema([
+                                Forms\Components\Section::make('Thống kê')
+                                    ->schema([
+                                        Forms\Components\Placeholder::make('views_count')
+                                            ->label('Lượt xem')
+                                            ->content(fn ($record) => number_format($record?->views_count ?? 0)),
+                                        Forms\Components\Placeholder::make('favorites_count')
+                                            ->label('Lượt yêu thích')
+                                            ->content(fn ($record) => number_format($record?->favorites_count ?? 0)),
+                                        Forms\Components\Placeholder::make('contacts_count')
+                                            ->label('Lượt liên hệ')
+                                            ->content(fn ($record) => number_format($record?->contacts_count ?? 0)),
+                                        Forms\Components\Placeholder::make('created_at')
+                                            ->label('Ngày đăng')
+                                            ->content(fn ($record) => $record?->created_at?->format('d/m/Y H:i') ?? '-'),
+                                    ])->columns(4)
+                                    ->visible(fn ($record) => $record !== null)
+                                    ->collapsible(),
+                            ]),
                     ])
-                    ->collapsible()
-                    ->collapsed(false),
-
-                Forms\Components\Section::make('Thông tin cơ bản')
-                    ->schema([
-                        Forms\Components\Select::make('user_id')
-                            ->label('Đối tác')
-                            ->relationship('user', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->disabled(fn ($record) => $record !== null),
-                        Forms\Components\Select::make('category_id')
-                            ->label('Danh mục')
-                            ->relationship('category', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        Forms\Components\Select::make('city_id')
-                            ->label('Tỉnh/Thành phố')
-                            ->relationship('city', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->reactive()
-                            ->afterStateUpdated(fn (Forms\Set $set) => $set('district_id', null)),
-                        Forms\Components\Select::make('district_id')
-                            ->label('Quận/Huyện')
-                            ->relationship('district', 'name', fn (Builder $query, Forms\Get $get) => 
-                                $query->where('city_id', $get('city_id')))
-                            ->searchable()
-                            ->preload()
-                            ->nullable(),
-                        Forms\Components\Select::make('package_id')
-                            ->label('Gói đăng tin')
-                            ->relationship('package', 'name')
-                            ->required()
-                            ->default(1),
-                    ])->columns(2),
-
-                Forms\Components\Section::make('Nội dung tin đăng')
-                    ->schema([
-                        Forms\Components\TextInput::make('title')
-                            ->label('Tiêu đề')
-                            ->required()
-                            ->maxLength(255)
-                            ->columnSpanFull(),
-                        Forms\Components\Textarea::make('description')
-                            ->label('Mô tả')
-                            ->rows(4)
-                            ->columnSpanFull(),
-                        Forms\Components\TextInput::make('address')
-                            ->label('Địa chỉ')
-                            ->required()
-                            ->maxLength(255)
-                            ->columnSpanFull(),
-                        Forms\Components\TextInput::make('slug')
-                            ->label('Slug (URL)')
-                            ->maxLength(255)
-                            ->unique(ignoreRecord: true)
-                            ->columnSpanFull(),
-                    ]),
-
-                Forms\Components\Section::make('Vị trí trên bản đồ')
-                    ->schema([
-                        Forms\Components\TextInput::make('latitude')
-                            ->label('Vĩ độ')
-                            ->required()
-                            ->numeric()
-                            ->step(0.00000001),
-                        Forms\Components\TextInput::make('longitude')
-                            ->label('Kinh độ')
-                            ->required()
-                            ->numeric()
-                            ->step(0.00000001),
-                    ])->columns(2),
-
-                Forms\Components\Section::make('Thông tin giá và diện tích')
-                    ->schema([
-                        Forms\Components\TextInput::make('price')
-                            ->label('Giá (triệu đồng)')
-                            ->required()
-                            ->numeric()
-                            ->prefix('₫')
-                            ->step(0.01)
-                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
-                                if ($state !== null) {
-                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
-                                    $component->state($formatted);
-                                }
-                            }),
-                        Forms\Components\TextInput::make('price_per_m2')
-                            ->label('Đơn giá /m²')
-                            ->numeric()
-                            ->prefix('₫')
-                            ->step(0.01)
-                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
-                                if ($state !== null) {
-                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
-                                    $component->state($formatted);
-                                }
-                            }),
-                        Forms\Components\TextInput::make('area')
-                            ->label('Diện tích (m²)')
-                            ->required()
-                            ->numeric()
-                            ->suffix('m²')
-                            ->step(0.01)
-                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
-                                if ($state !== null) {
-                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
-                                    $component->state($formatted);
-                                }
-                            }),
-                        Forms\Components\TextInput::make('front_width')
-                            ->label('Mặt tiền (m)')
-                            ->numeric()
-                            ->suffix('m')
-                            ->step(0.01)
-                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
-                                if ($state !== null) {
-                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
-                                    $component->state($formatted);
-                                }
-                            }),
-                        Forms\Components\TextInput::make('depth')
-                            ->label('Chiều sâu (m)')
-                            ->numeric()
-                            ->suffix('m')
-                            ->step(0.01)
-                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
-                                if ($state !== null) {
-                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
-                                    $component->state($formatted);
-                                }
-                            }),
-                    ])->columns(3),
-
-                Forms\Components\Section::make('Thông tin pháp lý và đường')
-                    ->schema([
-                        Forms\Components\Select::make('legal_status')
-                            ->label('Tình trạng pháp lý')
-                            ->options([
-                                'Sổ đỏ' => 'Sổ đỏ',
-                                'Sổ hồng' => 'Sổ hồng',
-                                'Đang làm sổ' => 'Đang làm sổ',
-                                'Giấy tờ khác' => 'Giấy tờ khác',
-                            ]),
-                        Forms\Components\Select::make('road_type')
-                            ->label('Loại đường')
-                            ->options([
-                                'Ô tô' => 'Ô tô',
-                                'Hẻm' => 'Hẻm',
-                                'Đường đất' => 'Đường đất',
-                            ]),
-                        Forms\Components\TextInput::make('road_width')
-                            ->label('Độ rộng đường (m)')
-                            ->numeric()
-                            ->suffix('m')
-                            ->step(0.01)
-                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
-                                if ($state !== null) {
-                                    $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
-                                    $component->state($formatted);
-                                }
-                            }),
-                        Forms\Components\Select::make('direction')
-                            ->label('Hướng')
-                            ->options([
-                                'Đông' => 'Đông',
-                                'Tây' => 'Tây',
-                                'Nam' => 'Nam',
-                                'Bắc' => 'Bắc',
-                                'Đông Nam' => 'Đông Nam',
-                                'Đông Bắc' => 'Đông Bắc',
-                                'Tây Nam' => 'Tây Nam',
-                                'Tây Bắc' => 'Tây Bắc',
-                            ]),
-                        Forms\Components\Toggle::make('has_road_access')
-                            ->label('Có đường ô tô vào')
-                            ->default(false),
-                    ])->columns(3),
-
-                Forms\Components\Section::make('Thông tin liên hệ')
-                    ->schema([
-                        Forms\Components\TextInput::make('contact_name')
-                            ->label('Tên người liên hệ')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('contact_phone')
-                            ->label('Số điện thoại')
-                            ->tel()
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('contact_zalo')
-                            ->label('Zalo')
-                            ->maxLength(255),
-                    ])->columns(3),
-
-                Forms\Components\Section::make('Trạng thái và duyệt tin')
-                    ->schema([
-                        Forms\Components\Select::make('status')
-                            ->label('Trạng thái')
-                            ->options([
-                                'draft' => 'Nháp',
-                                'pending' => 'Chờ duyệt',
-                                'approved' => 'Đã duyệt',
-                                'rejected' => 'Từ chối',
-                                'expired' => 'Hết hạn',
-                                'sold' => 'Đã bán',
-                            ])
-                            ->required()
-                            ->default('pending')
-                            ->helperText('Khi đổi trạng thái thành "Đã duyệt", ngày duyệt sẽ tự động được cập nhật'),
-                        Forms\Components\Textarea::make('rejection_reason')
-                            ->label('Lý do từ chối')
-                            ->rows(3)
-                            ->visible(fn (Forms\Get $get) => $get('status') === 'rejected')
-                            ->columnSpanFull(),
-                        Forms\Components\DateTimePicker::make('expires_at')
-                            ->label('Ngày hết hạn')
-                            ->nullable()
-                            ->helperText('Ngày tin đăng hết hạn (để trống nếu không giới hạn)'),
-                    ])->columns(2),
-
-                Forms\Components\Section::make('Thông tin khác')
-                    ->schema([
-                        Forms\Components\Textarea::make('planning_info')
-                            ->label('Thông tin quy hoạch')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                        Forms\Components\Textarea::make('meta_description')
-                            ->label('Mô tả SEO')
-                            ->rows(2)
-                            ->columnSpanFull(),
-                    ])->collapsible(),
-
-                Forms\Components\Section::make('Thống kê')
-                    ->schema([
-                        Forms\Components\Placeholder::make('views_count')
-                            ->label('Lượt xem')
-                            ->content(fn ($record) => number_format($record?->views_count ?? 0)),
-                        Forms\Components\Placeholder::make('favorites_count')
-                            ->label('Lượt yêu thích')
-                            ->content(fn ($record) => number_format($record?->favorites_count ?? 0)),
-                        Forms\Components\Placeholder::make('contacts_count')
-                            ->label('Lượt liên hệ')
-                            ->content(fn ($record) => number_format($record?->contacts_count ?? 0)),
-                        Forms\Components\Placeholder::make('created_at')
-                            ->label('Ngày đăng')
-                            ->content(fn ($record) => $record?->created_at?->format('d/m/Y H:i') ?? '-'),
-                    ])->columns(4)
-                    ->visible(fn ($record) => $record !== null)
-                    ->collapsible(),
+                    ->activeTab(1)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -441,7 +482,11 @@ class ListingResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('area')
                     ->label('Diện tích')
-                    ->suffix(' m²')
+                    ->formatStateUsing(function ($state) {
+                        if ($state === null) return '-';
+                        $formatted = rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.');
+                        return $formatted . ' m²';
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Trạng thái')
