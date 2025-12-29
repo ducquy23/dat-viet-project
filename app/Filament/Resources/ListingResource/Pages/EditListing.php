@@ -38,13 +38,11 @@ class EditListing extends EditRecord
             $data['price_per_m2'] = $data['price_per_m2'] / 1000000;
         }
 
-        // Lấy thumbnail (ảnh primary)
         $primaryImage = $listing->primaryImage;
         if ($primaryImage) {
             $data['thumbnail'] = $primaryImage->image_path;
         }
 
-        // Lấy gallery images (các ảnh không phải primary)
         $galleryImages = $listing->images()
             ->where('is_primary', false)
             ->orderBy('sort_order')
@@ -72,35 +70,39 @@ class EditListing extends EditRecord
         $this->thumbnail = $data['thumbnail'] ?? null;
         $this->galleryImages = $data['gallery_images'] ?? [];
 
-        // Xóa khỏi data để không lưu vào listing
         unset($data['thumbnail'], $data['gallery_images']);
 
-        // Convert price_per_m2 từ triệu/m² (Form) → đồng/m² (DB)
+        // Lấy giá trị từ form hoặc từ record hiện tại (nếu không thay đổi)
         if (isset($data['price_per_m2']) && $data['price_per_m2'] > 0) {
+            // Convert từ triệu/m² → đồng/m²
             $data['price_per_m2'] = $data['price_per_m2'] * 1000000;
+        } elseif (!isset($data['price_per_m2']) && $this->record->price_per_m2) {
+            // Nếu không có trong form, dùng giá trị hiện tại từ DB
+            $data['price_per_m2'] = $this->record->price_per_m2;
         }
         
-        // Tính giá tổng từ đơn giá/m² × diện tích
-        if (isset($data['price_per_m2']) && isset($data['area']) && $data['area'] > 0) {
-            // Giá tổng = đơn giá/m² × diện tích (đã convert sang đồng)
-            $data['price'] = $data['price_per_m2'] * $data['area'];
+        // Lấy diện tích từ form hoặc từ record hiện tại
+        $area = $data['area'] ?? $this->record->area;
+        
+        // Tính giá tổng từ đơn giá/m² × diện tích (LUÔN tính lại để đảm bảo đúng)
+        if (isset($data['price_per_m2']) && $data['price_per_m2'] > 0 && $area && $area > 0) {
+            // Giá tổng = đơn giá/m² × diện tích (cả hai đều tính bằng đồng)
+            $data['price'] = $data['price_per_m2'] * $area;
         } elseif (isset($data['price']) && $data['price'] > 0) {
             // Fallback: nếu có nhập giá tổng trực tiếp (triệu) → convert sang đồng
+            // Chỉ dùng khi không có price_per_m2 (dữ liệu cũ)
             $data['price'] = $data['price'] * 1000000;
-            // Tính lại đơn giá/m² nếu chưa có
-            if (!isset($data['price_per_m2']) && isset($data['area']) && $data['area'] > 0) {
-                $data['price_per_m2'] = $data['price'] / $data['area'];
+            // Tính lại đơn giá/m² nếu chưa có và có diện tích
+            if (!isset($data['price_per_m2']) && $area && $area > 0) {
+                $data['price_per_m2'] = $data['price'] / $area;
             }
         }
 
-        // Tự động set approved_at khi status = 'approved'
         if (isset($data['status']) && $data['status'] === 'approved') {
-            // Nếu đang chuyển từ trạng thái khác sang approved và chưa có approved_at
             if ($this->record->status !== 'approved' || !$this->record->approved_at) {
                 $data['approved_at'] = now();
             }
         } elseif (isset($data['status']) && $data['status'] !== 'approved') {
-            // Nếu đổi từ approved sang trạng thái khác, xóa approved_at
             $data['approved_at'] = null;
         }
 
@@ -114,11 +116,8 @@ class EditListing extends EditRecord
     {
         $listing = $this->record;
 
-        // Xử lý thumbnail
-        // Xóa thumbnail cũ
         $listing->images()->where('is_primary', true)->delete();
 
-        // Tạo thumbnail mới nếu có
         if ($this->thumbnail) {
             ListingImage::create([
                 'listing_id' => $listing->id,
@@ -128,11 +127,8 @@ class EditListing extends EditRecord
             ]);
         }
 
-        // Xử lý gallery images
-        // Xóa các ảnh gallery cũ (không phải primary)
         $listing->images()->where('is_primary', false)->delete();
 
-        // Tạo gallery images mới
         if (is_array($this->galleryImages) && !empty($this->galleryImages)) {
             foreach ($this->galleryImages as $index => $imageData) {
                 if (isset($imageData['image']) && $imageData['image']) {

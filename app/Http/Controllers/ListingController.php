@@ -197,21 +197,20 @@ class ListingController extends Controller
         DB::beginTransaction();
         try {
             // Tính toán giá trị
-            // Nếu có nhập giá tổng → tính đơn giá/m²
-            // Nếu có nhập đơn giá/m² → tính giá tổng
-            if ($request->price && $request->price > 0 && $request->area > 0) {
-                // Nếu nhập cả giá tổng → tính đơn giá/m² từ giá tổng
-                $pricePerM2 = ($request->price * 1000000) / $request->area;
-                $price = $request->price * 1000000;
-            } elseif ($request->price_per_m2 && $request->price_per_m2 > 0 && $request->area > 0) {
-                // Nếu nhập đơn giá/m² → tính giá tổng
-                $pricePerM2 = $request->price_per_m2 * 1000000;
-                $price = ($request->price_per_m2 * 1000000) * $request->area;
-            } else {
-                // Fallback: dùng đơn giá/m² đã nhập
-                $pricePerM2 = $request->price_per_m2 * 1000000;
-                $price = ($request->price_per_m2 * 1000000) * $request->area;
+            // Đơn giá/m² là required, tính giá tổng từ đơn giá/m² × diện tích
+            if (!$request->price_per_m2 || $request->price_per_m2 <= 0) {
+                throw new \Exception('Vui lòng nhập đơn giá /m²');
             }
+            
+            if (!$request->area || $request->area <= 0) {
+                throw new \Exception('Vui lòng nhập diện tích');
+            }
+            
+            // Convert đơn giá/m² từ triệu/m² → đồng/m²
+            $pricePerM2 = $request->price_per_m2 * 1000000;
+            
+            // Tính giá tổng = đơn giá/m² × diện tích (cả hai đều tính bằng đồng)
+            $price = $pricePerM2 * $request->area;
 
             // Tạo slug từ title
             $baseSlug = Str::slug($request->title);
